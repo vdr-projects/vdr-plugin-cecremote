@@ -25,6 +25,12 @@ TMPDIR ?= /tmp
 
 ### The compiler options:
 
+ifneq (exists, $(shell pkg-config libcec && echo exists))
+  $(warning ******************************************************************)
+  $(warning 'libcec' not detected!)
+  $(error ******************************************************************)
+endif
+
 export CFLAGS   = $(call PKGCFG,cflags)
 export CXXFLAGS = $(call PKGCFG,cxxflags)
 
@@ -50,6 +56,10 @@ SOFILE = libvdr-$(PLUGIN).so
 INCLUDES +=
 
 DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
+
+LIBS += $(shell pkg-config --libs libcec)
+CFLAGS += $(shell pkg-config --cflags libcec)
+CXXFLAGS += $(shell pkg-config --cflags libcec)
 
 ### The object files (add further files here):
 
