@@ -11,32 +11,70 @@
 #include <vdr/plugin.h>
 #include <vdr/remote.h>
 #include <vdr/thread.h>
+#include <vdr/keys.h>
 #include <cectypes.h>
 #include <cec.h>
 #include <stdint.h>
+#include <queue>
+#include <list>
+#include <vector>
 
 #define MAX_CEC_ADAPTERS 10
 
 using namespace CEC;
 
+typedef enum {
+    CEC_INVALID = -1,
+    CEC_TIMEOUT = 0,
+    CEC_KEYRPRESS
+} CECCommand;
+
+class cCECCmd {
+public:
+    cCECCmd() : mCmd(CEC_INVALID), mVal(0) {};
+    cCECCmd(CECCommand c, int v) {
+        mCmd = c;
+        mVal = v;
+    }
+
+    CECCommand mCmd;
+    int mVal;
+    cCECCmd &operator=(const cCECCmd &c) {
+        mCmd = c.mCmd;
+        mVal = c.mVal;
+        return *this;
+    }
+};
+
+typedef std::queue<cCECCmd> cCmdQueue;
+typedef std::list<eKeys> cKeyList;
+typedef cKeyList::const_iterator cKeyListIterator;
+
+typedef std::vector<cKeyList> cVdrKeyMap;
+
 class cCECRemote : public cRemote, private cThread {
 public:
     cCECRemote(void);
-    virtual ~cCECRemote();
-    virtual bool Initialize(void);
-
+    ~cCECRemote();
+    bool Initialize(void);
+    void PushCmd(const cCECCmd &cmd);
+    int getCECLogLevel() {return mCECLogLevel;}
 private:
-    uint8_t mDevicesFound;
+    int                    mCECLogLevel;
+    uint8_t                mDevicesFound;
     ICECAdapter            *mCECAdapter;
     libcec_configuration   mCECConfig;
     ICECCallbacks          mCECCallbacks;
     cec_adapter_descriptor mCECAdapterDescription[MAX_CEC_ADAPTERS];
+    cMutex                 mQueueMutex;
+    cCondWait              mQueueWait;
+    cCmdQueue              mQueue;
+    cVdrKeyMap             mKeyMap;
 
-    virtual void Action(void);
-    //int ReadKey(void);
-    //uint64_t ReadKeySequence(void);
-    //int MapCodeToFunc(uint64_t Code);
-    //void PutKey(uint64_t Code, bool Repeat = false, bool Release = false);
+    void Action(void);
+
+    cCECCmd WaitCmd();
+
 };
 
 #endif /* CECREMOTE_H_ */

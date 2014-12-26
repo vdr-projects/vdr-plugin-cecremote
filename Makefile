@@ -32,7 +32,7 @@ ifneq (exists, $(shell pkg-config libcec && echo exists))
 endif
 
 export CFLAGS   = $(call PKGCFG,cflags)
-export CXXFLAGS = $(call PKGCFG,cxxflags)
+export CXXFLAGS = $(call PKGCFG,cxxflags) -std=gnu++11
 
 ### The version number of VDR's plugin API:
 

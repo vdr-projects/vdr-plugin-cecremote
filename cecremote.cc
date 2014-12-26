@@ -6,40 +6,10 @@
  */
 #include "cecremote.h"
 
+// We need this for cecloader.h
 #include <iostream>
 using namespace std;
 #include <cecloader.h>
-
-/*
-class CReconnect : public PLATFORM::CThread
-{
-public:
-  static CReconnect& Get(void)
-  {
-    static CReconnect _instance;
-    return _instance;
-  }
-
-  virtual ~CReconnect(void) {}
-
-  void* Process(void)
-  {
-    if (g_parser)
-    {
-      g_parser->Close();
-      if (!g_parser->Open(g_strPort.c_str()))
-      {
-        PrintToStdOut("Failed to reconnect\n");
-        g_bExit = true;
-      }
-    }
-    return NULL;
-  }
-
-private:
-  CReconnect(void) {}
-};
-*/
 
 cCECRemote::cCECRemote(void):
         cRemote("CEC"),
@@ -47,7 +17,8 @@ cCECRemote::cCECRemote(void):
         mDevicesFound(0),
         mCECAdapter(NULL)
 {
-  //  Start();
+    mCECLogLevel = CEC_LOG_ERROR | CEC_LOG_WARNING | CEC_LOG_DEBUG;
+    Start();
     dsyslog("cCECRemote start");
 }
 
@@ -64,72 +35,110 @@ cCECRemote::~cCECRemote()
 
 void cCECRemote::Action(void)
 {
+    cCECCmd cmd;
     while (Running()) {
-        Put(k9);
-        sleep(15);
+        cmd = WaitCmd();
+        if (cmd.mCmd != 0) dsyslog ("Action %d Val %d", cmd.mCmd, cmd.mVal);
+        switch (cmd.mCmd)
+        {
+        case CEC_KEYRPRESS:
+            if (cmd.mVal >= 0 && cmd.mVal <= CEC_USER_CONTROL_CODE_MAX) {
+                const cKeyList &inputKeys = mKeyMap[cmd.mVal];
+                for (cKeyListIterator keys = inputKeys.begin();
+                     keys != inputKeys.end(); ++keys) {
+                    eKeys k = *keys;
+                    Put(k);
+                    dsyslog ("   Put(%d)", k);
+                }
+            }
+            break;
+        case CEC_TIMEOUT:
+            break;
+        default:
+            esyslog("Unknown action %d Val %d", cmd.mCmd, cmd.mVal);
+            break;
+        }
+
     }
 }
 
 int CecLogMessage(void *cbParam, const cec_log_message message)
 {
-  //if ((message.level & g_cecLogLevel) == message.level)
-  //{
-    string strLevel;
-    switch (message.level)
+    cCECRemote *rem = (cCECRemote *)cbParam;
+    if ((message.level & rem->getCECLogLevel()) == message.level)
     {
-    case CEC_LOG_ERROR:
-      strLevel = "ERROR:   ";
-      break;
-    case CEC_LOG_WARNING:
-      strLevel = "WARNING: ";
-      break;
-    case CEC_LOG_NOTICE:
-      strLevel = "NOTICE:  ";
-      break;
-    case CEC_LOG_TRAFFIC:
-      strLevel = "TRAFFIC: ";
-      break;
-    case CEC_LOG_DEBUG:
-      strLevel = "DEBUG:   ";
-      break;
-    default:
-      break;
+        string strLevel;
+        switch (message.level)
+        {
+        case CEC_LOG_ERROR:
+            strLevel = "ERROR:   ";
+            break;
+        case CEC_LOG_WARNING:
+            strLevel = "WARNING: ";
+            break;
+        case CEC_LOG_NOTICE:
+            strLevel = "NOTICE:  ";
+            break;
+        case CEC_LOG_TRAFFIC:
+            strLevel = "TRAFFIC: ";
+            break;
+        case CEC_LOG_DEBUG:
+            strLevel = "DEBUG:   ";
+            break;
+        default:
+            break;
+        }
+
+        char strFullLog[128]; // TODO
+        snprintf(strFullLog, 127, "%s[%6ld]\t%s", strLevel.c_str(), message.time, message.message);
+        if (message.level == CEC_LOG_ERROR)
+        {
+            esyslog(strFullLog);
+        }
+        else
+        {
+            dsyslog(strFullLog);
+        }
     }
 
-    char strFullLog[128]; // TODO
-    snprintf(strFullLog, 127, "%s[%16ld]\t%s", strLevel.c_str(), message.time, message.message);
-    dsyslog(strFullLog);
-  //}
-
-  return 0;
+    return 0;
 }
+
 
 int CecKeyPress(void *cbParam, const cec_keypress key)
 {
-    dsyslog("key pressed %d", key.keycode);
-  return 0;
+    cCECRemote *rem = (cCECRemote *)cbParam;
+
+    dsyslog("key pressed %d (%d)", key.keycode, key.duration);
+    if ((key.keycode >= 0) && (key.keycode <= CEC_USER_CONTROL_CODE_MAX) &&
+        (key.duration == 0))
+    {
+        cCECCmd cmd(CEC_KEYRPRESS, (int)key.keycode);
+        rem->PushCmd(cmd);
+    }
+    return 0;
 }
 
 int CecCommand(void *cbParam, const cec_command command)
 {
     dsyslog("CEC Command %d", command.opcode);
-  return 0;
+    return 0;
 }
 
 int CecAlert(void *cbParam, const libcec_alert type, const libcec_parameter param)
 {
     dsyslog("CecAlert %d", type);
-  switch (type)
-  {
-  case CEC_ALERT_CONNECTION_LOST:
-    /* TODO */
-      esyslog("Connection lost - trying to reconnect");
+    switch (type)
+    {
+    case CEC_ALERT_CONNECTION_LOST:
+        /* TODO */
+        esyslog("Connection lost - trying to reconnect");
 
-    break;
-  default:
-    break;
-  }
-  return 0;
+        break;
+    default:
+        break;
+    }
+    return 0;
 }
 
 bool cCECRemote::Initialize(void)
@@ -199,5 +208,114 @@ bool cCECRemote::Initialize(void)
         }
     }
 
+    mKeyMap.resize(CEC_USER_CONTROL_CODE_MAX + 1, {});
+    mKeyMap[CEC_USER_CONTROL_CODE_SELECT                      ] = { kOk };
+    mKeyMap[CEC_USER_CONTROL_CODE_UP                          ] = { kUp };
+    mKeyMap[CEC_USER_CONTROL_CODE_DOWN                        ] = { kDown };
+    mKeyMap[CEC_USER_CONTROL_CODE_LEFT                        ] = { kLeft };
+    mKeyMap[CEC_USER_CONTROL_CODE_RIGHT                       ] = { kRight };
+    mKeyMap[CEC_USER_CONTROL_CODE_RIGHT_UP                    ] = { kRight, kUp };
+    mKeyMap[CEC_USER_CONTROL_CODE_RIGHT_DOWN                  ] = { kRight, kDown };
+    mKeyMap[CEC_USER_CONTROL_CODE_LEFT_UP                     ] = { kLeft, kUp };
+    mKeyMap[CEC_USER_CONTROL_CODE_LEFT_DOWN                   ] = { kRight, kUp };
+    mKeyMap[CEC_USER_CONTROL_CODE_ROOT_MENU                   ] = { kMenu };
+    mKeyMap[CEC_USER_CONTROL_CODE_SETUP_MENU                  ] = { kSetup };
+    mKeyMap[CEC_USER_CONTROL_CODE_CONTENTS_MENU               ] = { kSetup };
+    mKeyMap[CEC_USER_CONTROL_CODE_FAVORITE_MENU               ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_EXIT                        ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER0                     ] = { k0 };
+    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER1                     ] = { k1 };
+    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER2                     ] = { k2 };
+    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER3                     ] = { k3 };
+    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER4                     ] = { k4 };
+    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER5                     ] = { k5 };
+    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER6                     ] = { k6 };
+    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER7                     ] = { k7 };
+    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER8                     ] = { k8 };
+    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER9                     ] = { k9 };
+    mKeyMap[CEC_USER_CONTROL_CODE_DOT                         ] = {  };
+    mKeyMap[CEC_USER_CONTROL_CODE_ENTER                       ] = { kOk };
+    mKeyMap[CEC_USER_CONTROL_CODE_CLEAR                       ] = { kBack };
+    mKeyMap[CEC_USER_CONTROL_CODE_NEXT_FAVORITE               ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_CHANNEL_UP                  ] = { kChanUp };
+    mKeyMap[CEC_USER_CONTROL_CODE_CHANNEL_DOWN                ] = { kChanDn };
+    mKeyMap[CEC_USER_CONTROL_CODE_PREVIOUS_CHANNEL            ] = { kChanPrev };
+    mKeyMap[CEC_USER_CONTROL_CODE_SOUND_SELECT                ] = { kAudio };
+    mKeyMap[CEC_USER_CONTROL_CODE_INPUT_SELECT                ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_DISPLAY_INFORMATION         ] = { kInfo };
+    mKeyMap[CEC_USER_CONTROL_CODE_HELP                        ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_PAGE_UP                     ] = { kNext };
+    mKeyMap[CEC_USER_CONTROL_CODE_PAGE_DOWN                   ] = { kPrev };
+    mKeyMap[CEC_USER_CONTROL_CODE_POWER                       ] = { kPower };
+    mKeyMap[CEC_USER_CONTROL_CODE_VOLUME_UP                   ] = { kVolUp };
+    mKeyMap[CEC_USER_CONTROL_CODE_VOLUME_DOWN                 ] = { kVolDn };
+    mKeyMap[CEC_USER_CONTROL_CODE_MUTE                        ] = { kMute };
+    mKeyMap[CEC_USER_CONTROL_CODE_PLAY                        ] = { kPlay };
+    mKeyMap[CEC_USER_CONTROL_CODE_STOP                        ] = { kStop };
+    mKeyMap[CEC_USER_CONTROL_CODE_PAUSE                       ] = { kPause };
+    mKeyMap[CEC_USER_CONTROL_CODE_RECORD                      ] = { kRecord };
+    mKeyMap[CEC_USER_CONTROL_CODE_REWIND                      ] = { kFastRew };
+    mKeyMap[CEC_USER_CONTROL_CODE_FAST_FORWARD                ] = { kFastFwd };
+    mKeyMap[CEC_USER_CONTROL_CODE_EJECT                       ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_FORWARD                     ] = { kFastFwd };
+    mKeyMap[CEC_USER_CONTROL_CODE_BACKWARD                    ] = { kFastRew };
+    mKeyMap[CEC_USER_CONTROL_CODE_STOP_RECORD                 ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_PAUSE_RECORD                ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_ANGLE                       ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_SUB_PICTURE                 ] = { kSubtitles };
+    mKeyMap[CEC_USER_CONTROL_CODE_VIDEO_ON_DEMAND             ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_ELECTRONIC_PROGRAM_GUIDE    ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_TIMER_PROGRAMMING           ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_INITIAL_CONFIGURATION       ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_PLAY_FUNCTION               ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_PAUSE_PLAY_FUNCTION         ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_RECORD_FUNCTION             ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_PAUSE_RECORD_FUNCTION       ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_STOP_FUNCTION               ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_MUTE_FUNCTION               ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_RESTORE_VOLUME_FUNCTION     ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_TUNE_FUNCTION               ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_SELECT_MEDIA_FUNCTION       ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_SELECT_AV_INPUT_FUNCTION    ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_SELECT_AUDIO_INPUT_FUNCTION ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_POWER_TOGGLE_FUNCTION       ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_POWER_OFF_FUNCTION          ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_POWER_ON_FUNCTION           ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_F1_BLUE                     ] = { kBlue };
+    mKeyMap[CEC_USER_CONTROL_CODE_F2_RED                      ] = { kRed };
+    mKeyMap[CEC_USER_CONTROL_CODE_F3_GREEN                    ] = { kGreen };
+    mKeyMap[CEC_USER_CONTROL_CODE_F4_YELLOW                   ] = { kYellow };
+    mKeyMap[CEC_USER_CONTROL_CODE_F5                          ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_DATA                        ] = { };
+    mKeyMap[CEC_USER_CONTROL_CODE_AN_RETURN                   ] = { kBack };
+    mKeyMap[CEC_USER_CONTROL_CODE_AN_CHANNELS_LIST            ] = { };
+
     return false;
+}
+
+void cCECRemote::PushCmd(const cCECCmd &cmd)
+{
+    cMutexLock lock(&mQueueMutex);
+    mQueue.push(cmd);
+    mQueueWait.Signal();
+}
+
+cCECCmd cCECRemote::WaitCmd()
+{
+    cCECCmd cmd;
+    mQueueMutex.Lock();
+    if (mQueue.empty()) {
+        mQueueMutex.Unlock();
+        mQueueWait.Wait(1000);
+        mQueueMutex.Lock();
+    }
+    if (mQueue.empty()) {
+        cmd.mCmd = CEC_TIMEOUT;
+    }
+    else {
+        cmd = mQueue.front();
+        mQueue.pop();
+    }
+    mQueueMutex.Unlock();
+    return cmd;
 }
