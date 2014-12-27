@@ -11,7 +11,7 @@
  */
 
 #include "cecconfigmenu.h"
-
+//#include "ceclog.h"
 
 /*
 static const char *workingmode_entry[] = {

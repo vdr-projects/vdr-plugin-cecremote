@@ -5,21 +5,22 @@
  *      Author: uli
  */
 #include "cecremote.h"
+#include "ceclog.h"
 
 // We need this for cecloader.h
 #include <iostream>
 using namespace std;
 #include <cecloader.h>
 
-cCECRemote::cCECRemote(void):
+cCECRemote::cCECRemote(int loglevel):
         cRemote("CEC"),
         cThread("CEC receiver"),
         mDevicesFound(0),
         mCECAdapter(NULL)
 {
-    mCECLogLevel = CEC_LOG_ERROR | CEC_LOG_WARNING | CEC_LOG_DEBUG;
+    mCECLogLevel = loglevel;
     Start();
-    dsyslog("cCECRemote start");
+    Dsyslog("cCECRemote start");
 }
 
 
@@ -38,7 +39,7 @@ void cCECRemote::Action(void)
     cCECCmd cmd;
     while (Running()) {
         cmd = WaitCmd();
-        if (cmd.mCmd != 0) dsyslog ("Action %d Val %d", cmd.mCmd, cmd.mVal);
+        if (cmd.mCmd != 0) Dsyslog ("Action %d Val %d", cmd.mCmd, cmd.mVal);
         switch (cmd.mCmd)
         {
         case CEC_KEYRPRESS:
@@ -48,14 +49,17 @@ void cCECRemote::Action(void)
                      keys != inputKeys.end(); ++keys) {
                     eKeys k = *keys;
                     Put(k);
-                    dsyslog ("   Put(%d)", k);
+                    Dsyslog ("   Put(%d)", k);
                 }
             }
+            break;
+        case CEC_VDRKEYPRESS:
+
             break;
         case CEC_TIMEOUT:
             break;
         default:
-            esyslog("Unknown action %d Val %d", cmd.mCmd, cmd.mVal);
+            Esyslog("Unknown action %d Val %d", cmd.mCmd, cmd.mVal);
             break;
         }
 
@@ -90,14 +94,14 @@ int CecLogMessage(void *cbParam, const cec_log_message message)
         }
 
         char strFullLog[128]; // TODO
-        snprintf(strFullLog, 127, "%s[%6ld]\t%s", strLevel.c_str(), message.time, message.message);
+        snprintf(strFullLog, 127, "CEC %s %s", strLevel.c_str(), message.message);
         if (message.level == CEC_LOG_ERROR)
         {
-            esyslog(strFullLog);
+            Esyslog(strFullLog);
         }
         else
         {
-            dsyslog(strFullLog);
+            Dsyslog(strFullLog);
         }
     }
 
@@ -109,7 +113,7 @@ int CecKeyPress(void *cbParam, const cec_keypress key)
 {
     cCECRemote *rem = (cCECRemote *)cbParam;
 
-    dsyslog("key pressed %d (%d)", key.keycode, key.duration);
+    Dsyslog("key pressed %d (%d)", key.keycode, key.duration);
     if ((key.keycode >= 0) && (key.keycode <= CEC_USER_CONTROL_CODE_MAX) &&
         (key.duration == 0))
     {
@@ -121,18 +125,18 @@ int CecKeyPress(void *cbParam, const cec_keypress key)
 
 int CecCommand(void *cbParam, const cec_command command)
 {
-    dsyslog("CEC Command %d", command.opcode);
+    Dsyslog("CEC Command %d", command.opcode);
     return 0;
 }
 
 int CecAlert(void *cbParam, const libcec_alert type, const libcec_parameter param)
 {
-    dsyslog("CecAlert %d", type);
+    Dsyslog("CecAlert %d", type);
     switch (type)
     {
     case CEC_ALERT_CONNECTION_LOST:
         /* TODO */
-        esyslog("Connection lost - trying to reconnect");
+        Esyslog("Connection lost - trying to reconnect");
 
         break;
     default:
@@ -161,24 +165,24 @@ bool cCECRemote::Initialize(void)
     // Initialize libcec
     mCECAdapter = LibCecInitialise(&mCECConfig);
     if (mCECAdapter == NULL) {
-        esyslog("Can not initialize libcec");
+        Esyslog("Can not initialize libcec");
         exit(-1);
     }
     // init video on targets that need this
     mCECAdapter->InitVideoStandalone();
-    dsyslog("LibCEC %s", mCECAdapter->GetLibInfo());
+    Dsyslog("LibCEC %s", mCECAdapter->GetLibInfo());
 
     mDevicesFound = mCECAdapter->DetectAdapters(mCECAdapterDescription,
                                                 MAX_CEC_ADAPTERS, NULL);
     if (mDevicesFound <= 0)
     {
-        esyslog("No adapter found");
+        Esyslog("No adapter found");
         UnloadLibCec(mCECAdapter);
         exit(-1);
     }
     for (int i = 0; i < mDevicesFound; i++)
     {
-        dsyslog("Device %d path: %s port: %s Firmware %04d", i,
+        Dsyslog("Device %d path: %s port: %s Firmware %04d", i,
                         mCECAdapterDescription[0].strComPath,
                         mCECAdapterDescription[0].strComName,
                         mCECAdapterDescription[0].iFirmwareVersion);
@@ -186,7 +190,7 @@ bool cCECRemote::Initialize(void)
 
     if (!mCECAdapter->Open(mCECAdapterDescription[0].strComName))
     {
-      esyslog("unable to open the device on port %s",
+      Esyslog("unable to open the device on port %s",
               mCECAdapterDescription[0].strComName);
       UnloadLibCec(mCECAdapter);
       exit(-1);
@@ -201,7 +205,7 @@ bool cCECRemote::Initialize(void)
             uint16_t phaddr = mCECAdapter->GetDevicePhysicalAddress(logical_addres);
             cec_osd_name name = mCECAdapter->GetDeviceOSDName(logical_addres);
             cec_vendor_id vendor = (cec_vendor_id)mCECAdapter->GetDeviceVendorId(logical_addres);
-            dsyslog("  %s@%04x %15.15s %15.15s",
+            Dsyslog("  %s@%04x %15.15s %15.15s",
                     mCECAdapter->ToString(logical_addres),
                     phaddr, name.name,
                     mCECAdapter->ToString(vendor));

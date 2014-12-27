@@ -11,6 +11,8 @@
 #include <stdlib.h>
 
 #include "cecremoteplugin.h"
+#include "ceclog.h"
+#include "cecosd.h"
 
 static const char *VERSION        = "0.0.1";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
@@ -18,19 +20,17 @@ static const char *MAINMENUENTRY  = "CECremote";
 
 using namespace std;
 
-string cPluginCecremote::mCfgDir = "cecremote";
-string cPluginCecremote::mCfgFile = "cecremote.conf";
-
-cPluginCecremote::cPluginCecremote(void)
+cPluginCecremote::cPluginCecremote(void) :
+        mCfgDir("cecremote"), mCfgFile("cecremote.conf"), mCECRemote(NULL)
 {
-    // Initialize any member variables here.
-    // DON'T DO ANYTHING ELSE THAT MAY HAVE SIDE EFFECTS, REQUIRE GLOBAL
-    // VDR OBJECTS TO EXIST OR PRODUCE ANY OUTPUT!
+    mCECLogLevel = CEC_LOG_ERROR | CEC_LOG_WARNING | CEC_LOG_DEBUG;
 }
 
 cPluginCecremote::~cPluginCecremote()
 {
-    // Clean up after yourself!
+    if (mCECRemote != NULL) {
+        delete mCECRemote;
+    }
 }
 
 const char *cPluginCecremote::Version(void)
@@ -72,7 +72,7 @@ bool cPluginCecremote::ProcessArgs(int argc, char *argv[])
             mCfgDir.assign(optarg);
             break;
         default:
-            esyslog("CECRemotePlugin unknown option %c", c);
+            Esyslog("CECRemotePlugin unknown option %c", c);
             return false;
         }
     }
@@ -86,9 +86,83 @@ bool cPluginCecremote::Initialize(void)
     return true;
 }
 
+// Read global options for the plugin
+bool cPluginCecremote::AddGlobalOptions (const string &sectionname)
+{
+    stringList vals;
+    stringList::iterator it;
+    string cecdebug;
+
+    if (sectionname != "GLOBAL") {
+        return false;
+    }
+
+    if (mConfigFileParser.GetSingleValue(sectionname, "CEC_DEBUG", cecdebug)) {
+        Isyslog("CEC_Debug %s", cecdebug.c_str());
+        mCECLogLevel = atoi(cecdebug.c_str());
+        if ((mCECLogLevel < 0) || (mCECLogLevel > CEC_LOG_ALL)) {
+            Esyslog("CEC_Debug out of range");
+        }
+    }
+
+    return true;
+}
+
+bool cPluginCecremote::AddMenu(const string &sectionname)
+{
+    string menuname;
+    string dev = "DEVICE#";
+    char num;
+
+    if (sectionname.compare(0,dev.length(), dev) != 0) {
+        return false;
+    }
+    if (sectionname.length() > dev.length()+1) {
+        Esyslog("Invalid device section name %s", sectionname.c_str());
+        return false;
+    }
+    num = sectionname[dev.length()];
+    if (!mConfigFileParser.GetSingleValue(sectionname, "name", menuname)) {
+        Esyslog("Missing name in device section %s", sectionname.c_str());
+        return false;
+    }
+    Dsyslog("Menu#%c: %s", num, menuname.c_str());
+    cCECDevInfo info((int)num-'0', menuname);
+    mCECDevMenuInfo.push_back(info);
+    return true;
+}
+
 bool cPluginCecremote::Start(void)
 {
-    new cCECRemote();
+    Section::iterator iter;
+    string sectionname;
+
+    string file = GetConfigFile();
+    if (!mConfigFileParser.Parse(file)) {
+        Esyslog("Config file %s not found", file.c_str());
+        return false;
+    }
+
+    if (!mConfigFileParser.GetFirstSection(iter, sectionname)) {
+        Esyslog("Empty config file %s", file.c_str());
+        return false;
+    }
+    Dsyslog("First Section:%s ", sectionname.c_str());
+    if (!AddGlobalOptions(sectionname)) {
+        if (!AddMenu(sectionname)) {
+            return false;
+        }
+    }
+
+    while (mConfigFileParser.GetNextSection(iter, sectionname)) {
+        Dsyslog("Section:%s ", sectionname.c_str());
+        if (!AddGlobalOptions(sectionname)) {
+            if (!AddMenu(sectionname)) {
+                return false;
+            }
+        }
+    }
+    mCECRemote = new cCECRemote(mCECLogLevel);
     return true;
 }
 
@@ -120,15 +194,28 @@ time_t cPluginCecremote::WakeupTime(void)
     return 0;
 }
 
+void cPluginCecremote::StartPlayer(int cnt) {
+    Isyslog("starting player: %s", mCECDevMenuInfo.at(cnt).mMenuName.c_str());
+
+    cControl::Launch(new cCECControl(mCECDevMenuInfo.at(cnt), this));
+    cControl::Attach();
+}
+
 cOsdObject *cPluginCecremote::MainMenuAction(void)
 {
-    // Perform the action when selected from the main VDR menu.
-    return NULL;
+    int count = mCECDevMenuInfo.size();
+       if (count == 0) {
+           return NULL;
+       }
+       else if (count == 1) {
+           StartPlayer(0);
+           return NULL;
+       }
+    return new cCECOsd(this);
 }
 
 cMenuSetupPage *cPluginCecremote::SetupMenu(void)
 {
-    // Return a setup menu in case the plugin supports one.
     return NULL;
 }
 

@@ -26,7 +26,9 @@ using namespace CEC;
 typedef enum {
     CEC_INVALID = -1,
     CEC_TIMEOUT = 0,
-    CEC_KEYRPRESS
+    CEC_KEYRPRESS,
+    CEC_MAKEACTIVE,
+    CEC_VDRKEYPRESS
 } CECCommand;
 
 class cCECCmd {
@@ -54,7 +56,7 @@ typedef std::vector<cKeyList> cVdrKeyMap;
 
 class cCECRemote : public cRemote, private cThread {
 public:
-    cCECRemote(void);
+    cCECRemote(int loglevel);
     ~cCECRemote();
     bool Initialize(void);
     void PushCmd(const cCECCmd &cmd);
