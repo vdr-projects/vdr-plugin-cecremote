@@ -12,7 +12,7 @@
 #include <vdr/status.h>
 #include <vdr/player.h>
 #include <string>
-
+#include "cecremoteplugin.h"
 // The maximum size of a single frame (up to HDTV 1920x1080):
 #define TS_SIZE 188
 #define CDMAXFRAMESIZE  (KILOBYTE(1024) / TS_SIZE * TS_SIZE) // multiple of TS_SIZE to avoid breaking up TS packets
@@ -23,12 +23,13 @@ protected:
     void LoadStillPicture (const std::string &filename);
     void DisplayStillPicture (void);
 
+    cCECDevInfo mConfig;
     std::string mStillPic;
     cMutex mPlayerMutex;
     uchar *pStillBuf;
     ssize_t mStillBufLen;
 public:
-    cCECPlayer(const std::string &stillpic);
+    cCECPlayer(const cCECDevInfo &config);
     virtual ~cCECPlayer();
 };
 

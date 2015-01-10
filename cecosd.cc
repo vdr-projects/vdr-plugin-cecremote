@@ -8,7 +8,7 @@
 #include <algorithm>
 #include "cecremoteplugin.h"
 #include "cecosd.h"
-//#include "ceclog.h"
+#include "ceclog.h"
 
 using namespace std;
 
@@ -42,6 +42,7 @@ cCECOsdItem::cCECOsdItem(int cnt, const char *menutxt,
         cOsdItem(menutxt), mControl(NULL) {
     mCnt = cnt;
     mPlugin = plugin;
+    Dsyslog("Menu %d ->%s", cnt, menutxt);
 }
 
 eOSState cCECOsdItem::ProcessKey(eKeys key) {

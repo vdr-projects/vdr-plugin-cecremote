@@ -19,14 +19,23 @@ class cCECOsd;
 
 class cCECDevInfo {
 public:
-    cCECDevInfo() : mAddr(0), mMenuName("") {};
-    cCECDevInfo(int addr, const std::string &menuname) {
-        mAddr = addr;
+    cCECDevInfo() : mAddr(CECDEVICE_UNKNOWN), mMakeActive(false), mPowerOn(false),
+                    mPowerOff(false), mMenuName(""), mStillPic("") {};
+    cCECDevInfo(int addr, const std::string &menuname,
+                const std::string &stillpic, bool makeactive, bool poweron,
+                bool poweroff) {
+        mAddr = (cec_logical_address)addr;
+        mMakeActive = makeactive;
+        mPowerOn = poweron;
+        mPowerOff = poweroff;
         mMenuName = menuname;
-        mStillPic= "/video/conf/plugins/cecremote/blueray.mpg"; // @TODO
+        mStillPic= stillpic;
     }
 
-    int mAddr;
+    cec_logical_address mAddr;
+    bool mMakeActive;
+    bool mPowerOn;
+    bool mPowerOff;
     std::string mMenuName;
     std::string mStillPic;
 };

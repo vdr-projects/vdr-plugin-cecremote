@@ -11,13 +11,30 @@
 
 cCECControl::cCECControl(const cCECDevInfo &config,
                          cPluginCecremote *plugin) :
-    cControl(mCECPlayer = new cCECPlayer(config.mStillPic))
+    cControl(mCECPlayer = new cCECPlayer(config))
 {
     mConfig = config;
     mPlugin = plugin;
+
+    if (config.mPowerOn) {
+        cCECCmd cmd(CEC_POWERON, 0, config.mAddr);
+        mPlugin->PushCmd(cmd);
+    }
+    if (mConfig.mMakeActive) {
+        cCECCmd cmd(CEC_MAKEINACTIVE);
+        mPlugin->PushCmd(cmd);
+    }
 }
 
 cCECControl::~cCECControl() {
+    if (mConfig.mPowerOff) {
+        cCECCmd cmd(CEC_POWEROFF, 0, mConfig.mAddr);
+        mPlugin->PushCmd(cmd);
+    }
+    if (mConfig.mMakeActive) {
+        cCECCmd cmd(CEC_MAKEACTIVE);
+        mPlugin->PushCmd(cmd);
+    }
     delete mCECPlayer;
 }
 

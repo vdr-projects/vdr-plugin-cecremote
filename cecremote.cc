@@ -39,7 +39,10 @@ void cCECRemote::Action(void)
     cCECCmd cmd;
     while (Running()) {
         cmd = WaitCmd();
-        if (cmd.mCmd != 0) Dsyslog ("Action %d Val %d", cmd.mCmd, cmd.mVal);
+        if (cmd.mCmd != 0) {
+            Dsyslog ("Action %d Val %d Addr %d",
+                     cmd.mCmd, cmd.mVal, cmd.mAddress);
+        }
         switch (cmd.mCmd)
         {
         case CEC_KEYRPRESS:
@@ -53,8 +56,28 @@ void cCECRemote::Action(void)
                 }
             }
             break;
+        case CEC_POWERON: // TODO
+            Dsyslog("Power on");
+            if (mCECAdapter->PowerOnDevices(cmd.mAddress) != 0) {
+                Esyslog("PowerOnDevice failed for %s", mCECAdapter->ToString(cmd.mAddress));
+            }
+            break;
+        case CEC_POWEROFF: // TODO
+               Dsyslog("Power off");
+               if (mCECAdapter->StandbyDevices(cmd.mAddress) != 0) {
+                   Esyslog("PowerOnDevice failed for %s", mCECAdapter->ToString(cmd.mAddress));
+               }
+               break;
+        case CEC_MAKEACTIVE:
+            Dsyslog ("Make active");
+            mCECAdapter->SetActiveSource();
+            break;
+        case CEC_MAKEINACTIVE:
+            Dsyslog ("Make inactive");
+            mCECAdapter->SetInactiveView();
+            break;
         case CEC_VDRKEYPRESS:
-
+            Dsyslog ("Send Keypress %d", cmd.mVal);
             break;
         case CEC_TIMEOUT:
             break;
@@ -158,7 +181,7 @@ bool cCECRemote::Initialize(void)
     mCECConfig.Clear();
     strncpy(mCECConfig.strDeviceName, "VDR", sizeof(mCECConfig.strDeviceName));
     mCECConfig.clientVersion       = CEC_CLIENT_VERSION_CURRENT;
-    mCECConfig.bActivateSource     = CEC_TRUE;
+    mCECConfig.bActivateSource     = CEC_FALSE;
     mCECConfig.deviceTypes.Add(CEC_DEVICE_TYPE_RECORDING_DEVICE);
     mCECConfig.callbackParam = this;
     mCECConfig.callbacks = &mCECCallbacks;

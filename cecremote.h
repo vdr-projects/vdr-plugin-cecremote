@@ -28,22 +28,29 @@ typedef enum {
     CEC_TIMEOUT = 0,
     CEC_KEYRPRESS,
     CEC_MAKEACTIVE,
+    CEC_MAKEINACTIVE,
+    CEC_POWERON,
+    CEC_POWEROFF,
     CEC_VDRKEYPRESS
 } CECCommand;
 
 class cCECCmd {
 public:
     cCECCmd() : mCmd(CEC_INVALID), mVal(0) {};
-    cCECCmd(CECCommand c, int v) {
-        mCmd = c;
-        mVal = v;
+    cCECCmd(CECCommand cmd, int val = -1, cec_logical_address adress = CECDEVICE_UNKNOWN) {
+        mCmd = cmd;
+        mVal = val;
+        mAddress = adress;
     }
 
     CECCommand mCmd;
     int mVal;
+    cec_logical_address mAddress;
+
     cCECCmd &operator=(const cCECCmd &c) {
         mCmd = c.mCmd;
         mVal = c.mVal;
+        mAddress = c.mAddress;
         return *this;
     }
 };

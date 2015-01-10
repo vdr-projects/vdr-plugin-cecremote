@@ -13,6 +13,7 @@
 #include "cecremoteplugin.h"
 #include "ceclog.h"
 #include "cecosd.h"
+#include "stringtools.h"
 
 static const char *VERSION        = "0.0.1";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
@@ -111,8 +112,13 @@ bool cPluginCecremote::AddGlobalOptions (const string &sectionname)
 bool cPluginCecremote::AddMenu(const string &sectionname)
 {
     string menuname;
+    string stillpic;
+    stringList vals;
     string dev = "DEVICE#";
     char num;
+    bool makeactive = false;
+    bool poweron = false;
+    bool poweroff = false;
 
     if (sectionname.compare(0,dev.length(), dev) != 0) {
         return false;
@@ -127,7 +133,44 @@ bool cPluginCecremote::AddMenu(const string &sectionname)
         return false;
     }
     Dsyslog("Menu#%c: %s", num, menuname.c_str());
-    cCECDevInfo info((int)num-'0', menuname);
+    if (!mConfigFileParser.GetSingleValue(sectionname, "stillpic", stillpic)) {
+        Esyslog("Missing stillpic in device section %s", sectionname.c_str());
+        return false;
+    }
+
+    if (mConfigFileParser.GetValues(sectionname, "onstart", vals)) {
+        stringList::iterator it;
+        for (it = vals.begin(); it != vals.end(); it++) {
+            string s = StringTools::ToUpper(*it);
+            Dsyslog("+%s+ ", s.c_str());
+            if (s == "POWERON") {
+                poweron = true;
+            }
+            else {
+                Esyslog("%s not allowed for onstart in section %s",
+                        s.c_str(), sectionname.c_str());
+            }
+        }
+    }
+    if (mConfigFileParser.GetValues(sectionname, "onstop", vals)) {
+        stringList::iterator it;
+        for (it = vals.begin(); it != vals.end(); it++) {
+            string s = StringTools::ToUpper(*it);
+            Dsyslog("-%s- ", s.c_str());
+            if (s == "MAKEACTIVE") {
+                makeactive = true;
+            }
+            else if (s == "POWEROFF") {
+                poweroff = true;
+            }
+            else {
+                Esyslog("%s not allowed for onstop in section %s",
+                        s.c_str(), sectionname.c_str());
+            }
+        }
+    }
+
+    cCECDevInfo info((int)num-'0', menuname, stillpic, makeactive, poweron, poweroff);
     mCECDevMenuInfo.push_back(info);
     return true;
 }
@@ -195,6 +238,8 @@ time_t cPluginCecremote::WakeupTime(void)
 }
 
 void cPluginCecremote::StartPlayer(int cnt) {
+    cnt -= 1;
+    Dsyslog("StartPlayer %d", cnt);
     Isyslog("starting player: %s", mCECDevMenuInfo.at(cnt).mMenuName.c_str());
 
     cControl::Launch(new cCECControl(mCECDevMenuInfo.at(cnt), this));

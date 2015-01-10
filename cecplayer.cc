@@ -9,10 +9,11 @@
 
 using namespace std;
 
-cCECPlayer::cCECPlayer(const string &stillpic) :
+cCECPlayer::cCECPlayer(const cCECDevInfo &config) :
                 pStillBuf(NULL), mStillBufLen(0)
 {
-    mStillPic = stillpic;
+    mConfig = config;
+    mStillPic = config.mStillPic;
 }
 
 cCECPlayer::~cCECPlayer() {
@@ -87,7 +88,7 @@ void cCECPlayer::LoadStillPicture (const string &FileName)
 void cCECPlayer::Activate(bool On) {
     if (On) {
         LoadStillPicture(mStillPic);
-        //Play();
+
     }
     else {
         //Stop();
