@@ -12,81 +12,45 @@
 using namespace std;
 #include <cecloader.h>
 
-cCECRemote::cCECRemote(int loglevel):
-        cRemote("CEC"),
-        cThread("CEC receiver"),
-        mDevicesFound(0),
-        mCECAdapter(NULL)
+// Callback for CEC KeyPress
+int CecKeyPress(void *cbParam, const cec_keypress key)
 {
-    mCECLogLevel = loglevel;
-    Start();
-    Dsyslog("cCECRemote start");
+    cCECRemote *rem = (cCECRemote *)cbParam;
+
+    Dsyslog("key pressed %d (%d)", key.keycode, key.duration);
+    if ((key.keycode >= 0) && (key.keycode <= CEC_USER_CONTROL_CODE_MAX) &&
+        (key.duration == 0))
+    {
+        cCECCmd cmd(CEC_KEYRPRESS, (int)key.keycode);
+        rem->PushCmd(cmd);
+    }
+    return 0;
+}
+
+// Callback for CEC Command
+int CecCommand(void *cbParam, const cec_command command)
+{
+    cCECRemote *rem = (cCECRemote *)cbParam;
+    Dsyslog("CEC Command %d : %s", command.opcode, rem->mCECAdapter->ToString(command.opcode));
+    return 0;
 }
 
 
-cCECRemote::~cCECRemote()
+// Callback for CEC Alert
+int CecAlert(void *cbParam, const libcec_alert type, const libcec_parameter param)
 {
-    Cancel(3);
-    if (mCECAdapter != NULL) {
-        mCECAdapter->SetInactiveView();
-        mCECAdapter->Close();
-        UnloadLibCec(mCECAdapter);
-    }
-}
+    Dsyslog("CecAlert %d", type);
+    switch (type)
+    {
+    case CEC_ALERT_CONNECTION_LOST:
+        /* TODO */
+        Esyslog("Connection lost - trying to reconnect");
 
-void cCECRemote::Action(void)
-{
-    cCECCmd cmd;
-    while (Running()) {
-        cmd = WaitCmd();
-        if (cmd.mCmd != 0) {
-            Dsyslog ("Action %d Val %d Addr %d",
-                     cmd.mCmd, cmd.mVal, cmd.mAddress);
-        }
-        switch (cmd.mCmd)
-        {
-        case CEC_KEYRPRESS:
-            if (cmd.mVal >= 0 && cmd.mVal <= CEC_USER_CONTROL_CODE_MAX) {
-                const cKeyList &inputKeys = mKeyMap[cmd.mVal];
-                for (cKeyListIterator keys = inputKeys.begin();
-                     keys != inputKeys.end(); ++keys) {
-                    eKeys k = *keys;
-                    Put(k);
-                    Dsyslog ("   Put(%d)", k);
-                }
-            }
-            break;
-        case CEC_POWERON: // TODO
-            Dsyslog("Power on");
-            if (mCECAdapter->PowerOnDevices(cmd.mAddress) != 0) {
-                Esyslog("PowerOnDevice failed for %s", mCECAdapter->ToString(cmd.mAddress));
-            }
-            break;
-        case CEC_POWEROFF: // TODO
-               Dsyslog("Power off");
-               if (mCECAdapter->StandbyDevices(cmd.mAddress) != 0) {
-                   Esyslog("PowerOnDevice failed for %s", mCECAdapter->ToString(cmd.mAddress));
-               }
-               break;
-        case CEC_MAKEACTIVE:
-            Dsyslog ("Make active");
-            mCECAdapter->SetActiveSource();
-            break;
-        case CEC_MAKEINACTIVE:
-            Dsyslog ("Make inactive");
-            mCECAdapter->SetInactiveView();
-            break;
-        case CEC_VDRKEYPRESS:
-            Dsyslog ("Send Keypress %d", cmd.mVal);
-            break;
-        case CEC_TIMEOUT:
-            break;
-        default:
-            Esyslog("Unknown action %d Val %d", cmd.mCmd, cmd.mVal);
-            break;
-        }
-
+        break;
+    default:
+        break;
     }
+    return 0;
 }
 
 int CecLogMessage(void *cbParam, const cec_log_message message)
@@ -131,45 +95,146 @@ int CecLogMessage(void *cbParam, const cec_log_message message)
     return 0;
 }
 
+/*
+ * CEC remote
+ */
 
-int CecKeyPress(void *cbParam, const cec_keypress key)
+cCECRemote::cCECRemote(int loglevel):
+        cRemote("CEC"),
+        cThread("CEC receiver"),
+        mDevicesFound(0)
+
 {
-    cCECRemote *rem = (cCECRemote *)cbParam;
+    mCECAdapter = NULL;
+    mCECLogLevel = loglevel;
+    Start();
+    Dsyslog("cCECRemote start");
+}
 
-    Dsyslog("key pressed %d (%d)", key.keycode, key.duration);
-    if ((key.keycode >= 0) && (key.keycode <= CEC_USER_CONTROL_CODE_MAX) &&
-        (key.duration == 0))
-    {
-        cCECCmd cmd(CEC_KEYRPRESS, (int)key.keycode);
-        rem->PushCmd(cmd);
+
+cCECRemote::~cCECRemote()
+{
+    Cancel(3);
+    if (mCECAdapter != NULL) {
+        mCECAdapter->SetInactiveView();
+        mCECAdapter->Close();
+        UnloadLibCec(mCECAdapter);
     }
-    return 0;
 }
 
-int CecCommand(void *cbParam, const cec_command command)
+cKeyList &cCECRemote::CECtoVDRKey(cec_user_control_code code)
 {
-    Dsyslog("CEC Command %d", command.opcode);
-    return 0;
-}
-
-int CecAlert(void *cbParam, const libcec_alert type, const libcec_parameter param)
-{
-    Dsyslog("CecAlert %d", type);
-    switch (type)
-    {
-    case CEC_ALERT_CONNECTION_LOST:
-        /* TODO */
-        Esyslog("Connection lost - trying to reconnect");
-
-        break;
-    default:
-        break;
+    if ((code >= 0) && (code <= CEC_USER_CONTROL_CODE_MAX)) {
+        return mKeyMap[code];
     }
-    return 0;
+    return mKeyMap[CEC_USER_CONTROL_CODE_MAX+1]; // Empty list
 }
+
+cec_user_control_code cCECRemote::VDRtoCECKey(eKeys key)
+{
+    int i;
+    cKeyList inputKeys;
+
+    for (i = 0; i <= CEC_USER_CONTROL_CODE_MAX; i++)
+    {
+        inputKeys = CECtoVDRKey((cec_user_control_code)i);
+        for (cKeyListIterator keys = inputKeys.begin();
+             keys != inputKeys.end(); ++keys) {
+            eKeys k = *keys;
+            if (k == key) {
+                return (cec_user_control_code)i;
+            }
+        }
+    }
+    return CEC_USER_CONTROL_CODE_UNKNOWN;
+}
+
+bool cCECRemote::TextViewOn(cec_logical_address address)
+{
+    cec_command data;
+
+    cec_command::Format(data, mCECConfig.baseDevice, address, CEC_OPCODE_TEXT_VIEW_ON);
+    Dsyslog("Text View on : %02x %02x %02x", data.initiator, data.destination, data.opcode);
+    return mCECAdapter->Transmit(data);
+}
+
+void cCECRemote::Action(void)
+{
+    cCECCmd cmd;
+    cec_user_control_code ceckey;
+    eKeys k;
+
+    while (Running()) {
+        cmd = WaitCmd();
+        if (cmd.mCmd != CEC_TIMEOUT) {
+            Dsyslog ("Action %d Val %d Addr %d",
+                    cmd.mCmd, cmd.mVal, cmd.mAddress);
+        }
+        switch (cmd.mCmd)
+        {
+        case CEC_KEYRPRESS:
+            if ((cmd.mVal >= 0) && (cmd.mVal <= CEC_USER_CONTROL_CODE_MAX)) {
+                const cKeyList &inputKeys = mKeyMap[cmd.mVal];
+                cKeyListIterator ikeys;
+                for (ikeys = inputKeys.begin(); ikeys != inputKeys.end(); ++ikeys) {
+                    k = *ikeys;
+                    Put(k);
+                    Dsyslog ("   Put(%d)", k);
+                }
+            }
+            break;
+        case CEC_POWERON: // TODO
+            Dsyslog("Power on");
+            if (TextViewOn(cmd.mAddress) != 0) {
+                Esyslog("PowerOnDevice failed for %s",
+                        mCECAdapter->ToString(cmd.mAddress));
+            }
+            break;
+        case CEC_POWEROFF: // TODO
+            Dsyslog("Power off");
+            if (mCECAdapter->StandbyDevices(cmd.mAddress) != 0) {
+                Esyslog("PowerOnDevice failed for %s",
+                        mCECAdapter->ToString(cmd.mAddress));
+            }
+            break;
+        case CEC_MAKEACTIVE:
+            Dsyslog ("Make active");
+            mCECAdapter->SetActiveSource();
+            break;
+        case CEC_MAKEINACTIVE:
+            Dsyslog ("Make inactive");
+            mCECAdapter->SetInactiveView();
+            break;
+        case CEC_VDRKEYPRESS:
+            ceckey = VDRtoCECKey((eKeys)cmd.mVal);
+            Dsyslog ("Send Keypress VDR %d - > CEC 0x%02x", cmd.mVal, ceckey);
+            if (ceckey != CEC_USER_CONTROL_CODE_UNKNOWN) {
+                if (!mCECAdapter->SendKeypress(cmd.mAddress, ceckey, true)) {
+                    Esyslog("Keypress to %d %s failed",
+                            cmd.mAddress, mCECAdapter->ToString(cmd.mAddress));
+                    return;
+                }
+                cCondWait::SleepMs(50);
+                if (!mCECAdapter->SendKeyRelease(cmd.mAddress, true)) {
+                    Esyslog("SendKeyRelease to %d %s failed",
+                            cmd.mAddress, mCECAdapter->ToString(cmd.mAddress));
+                }
+            }
+            break;
+        case CEC_TIMEOUT:
+            break;
+        default:
+            Esyslog("Unknown action %d Val %d", cmd.mCmd, cmd.mVal);
+            break;
+        }
+    }
+}
+
+
 
 bool cCECRemote::Initialize(void)
 {
+    Dsyslog("cCECRemote::Initialize");
     // Initialize Callbacks
     mCECCallbacks.Clear();
     mCECCallbacks.CBCecLogMessage  = &::CecLogMessage;
@@ -181,7 +246,7 @@ bool cCECRemote::Initialize(void)
     mCECConfig.Clear();
     strncpy(mCECConfig.strDeviceName, "VDR", sizeof(mCECConfig.strDeviceName));
     mCECConfig.clientVersion       = CEC_CLIENT_VERSION_CURRENT;
-    mCECConfig.bActivateSource     = CEC_FALSE;
+    mCECConfig.bActivateSource     = CEC_TRUE;
     mCECConfig.deviceTypes.Add(CEC_DEVICE_TYPE_RECORDING_DEVICE);
     mCECConfig.callbackParam = this;
     mCECConfig.callbacks = &mCECCallbacks;
@@ -235,7 +300,8 @@ bool cCECRemote::Initialize(void)
         }
     }
 
-    mKeyMap.resize(CEC_USER_CONTROL_CODE_MAX + 1, {});
+    Dsyslog("Load keymap");
+    mKeyMap.resize(CEC_USER_CONTROL_CODE_MAX + 2, {});
     mKeyMap[CEC_USER_CONTROL_CODE_SELECT                      ] = { kOk };
     mKeyMap[CEC_USER_CONTROL_CODE_UP                          ] = { kUp };
     mKeyMap[CEC_USER_CONTROL_CODE_DOWN                        ] = { kDown };
@@ -316,12 +382,16 @@ bool cCECRemote::Initialize(void)
     mKeyMap[CEC_USER_CONTROL_CODE_DATA                        ] = { };
     mKeyMap[CEC_USER_CONTROL_CODE_AN_RETURN                   ] = { kBack };
     mKeyMap[CEC_USER_CONTROL_CODE_AN_CHANNELS_LIST            ] = { };
+    // Empty list
+    mKeyMap[CEC_USER_CONTROL_CODE_MAX+1                       ] = { };
 
+    Dsyslog("END cCECRemote::Initialize");
     return false;
 }
 
 void cCECRemote::PushCmd(const cCECCmd &cmd)
 {
+    Dsyslog("cCECRemote::PushCmd %d", cmd.mCmd);
     cMutexLock lock(&mQueueMutex);
     mQueue.push(cmd);
     mQueueWait.Signal();

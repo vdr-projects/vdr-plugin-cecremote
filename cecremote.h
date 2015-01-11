@@ -68,10 +68,10 @@ public:
     bool Initialize(void);
     void PushCmd(const cCECCmd &cmd);
     int getCECLogLevel() {return mCECLogLevel;}
+    ICECAdapter            *mCECAdapter;
 private:
     int                    mCECLogLevel;
     uint8_t                mDevicesFound;
-    ICECAdapter            *mCECAdapter;
     libcec_configuration   mCECConfig;
     ICECCallbacks          mCECCallbacks;
     cec_adapter_descriptor mCECAdapterDescription[MAX_CEC_ADAPTERS];
@@ -83,7 +83,9 @@ private:
     void Action(void);
 
     cCECCmd WaitCmd();
-
+    cKeyList &CECtoVDRKey(cec_user_control_code code);
+    cec_user_control_code VDRtoCECKey(eKeys key);
+    bool TextViewOn(cec_logical_address address);
 };
 
 #endif /* CECREMOTE_H_ */

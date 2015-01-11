@@ -1,10 +1,10 @@
 This is a "plugin" for the Video Disk Recorder (VDR).
 
-Written by:                  Your Name <email@host.dom>
+Written by:                  Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
 
 Project's homepage:          URL
 
-Latest version available at: URL
+Latest version available at: http://hg.uli-eckhardt.de/
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -13,3 +13,51 @@ the Free Software Foundation; either version 2 of the License, or
 See the file COPYING for more information.
 
 Description:
+
+Plugin to receive and send commands via CEC.
+
+Installation:
+
+First get connected device via the command :
+     echo "scan" | cec-client -s -d 1 
+     
+The output should look like:
+opening a connection to the CEC adapter...
+requesting CEC bus information ...
+CEC bus information
+===================
+device #0: TV
+address:       0.0.0.0
+active source: no
+vendor:        Panasonic
+osd string:    TV
+CEC version:   unknown
+power status:  on
+language:      ???
+
+
+device #4: Playback 1
+address:       f.f.f.f
+active source: no
+vendor:        Samsung
+osd string:    BD Player
+CEC version:   1.4
+power status:  standby
+language:      ???
+
+
+device #8: Playback 2
+address:       1.0.0.0
+active source: no
+vendor:        Panasonic
+osd string:    CECTester
+CEC version:   1.4
+power status:  on
+language:      eng
+
+In the plugin config directory create the file cecremote.conf (an example can
+be found in the contrib directory) with an device entry for each device which
+should be handled by this plugin. In this example device#8 (osd string=CECTester)
+must be ignored.
+
+

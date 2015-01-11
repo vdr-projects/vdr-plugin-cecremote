@@ -22,9 +22,10 @@ static const char *MAINMENUENTRY  = "CECremote";
 using namespace std;
 
 cPluginCecremote::cPluginCecremote(void) :
-        mCfgDir("cecremote"), mCfgFile("cecremote.conf"), mCECRemote(NULL)
+        mCfgDir("cecremote"), mCfgFile("cecremote.conf")
 {
     mCECLogLevel = CEC_LOG_ERROR | CEC_LOG_WARNING | CEC_LOG_DEBUG;
+    mCECRemote = NULL;
 }
 
 cPluginCecremote::~cPluginCecremote()
