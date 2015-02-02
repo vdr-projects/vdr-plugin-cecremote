@@ -230,8 +230,6 @@ void cCECRemote::Action(void)
     }
 }
 
-
-
 bool cCECRemote::Initialize(void)
 {
     Dsyslog("cCECRemote::Initialize");

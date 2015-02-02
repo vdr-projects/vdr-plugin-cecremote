@@ -16,318 +16,306 @@
 #include "stringtools.h"
 
 using namespace std;
+using namespace xercesc;
 
-string cCECConfigFileParser::mWhiteSpace = " \t\n";
-
-void cCECConfigFileParser::AddKey (Key &kl, const string &key, const string &val)
+cCECConfigFileParser::cCECConfigFileParser()
 {
-    Key::iterator iter;
-    stringList vl;
-    iter = kl.find(key);
-    if (iter != kl.end()) {
-        vl = iter->second;
+    try {
+        XMLPlatformUtils::Initialize();
+    } catch (const XMLException& toCatch) {
+        char* message = XMLString::transcode(toCatch.getMessage());
+        cout << "Error during initialization! :\n" << message << "\n";
+        XMLString::release(&message);
+        exit(-1);
     }
-
-    vl.push_back(val);
-    kl[key] = vl;
-
+    mWildcard = XMLString::transcode("*");
+    mGlobal = XMLString::transcode("global");
+    mMenu = XMLString::transcode("menu");
+    mConfig = XMLString::transcode("config");
+    mCecDebug = XMLString::transcode("cecdebug");
+    mOnStart = XMLString::transcode("onstart");
+    mOnStop = XMLString::transcode("onstop");
+    mPowerOn = XMLString::transcode("poweron");
+    mPowerOff = XMLString::transcode("poweroff");
+    mExec = XMLString::transcode("exec");
+    mName = XMLString::transcode("name");
+    mStillPic = XMLString::transcode("stillpic");
 }
 
-void cCECConfigFileParser::AddSection (string sectionname,
-                                         string key,
-                                         const string val)
+cCECConfigFileParser::~cCECConfigFileParser()
 {
-    Section::iterator iter;
-    Key kl;
-    sectionname = StringTools::ToUpper(sectionname);
-    key = StringTools::ToUpper(key);
-    iter = mSections.find(sectionname);
-    if (iter != mSections.end()) {
-        kl = iter->second;
-    }
-
-    AddKey(kl, key, val);
-    mSections[sectionname] = kl;
+    XMLString::release(&mWildcard);
+    XMLString::release(&mGlobal);
+    XMLString::release(&mMenu);
+    XMLString::release(&mConfig);
+    XMLString::release(&mCecDebug);
+    XMLString::release(&mOnStart);
+    XMLString::release(&mOnStop);
+    XMLString::release(&mPowerOn);
+    XMLString::release(&mPowerOff);
+    XMLString::release(&mExec);
+    XMLString::release(&mName);
+    XMLString::release(&mStillPic);
 }
 
-bool cCECConfigFileParser::isSection (const string &token, string &section)
+void cCECConfigFileParser::parseList(const DOMNodeList *nodelist,
+                                     cCECCommandList &cmdlist)
 {
-    size_t last = token.length()-1;
-    if ((token.at(0) == '[') && (token.at(last) == ']')) {
-        section = token.substr (1, last-1);
-        return true;
-    }
-    return false;
-}
+    cCECCommand cmd;
+    const XMLSize_t nodeCount = nodelist->getLength();
 
-stringQueue cCECConfigFileParser::TokenizeLine (const string line)
-{
-    stringQueue q;
-    string newstr;
-    size_t i;
-    char c;
-    bool apo_active = false;
-
-    for (i = 0; i < line.size(); i++ )
+    for(XMLSize_t i = 0; i < nodeCount; ++i)
     {
-        c = line.at(i);
-        if (isspace(c) && (!apo_active)) {
-            if (!newstr.empty()) {
-                q.push(newstr);
-                newstr.clear();
+        DOMNode* currentNode = nodelist->item(i);
+
+        if (currentNode->getNodeType() == DOMNode::ELEMENT_NODE)  // is element
+        {
+            char *str = XMLString::transcode(currentNode->getNodeName());
+            Dsyslog("     OnXXX %s\n", str);
+            XMLString::release(&str);
+
+            // Found node which is an Element. Re-cast node as element
+            DOMElement* curElem =
+                    dynamic_cast<xercesc::DOMElement*>(currentNode);
+
+            DOMNodeList *li = curElem->getChildNodes();
+            if (li->getLength() > 1) {
+                str = XMLString::transcode(currentNode->getNodeName());
+                string s = "Too much arguments for ";
+                s += str;
+                XMLString::release(&str);
+                throw cCECConfigException(0, s);
             }
-        }
-        else if (c == '"') {
-            if (apo_active) {
-                q.push(newstr);
-                newstr.clear();
-                apo_active = false;
+            if (XMLString::compareIString(curElem->getNodeName(),
+                                            mPowerOn) == 0) {
+                cmd.mCommandType = cCECCommand::POWER_ON;
+                cmd.mCECAddress = XMLString::parseInt(curElem->getTextContent());
+                cmd.mExec = "";
+                Dsyslog("         POWERON %d\n", cmd.mCECAddress);
+                cmdlist.push_back(cmd);
             }
-            else
-            {
-                apo_active = true;
+            else if (XMLString::compareIString(curElem->getNodeName(),
+                                               mPowerOff) == 0) {
+                cmd.mCommandType = cCECCommand::POWER_OFF;
+                cmd.mCECAddress = XMLString::parseInt(
+                        curElem->getTextContent());
+                cmd.mExec = "";
+                Dsyslog("         POWEROFF %d\n", cmd.mCECAddress);
+                cmdlist.push_back(cmd);
+            } else if (XMLString::compareIString(curElem->getNodeName(),
+                                                 mExec) == 0) {
+                str = XMLString::transcode(curElem->getTextContent());
+                cmd.mCommandType = cCECCommand::EXEC;
+                cmd.mCECAddress = 0;
+                cmd.mExec = str;
+                Dsyslog("         EXEC %s\n", cmd.mExec.c_str());
+                cmdlist.push_back(cmd);
+                XMLString::release(&str);
             }
-        }
-        else {
-            newstr += c;
+            else {
+                str = XMLString::transcode(currentNode->getNodeName());
+                string s = "Invalid command ";
+                s += str;
+                XMLString::release(&str);
+                throw cCECConfigException(0, s);
+            }
         }
     }
-    if (!newstr.empty()) {
-        q.push(newstr);
-        newstr.clear();
-    }
-    return q;
 }
 
-bool cCECConfigFileParser::ParseLine (const string line)
+void cCECConfigFileParser::parseMenu(const DOMNodeList *list, DOMElement *menuElem)
 {
-    string token;
-    string key;
-    bool keysep = false;
-    stringQueue q = TokenizeLine (line);
+    cCECMenu menu;
+    char *str = XMLString::transcode(menuElem->getAttribute(mName));
+    Dsyslog ("  Menu %s\n", str);
+    menu.mMenuTitle = str;
+    XMLString::release(&str);
+    if (menu.mMenuTitle.empty()) {
+        string s = "Missing menu name";
+        throw cCECConfigException(0, s);
+    }
 
-    while (!q.empty()) {
-        token = q.front();
-        q.pop();
-        /* Comment found ? */
-        if (isComment(token)) {
-            return true;
+    const  XMLSize_t nodeCount = list->getLength();
+
+    for(XMLSize_t i = 0; i < nodeCount; ++i)
+    {
+        DOMNode* currentNode = list->item(i);
+
+        if (currentNode->getNodeType() == DOMNode::ELEMENT_NODE)  // is element
+        {
+            DOMElement* curElem =
+                                dynamic_cast<xercesc::DOMElement*>(currentNode);
+            DOMNodeList *li = curElem->getChildNodes();
+
+            if (XMLString::compareIString(curElem->getNodeName(),
+                    mStillPic) == 0) {
+                if (li->getLength() > 1) {
+                    string s = "Too much arguments";
+                    s += std::to_string( li->getLength());
+                    throw cCECConfigException(0, s);
+                }
+                char *str = XMLString::transcode(curElem->getTextContent());
+                menu.mStillPic = str;
+                XMLString::release(&str);
+
+                Dsyslog("StillPic = %s\n", menu.mStillPic.c_str());
+            }
+            else if (XMLString::compareIString(curElem->getNodeName(),
+                    mOnStart) == 0) {
+                parseList(li, menu.onStart);
+            }
+            else if (XMLString::compareIString(curElem->getNodeName(),
+                    mOnStop) == 0) {
+                parseList(li, menu.onStop);
+            }
+            else {
+                char *str = XMLString::transcode(curElem->getNodeName());
+                string s = "Invalid Command ";
+                s += str;
+                XMLString::release(&str);
+                throw cCECConfigException(0, s);
+            }
         }
-        /* Is a section ? */
-        if (isSection(token, mCurrSection)) {
-            if (!q.empty()) {
-                token = q.front();
-                q.pop();
+    }
+    mMenuList.push_back(menu);
+}
 
-                if (isComment(token)) {
-                    return true;
-                } else {
-                    Esyslog( "Syntax error on section: %s", line.c_str());
+void cCECConfigFileParser::parseGlobal(const DOMNodeList *list)
+{
+    const  XMLSize_t nodeCount = list->getLength();
+
+    for(XMLSize_t i = 0; i < nodeCount; ++i)
+    {
+        DOMNode* currentNode = list->item(i);
+
+        if (currentNode->getNodeType() == DOMNode::ELEMENT_NODE)  // is element
+        {
+            char *str = XMLString::transcode(currentNode->getNodeName());
+            Dsyslog("   Global Option %s\n", str);
+            XMLString::release(&str);
+
+            // Found node which is an Element. Re-cast node as element
+            DOMElement* curElem =
+                    dynamic_cast<xercesc::DOMElement*>(currentNode);
+
+            DOMNodeList *li = curElem->getChildNodes();
+
+            if (XMLString::compareIString(curElem->getNodeName(),
+                                          mCecDebug) == 0) {
+                if (li->getLength() > 1) {
+                    string s = "Too much arguments";
+                    s += std::to_string(li->getLength());
+                    throw cCECConfigException(0, s);
+                }
+                mGlobalOptions.cec_debug =
+                                XMLString::parseInt(curElem->getTextContent());
+                Dsyslog("CECDebug = %d\n", mGlobalOptions.cec_debug);
+            }
+            else if (XMLString::compareIString(curElem->getNodeName(),
+                                               mOnStart) == 0) {
+                parseList(li, mGlobalOptions.onStart);
+            }
+            else if (XMLString::compareIString(curElem->getNodeName(),
+                                               mOnStop) == 0) {
+                parseList(li, mGlobalOptions.onStop);
+            }
+            else {
+                char *str = XMLString::transcode(curElem->getNodeName());
+                string s = "Invalid Command ";
+                s += str;
+                XMLString::release(&str);
+                throw cCECConfigException(0, s);
+            }
+        }
+    }
+}
+
+bool cCECConfigFileParser::Parse(const string &filename) {
+    bool ret = true;
+
+    XercesDOMParser *parser = new XercesDOMParser;
+    parser->setValidationScheme(XercesDOMParser::Val_Never);
+    parser->setDoNamespaces(false);
+    parser->setDoSchema(false);
+    parser->setLoadExternalDTD(false);
+    ErrorHandler* errHandler = (ErrorHandler*)new HandlerBase();
+    parser->setErrorHandler(errHandler);
+
+    const char* xmlFile = filename.c_str();
+
+    try {
+        parser->parse(xmlFile);
+
+        DOMDocument* xmlDoc = parser->getDocument();
+        // Get the top-level element: NAme is "root". No attributes for "root"
+        DOMElement* elementRoot = xmlDoc->getDocumentElement();
+        if (elementRoot == NULL) {
+            Esyslog("Element Root NULL\n");
+            return false;
+        }
+
+        if (XMLString::compareIString(elementRoot->getTagName(), mConfig) != 0) {
+            Esyslog("Not a config file\n");
+            return false;
+        }
+
+        const DOMNodeList *list = elementRoot->getChildNodes();
+        const XMLSize_t nodeCount = list->getLength();
+
+        // For all nodes, children of "root" in the XML tree.
+
+        for (XMLSize_t i = 0; i < nodeCount; ++i) {
+            DOMNode* currentNode = list->item(i);
+
+            if (currentNode->getNodeType() == DOMNode::ELEMENT_NODE)  // is element
+            {
+                char *str = XMLString::transcode(currentNode->getNodeName());
+                Dsyslog("Node Name %s\n", str);
+                XMLString::release(&str);
+
+                // Found node which is an Element. Re-cast node as element
+                DOMElement* curElem =
+                        dynamic_cast<xercesc::DOMElement*>(currentNode);
+                DOMNodeList *li = curElem->getChildNodes();
+
+                if (XMLString::compareIString(currentNode->getNodeName(), mGlobal) == 0) {
+                    parseGlobal(li);
+                }
+                else if (XMLString::compareIString(currentNode->getNodeName(), mMenu) == 0) {
+                    parseMenu(li, curElem);
+                }
+                else {
+                    char *str = XMLString::transcode(currentNode->getNodeName());
+                    Esyslog("Invalid Command %s", str);
+                    XMLString::release(&str);
                     return false;
                 }
             }
-            return true;
         }
-        /* Read key */
-        if ((!keysep) && (token != "=")) {
-            if (key.empty()) {
-                key = token;
-            }
-            else {
-                Esyslog("Missing =: %s", line.c_str());
-                return false;
-            }
-        }
-        else if (token == "=") {
-            if (keysep) {
-                Esyslog("Duplicate = : %s", line.c_str());
-                return false;
-            }
-            keysep = true;
-        }
-        /* Read Values of key */
-        else {
-            AddSection (mCurrSection, key, token);
-        }
-    }
-    return true;
-}
-
-// Parse the config file
-bool cCECConfigFileParser::Parse(const string fname)
-{
-    ifstream file;
-    string line;
-
-    mCurrSection.clear();
-    file.open(fname.c_str());
-    if (!file.is_open()) {
-        string err = "Can not open file " + fname;
-        Esyslog(err.c_str());
-        return false;
+    } catch (xercesc::XMLException &e) {
+        char* message = xercesc::XMLString::transcode(e.getMessage());
+        Esyslog("Error parsing file %s: %s", xmlFile, message);
+        XMLString::release(&message);
+        ret = false;
+    } catch (const DOMException& toCatch) {
+        char* message = XMLString::transcode(toCatch.msg);
+        Esyslog("DOMException message is: %s", message);
+        XMLString::release(&message);
+        ret = false;
+    } catch (const SAXParseException &e) {
+        char* message = XMLString::transcode(e.getMessage());
+        Esyslog("SAXParseException: %d %s\n, ", e.getLineNumber(), message);
+        XMLString::release(&message);
+        ret = false;
+    } catch (const cCECConfigException &e) {
+        Esyslog ("%s\n", e.what());
+        ret = false;
+    } catch (const exception& e) {
+        Esyslog ("Unexpected Exception %s", e.what());
+        ret = false;
     }
 
-    while (getline (file, line)) {
-        if (!ParseLine (line)) {
-            return false;
-        }
-    }
-    if (!file.eof()) {
-        string err = "Read error on file " + fname;
-        Esyslog(err.c_str());
-        return false;
-    }
-    return true;
-}
-
-// Find a key in a given section and return the values as list.
-// Returns true if the key was found.
-bool cCECConfigFileParser::GetValues (const string sectionname,
-                                       const string key,
-                                       stringList &values)
-{
-    Section::iterator seciter;
-    Key::iterator keyiter;
-    Key kl;
-
-    string section = StringTools::ToUpper(sectionname);
-    string k = StringTools::ToUpper(key);
-    values.clear();
-    seciter = mSections.find(section);
-    if (seciter == mSections.end()) {
-        string err = "Can not find section " + section;
-        Esyslog(err.c_str());
-        return false;
-    }
-    kl = seciter->second;
-    keyiter = kl.find(k);
-    if (keyiter == kl.end()) {
-        Esyslog("Can not find key %s\n",k.c_str());
-        return false;
-    }
-    values = keyiter->second;
-    return true;
-}
-
-// Return all keys in a given section and return the values as list.
-// Returns true if the section was found.
-bool cCECConfigFileParser::GetKeys (const string sectionname,
-                                     stringList &values)
-{
-    Section::iterator seciter;
-    Key::iterator keyiter;
-    Key kl;
-
-    string section = StringTools::ToUpper(sectionname);
-
-    values.clear();
-    seciter = mSections.find(section);
-    if (seciter == mSections.end()) {
-        string err = "Can not find section " + section;
-        Esyslog(err.c_str());
-        return false;
-    }
-    values.clear();
-    kl = seciter->second;
-    for (keyiter = kl.begin(); keyiter != kl.end(); keyiter++) {
-        values.push_back(keyiter->first);
-    }
-
-    return true;
-}
-// Return a a key in a given section as single value (not split into a key list)
-
-bool cCECConfigFileParser::GetSingleValue (const string sectionname,
-                                             const string key,
-                                             string &value)
-{
-    stringList vals;
-
-    string plugin;
-    if (!GetValues(sectionname, key, vals)) {
-        return false;
-    }
-    if (vals.size() != 1) {
-        string err = "More than one argument to " + sectionname +  " key " + key;
-        Esyslog(err.c_str());
-        return false;
-    }
-    value = vals.front();
-    return true;
-}
-
-// Get first section of a config file, returning the section name
-bool cCECConfigFileParser::GetFirstSection (Section::iterator &iter,
-                                              string &sectionname)
-{
-    if (mSections.empty()) {
-        return false;
-    }
-    iter = mSections.begin();
-    sectionname = iter->first;
-    return true;
-}
-
-// Get next section, returning the section name
-// Returns false if no next section exist
-bool cCECConfigFileParser::GetNextSection (Section::iterator &iter,
-                                             string &sectionname)
-{
-    iter++;
-    if (iter == mSections.end()) {
-        return false;
-    }
-    sectionname = iter->first;
-    return true;
-}
-
-// Helper function to validate that a section contains only required and
-// optional keywords and that all required keywords are present.
-
-bool cCECConfigFileParser::CheckSection (const string sectionname,
-                                      const stringSet required,
-                                      const stringSet optional)
-{
-    stringList::iterator it;
-    stringList keys;
-
-    map <string,bool> reqmap;
-    map <string,bool>::iterator reqit;
-
-// Check that required keywords are available
-    stringSet::iterator req;
-    for (req = required.begin(); req != required.end(); req++) {
-        string s = *req;
-        reqmap[s] = false;
-    }
-    // Check for required and optional keywords.
-    if (!GetKeys(sectionname, keys)) {
-        Esyslog( "Invalid section %s", sectionname.c_str());
-        return false;
-    }
-
-    for (it = keys.begin(); it != keys.end(); it++) {
-        string s = *it;
-        bool inreq = (reqmap.find(s) != reqmap.end());
-        bool inopt = (optional.find(s) != optional.end());
-        if ((!inreq) && (!inopt)) {
-            Esyslog( "Invalid keyword %s in section %s",
-                            s.c_str(),
-                            sectionname.c_str());
-            return false;
-        }
-        if (inreq) {
-            reqmap[s] = true;
-        }
-    }
-
-    for (reqit = reqmap.begin(); reqit != reqmap.end(); reqit++) {
-        if (!reqit->second) {
-             Esyslog( "Required keyword %s missing in section %s",
-                            reqit->first.c_str(),
-                            sectionname.c_str());
-            return false;
-        }
-    }
-    return true;
+    delete parser;
+    delete errHandler;
+    return ret;
 }

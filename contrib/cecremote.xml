@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+	<global>
+		<cecdebug>7</cecdebug>
+		<onstart>
+			<poweron>0</poweron>
+		</onstart>
+	</global>
+	
+	<menu name="tv">
+		<onstart>
+			<poweron>0</poweron>
+		</onstart>
+		<stillpic>/video/conf/plugins/cecremote/blueray.mpg</stillpic>
+		<onstop>
+			<poweroff>0</poweroff>
+		</onstop>
+	</menu>
+	
+	<menu name="blueray">
+		<onstart>
+			<poweron>0</poweron>
+			<poweron>4</poweron>
+		</onstart>
+		<stillpic>/video/conf/plugins/cecremote/blueray.mpg</stillpic>
+		<onstop>
+			<poweroff>0</poweroff>
+		</onstop>
+	</menu>
+	
+</config>

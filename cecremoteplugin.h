@@ -62,8 +62,7 @@ protected:
         const std::string cf = GetConfigDir() + mCfgFile;
         return cf;
     }
-    bool AddGlobalOptions (const std::string &sectionname);
-    bool AddMenu (const std::string &sectionname);
+
 
 public:
     cPluginCecremote(void);

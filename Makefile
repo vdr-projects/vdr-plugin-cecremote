@@ -25,14 +25,25 @@ TMPDIR ?= /tmp
 
 ### The compiler options:
 
+# Check for libcec
+
 ifneq (exists, $(shell pkg-config libcec && echo exists))
   $(warning ******************************************************************)
   $(warning 'libcec' not detected!)
   $(error ******************************************************************)
 endif
 
+# Check for xerces-c
+
+ifneq (exists, $(shell pkg-config xerces-c && echo exists))
+  $(warning ******************************************************************)
+  $(warning 'xerces-c' not detected!)
+  $(error ******************************************************************)
+endif
+
 export CFLAGS   = $(call PKGCFG,cflags)
 export CXXFLAGS = $(call PKGCFG,cxxflags) -std=gnu++11
+
 
 ### The version number of VDR's plugin API:
 
@@ -57,9 +68,15 @@ INCLUDES +=
 
 DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
 
+# Flags for libcec
 LIBS += $(shell pkg-config --libs libcec)
 CFLAGS += $(shell pkg-config --cflags libcec)
 CXXFLAGS += $(shell pkg-config --cflags libcec)
+
+# Flags for xerces xml parser
+LIBS += $(shell pkg-config --libs xerces-c)
+CFLAGS += $(shell pkg-config --cflags xerces-c)
+CXXFLAGS += $(shell pkg-config --cflags xerces-c)
 
 ### The object files (add further files here):
 

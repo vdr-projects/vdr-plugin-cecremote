@@ -22,7 +22,7 @@ static const char *MAINMENUENTRY  = "CECremote";
 using namespace std;
 
 cPluginCecremote::cPluginCecremote(void) :
-        mCfgDir("cecremote"), mCfgFile("cecremote.conf")
+        mCfgDir("cecremote"), mCfgFile("cecremote.xml")
 {
     mCECLogLevel = CEC_LOG_ERROR | CEC_LOG_WARNING | CEC_LOG_DEBUG;
     mCECRemote = NULL;
@@ -88,124 +88,15 @@ bool cPluginCecremote::Initialize(void)
     return true;
 }
 
-// Read global options for the plugin
-bool cPluginCecremote::AddGlobalOptions (const string &sectionname)
-{
-    stringList vals;
-    stringList::iterator it;
-    string cecdebug;
-
-    if (sectionname != "GLOBAL") {
-        return false;
-    }
-
-    if (mConfigFileParser.GetSingleValue(sectionname, "CEC_DEBUG", cecdebug)) {
-        Isyslog("CEC_Debug %s", cecdebug.c_str());
-        mCECLogLevel = atoi(cecdebug.c_str());
-        if ((mCECLogLevel < 0) || (mCECLogLevel > CEC_LOG_ALL)) {
-            Esyslog("CEC_Debug out of range");
-        }
-    }
-
-    return true;
-}
-
-bool cPluginCecremote::AddMenu(const string &sectionname)
-{
-    string menuname;
-    string stillpic;
-    stringList vals;
-    string dev = "DEVICE#";
-    char num;
-    bool makeactive = false;
-    bool poweron = false;
-    bool poweroff = false;
-
-    if (sectionname.compare(0,dev.length(), dev) != 0) {
-        return false;
-    }
-    if (sectionname.length() > dev.length()+1) {
-        Esyslog("Invalid device section name %s", sectionname.c_str());
-        return false;
-    }
-    num = sectionname[dev.length()];
-    if (!mConfigFileParser.GetSingleValue(sectionname, "name", menuname)) {
-        Esyslog("Missing name in device section %s", sectionname.c_str());
-        return false;
-    }
-    Dsyslog("Menu#%c: %s", num, menuname.c_str());
-    if (!mConfigFileParser.GetSingleValue(sectionname, "stillpic", stillpic)) {
-        Esyslog("Missing stillpic in device section %s", sectionname.c_str());
-        return false;
-    }
-
-    if (mConfigFileParser.GetValues(sectionname, "onstart", vals)) {
-        stringList::iterator it;
-        for (it = vals.begin(); it != vals.end(); it++) {
-            string s = StringTools::ToUpper(*it);
-            Dsyslog("+%s+ ", s.c_str());
-            if (s == "POWERON") {
-                poweron = true;
-            }
-            else {
-                Esyslog("%s not allowed for onstart in section %s",
-                        s.c_str(), sectionname.c_str());
-            }
-        }
-    }
-    if (mConfigFileParser.GetValues(sectionname, "onstop", vals)) {
-        stringList::iterator it;
-        for (it = vals.begin(); it != vals.end(); it++) {
-            string s = StringTools::ToUpper(*it);
-            Dsyslog("-%s- ", s.c_str());
-            if (s == "MAKEACTIVE") {
-                makeactive = true;
-            }
-            else if (s == "POWEROFF") {
-                poweroff = true;
-            }
-            else {
-                Esyslog("%s not allowed for onstop in section %s",
-                        s.c_str(), sectionname.c_str());
-            }
-        }
-    }
-
-    cCECDevInfo info((int)num-'0', menuname, stillpic, makeactive, poweron, poweroff);
-    mCECDevMenuInfo.push_back(info);
-    return true;
-}
 
 bool cPluginCecremote::Start(void)
 {
-    Section::iterator iter;
-    string sectionname;
-
     string file = GetConfigFile();
     if (!mConfigFileParser.Parse(file)) {
         Esyslog("Config file %s not found", file.c_str());
         return false;
     }
-
-    if (!mConfigFileParser.GetFirstSection(iter, sectionname)) {
-        Esyslog("Empty config file %s", file.c_str());
-        return false;
-    }
-    Dsyslog("First Section:%s ", sectionname.c_str());
-    if (!AddGlobalOptions(sectionname)) {
-        if (!AddMenu(sectionname)) {
-            return false;
-        }
-    }
-
-    while (mConfigFileParser.GetNextSection(iter, sectionname)) {
-        Dsyslog("Section:%s ", sectionname.c_str());
-        if (!AddGlobalOptions(sectionname)) {
-            if (!AddMenu(sectionname)) {
-                return false;
-            }
-        }
-    }
+/* TODO */
     mCECRemote = new cCECRemote(mCECLogLevel);
     return true;
 }
