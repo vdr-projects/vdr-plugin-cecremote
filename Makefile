@@ -41,8 +41,8 @@ ifneq (exists, $(shell pkg-config xerces-c && echo exists))
   $(error ******************************************************************)
 endif
 
-export CFLAGS   = $(call PKGCFG,cflags)
-export CXXFLAGS = $(call PKGCFG,cxxflags) -std=gnu++11
+CFLAGS   = $(call PKGCFG,cflags)
+CXXFLAGS = $(call PKGCFG,cxxflags) -std=gnu++11
 
 
 ### The version number of VDR's plugin API:
@@ -130,7 +130,7 @@ install-i18n: $(I18Nmsgs)
 ### Targets:
 
 $(SOFILE): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -shared $(OBJS) -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LIBS) -shared $(OBJS) -o $@
 
 install-lib: $(SOFILE)
 	install -D $^ $(DESTDIR)$(LIBDIR)/$^.$(APIVERSION)

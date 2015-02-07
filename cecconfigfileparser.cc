@@ -1,10 +1,6 @@
 /*
  * configfileparser.cc: Class for parsing a configuration file.
  *
- * The config file has the following syntax:
- * [SECTION NAME]
- * <KEY> = <VALUE> <VALUE> <VALUE>
- *
  * Copyright (C) 2014 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
  *
  * This code is distributed under the terms and conditions of the
@@ -40,6 +36,7 @@ cCECConfigFileParser::cCECConfigFileParser()
     mExec = XMLString::transcode("exec");
     mName = XMLString::transcode("name");
     mStillPic = XMLString::transcode("stillpic");
+    mAddress = XMLString::transcode("address");
 }
 
 cCECConfigFileParser::~cCECConfigFileParser()
@@ -56,12 +53,13 @@ cCECConfigFileParser::~cCECConfigFileParser()
     XMLString::release(&mExec);
     XMLString::release(&mName);
     XMLString::release(&mStillPic);
+    XMLString::release(&mAddress);
 }
 
 void cCECConfigFileParser::parseList(const DOMNodeList *nodelist,
-                                     cCECCommandList &cmdlist)
+                                     cCmdQueue &cmdlist)
 {
-    cCECCommand cmd;
+    cCECCmd cmd;
     const XMLSize_t nodeCount = nodelist->getLength();
 
     for(XMLSize_t i = 0; i < nodeCount; ++i)
@@ -88,25 +86,26 @@ void cCECConfigFileParser::parseList(const DOMNodeList *nodelist,
             }
             if (XMLString::compareIString(curElem->getNodeName(),
                                             mPowerOn) == 0) {
-                cmd.mCommandType = cCECCommand::POWER_ON;
-                cmd.mCECAddress = XMLString::parseInt(curElem->getTextContent());
+                cmd.mCmd = CEC_POWERON;
+                cmd.mAddress = (cec_logical_address)
+                                XMLString::parseInt(curElem->getTextContent());
                 cmd.mExec = "";
-                Dsyslog("         POWERON %d\n", cmd.mCECAddress);
+                Dsyslog("         POWERON %d\n", cmd.mAddress);
                 cmdlist.push_back(cmd);
             }
             else if (XMLString::compareIString(curElem->getNodeName(),
                                                mPowerOff) == 0) {
-                cmd.mCommandType = cCECCommand::POWER_OFF;
-                cmd.mCECAddress = XMLString::parseInt(
-                        curElem->getTextContent());
+                cmd.mCmd = CEC_POWEROFF;
+                cmd.mAddress = (cec_logical_address)
+                                XMLString::parseInt(curElem->getTextContent());
                 cmd.mExec = "";
-                Dsyslog("         POWEROFF %d\n", cmd.mCECAddress);
+                Dsyslog("         POWEROFF %d\n", cmd.mAddress);
                 cmdlist.push_back(cmd);
             } else if (XMLString::compareIString(curElem->getNodeName(),
                                                  mExec) == 0) {
                 str = XMLString::transcode(curElem->getTextContent());
-                cmd.mCommandType = cCECCommand::EXEC;
-                cmd.mCECAddress = 0;
+                cmd.mCmd = CEC_EXECSHELL;
+                cmd.mAddress = CECDEVICE_UNKNOWN;
                 cmd.mExec = str;
                 Dsyslog("         EXEC %s\n", cmd.mExec.c_str());
                 cmdlist.push_back(cmd);
@@ -126,14 +125,30 @@ void cCECConfigFileParser::parseList(const DOMNodeList *nodelist,
 void cCECConfigFileParser::parseMenu(const DOMNodeList *list, DOMElement *menuElem)
 {
     cCECMenu menu;
-    char *str = XMLString::transcode(menuElem->getAttribute(mName));
-    Dsyslog ("  Menu %s\n", str);
+    const XMLCh *attr;
+
+    attr = menuElem->getAttribute(mName);
+    char *str = XMLString::transcode(attr);
     menu.mMenuTitle = str;
     XMLString::release(&str);
     if (menu.mMenuTitle.empty()) {
         string s = "Missing menu name";
+        Esyslog(s.c_str());
         throw cCECConfigException(0, s);
     }
+
+    attr = menuElem->getAttribute(mAddress);
+    str = XMLString::transcode(attr);
+    if (*str == '\0') {
+        string s = "Missing address";
+        Esyslog(s.c_str());
+        XMLString::release(&str);
+        throw cCECConfigException(0, s);
+    }
+    XMLString::release(&str);
+    menu.mAddress = (cec_logical_address)XMLString::parseInt(attr);
+
+    Dsyslog ("  Menu %s (%d)\n", menu.mMenuTitle.c_str(), menu.mAddress);
 
     const  XMLSize_t nodeCount = list->getLength();
 
@@ -294,7 +309,7 @@ bool cCECConfigFileParser::Parse(const string &filename) {
         }
     } catch (xercesc::XMLException &e) {
         char* message = xercesc::XMLString::transcode(e.getMessage());
-        Esyslog("Error parsing file %s: %s", xmlFile, message);
+        Esyslog("XMLException: Error parsing file %s: %s", xmlFile, message);
         XMLString::release(&message);
         ret = false;
     } catch (const DOMException& toCatch) {
@@ -308,7 +323,7 @@ bool cCECConfigFileParser::Parse(const string &filename) {
         XMLString::release(&message);
         ret = false;
     } catch (const cCECConfigException &e) {
-        Esyslog ("%s\n", e.what());
+        Esyslog ("cCECConfigException %s\n", e.what());
         ret = false;
     } catch (const exception& e) {
         Esyslog ("Unexpected Exception %s", e.what());

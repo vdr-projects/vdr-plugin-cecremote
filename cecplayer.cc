@@ -9,10 +9,9 @@
 
 using namespace std;
 
-cCECPlayer::cCECPlayer(const cCECDevInfo &config) :
+cCECPlayer::cCECPlayer(const cCECMenu &config) :
                 pStillBuf(NULL), mStillBufLen(0)
 {
-    mConfig = config;
     mStillPic = config.mStillPic;
 }
 

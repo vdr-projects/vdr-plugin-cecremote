@@ -18,6 +18,7 @@
 #include <queue>
 #include <list>
 #include <vector>
+#include <string>
 
 #define MAX_CEC_ADAPTERS 10
 
@@ -31,31 +32,37 @@ typedef enum {
     CEC_MAKEINACTIVE,
     CEC_POWERON,
     CEC_POWEROFF,
-    CEC_VDRKEYPRESS
+    CEC_VDRKEYPRESS,
+    CEC_EXECSHELL
 } CECCommand;
 
 class cCECCmd {
 public:
-    cCECCmd() : mCmd(CEC_INVALID), mVal(0) {};
-    cCECCmd(CECCommand cmd, int val = -1, cec_logical_address adress = CECDEVICE_UNKNOWN) {
+    cCECCmd() : mCmd(CEC_INVALID), mVal(0), mAddress(CECDEVICE_UNKNOWN) {};
+    cCECCmd(CECCommand cmd, int val = -1,
+            cec_logical_address adress = CECDEVICE_UNKNOWN, std::string exec="") {
         mCmd = cmd;
         mVal = val;
         mAddress = adress;
+        mExec = exec;
     }
 
     CECCommand mCmd;
     int mVal;
     cec_logical_address mAddress;
+    std::string mExec;
 
     cCECCmd &operator=(const cCECCmd &c) {
         mCmd = c.mCmd;
         mVal = c.mVal;
         mAddress = c.mAddress;
+        mExec = c.mExec;
         return *this;
     }
 };
 
-typedef std::queue<cCECCmd> cCmdQueue;
+typedef std::list<cCECCmd> cCmdQueue;
+typedef cCmdQueue::const_iterator cCmdQueueIterator;
 typedef std::list<eKeys> cKeyList;
 typedef cKeyList::const_iterator cKeyListIterator;
 
@@ -63,10 +70,12 @@ typedef std::vector<cKeyList> cVdrKeyMap;
 
 class cCECRemote : public cRemote, private cThread {
 public:
-    cCECRemote(int loglevel);
+    cCECRemote(int loglevel, const cCmdQueue &onStart,
+               const cCmdQueue &onStop);
     ~cCECRemote();
     bool Initialize(void);
     void PushCmd(const cCECCmd &cmd);
+    void ExecCmd(const cCmdQueue &cmdList);
     int getCECLogLevel() {return mCECLogLevel;}
     ICECAdapter            *mCECAdapter;
 private:
@@ -86,6 +95,9 @@ private:
     cKeyList &CECtoVDRKey(cec_user_control_code code);
     cec_user_control_code VDRtoCECKey(eKeys key);
     bool TextViewOn(cec_logical_address address);
+
+    cCmdQueue mOnStart;
+    cCmdQueue mOnStop;
 };
 
 #endif /* CECREMOTE_H_ */

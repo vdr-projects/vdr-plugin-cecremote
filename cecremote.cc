@@ -99,14 +99,16 @@ int CecLogMessage(void *cbParam, const cec_log_message message)
  * CEC remote
  */
 
-cCECRemote::cCECRemote(int loglevel):
+cCECRemote::cCECRemote(int loglevel, const cCmdQueue &onStart,
+                       const cCmdQueue &onStop):
         cRemote("CEC"),
         cThread("CEC receiver"),
         mDevicesFound(0)
-
 {
     mCECAdapter = NULL;
     mCECLogLevel = loglevel;
+    mOnStart = onStart;
+    mOnStop = onStop;
     Start();
     Dsyslog("cCECRemote start");
 }
@@ -387,11 +389,19 @@ bool cCECRemote::Initialize(void)
     return false;
 }
 
+void cCECRemote::ExecCmd(const cCmdQueue &cmdList)
+{
+    for (cCmdQueueIterator i = cmdList.begin();
+           i != cmdList.end(); i++) {
+        PushCmd(*i);
+    }
+}
+
 void cCECRemote::PushCmd(const cCECCmd &cmd)
 {
     Dsyslog("cCECRemote::PushCmd %d", cmd.mCmd);
     cMutexLock lock(&mQueueMutex);
-    mQueue.push(cmd);
+    mQueue.push_back(cmd);
     mQueueWait.Signal();
 }
 
@@ -409,7 +419,7 @@ cCECCmd cCECRemote::WaitCmd()
     }
     else {
         cmd = mQueue.front();
-        mQueue.pop();
+        mQueue.pop_front();
     }
     mQueueMutex.Unlock();
     return cmd;

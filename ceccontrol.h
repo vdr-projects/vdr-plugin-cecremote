@@ -15,12 +15,12 @@
 
 class cCECControl: public cControl {
 private:
-    cCECDevInfo mConfig;
     cCECPlayer *mCECPlayer;
     cPluginCecremote *mPlugin;
+    cCECMenu mMenuItem;
 
 public:
-    cCECControl(const cCECDevInfo &config, cPluginCecremote *plugin);
+    cCECControl(const cCECMenu &menuitem, cPluginCecremote *plugin);
     virtual ~cCECControl();
 
     virtual void Hide(void);

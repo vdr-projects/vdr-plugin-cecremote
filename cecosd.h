@@ -14,6 +14,7 @@
 
 class cCECOsd : public cOsdMenu {
 public:
+    static std::vector<cCECMenu> mMenuItems;
     cCECOsd(cPluginCecremote *plugin);
     virtual ~cCECOsd() {}
 };
@@ -22,10 +23,10 @@ class cCECOsdItem : public cOsdItem {
 private:
     cCECControl *mControl;
     cPluginCecremote *mPlugin;
-    int mCnt;
+    cCECMenu mMenuItem;
 
 public:
-  cCECOsdItem(int cnt, const char *menutxt, cPluginCecremote *plugin);
+  cCECOsdItem(const cCECMenu &menuitem, const char *menutxt, cPluginCecremote *plugin);
   ~cCECOsdItem() {}
   virtual eOSState ProcessKey(eKeys key);
 };

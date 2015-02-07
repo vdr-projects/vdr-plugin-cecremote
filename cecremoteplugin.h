@@ -16,7 +16,7 @@
 #include "cecconfigfileparser.h"
 
 class cCECOsd;
-
+/*
 class cCECDevInfo {
 public:
     cCECDevInfo() : mAddr(CECDEVICE_UNKNOWN), mMakeActive(false), mPowerOn(false),
@@ -42,6 +42,7 @@ public:
 
 typedef std::vector<cCECDevInfo> cCECDevInfoList;
 typedef cCECDevInfoList::const_iterator cCECDevInfoListIterator;
+*/
 
 class cPluginCecremote : public cPlugin {
 
@@ -51,7 +52,7 @@ protected:
     std::string mCfgDir;
     std::string mCfgFile;
     cCECConfigFileParser mConfigFileParser;
-    cCECDevInfoList mCECDevMenuInfo;
+    //cCECDevInfoList mCECDevMenuInfo;
     cCECRemote *mCECRemote;
 
     const std::string GetConfigDir(void) {
@@ -86,9 +87,10 @@ public:
     virtual const char **SVDRPHelpPages(void);
     virtual cString SVDRPCommand(const char *Command, const char *Option, int &ReplyCode);
 
-    void StartPlayer(int cnt);
+    void StartPlayer(const cCECMenu &menuitem);
     void PushCmd(const cCECCmd &cmd) {mCECRemote->PushCmd(cmd);}
-    cCECDevInfoList *GetDevInfoList() {return &mCECDevMenuInfo; }
+    void ExecCmd(const cCmdQueue &cmdList) {mCECRemote->ExecCmd(cmdList);}
+    cCECMenuList *GetMenuList() {return &mConfigFileParser.mMenuList; }
 };
 
 #endif

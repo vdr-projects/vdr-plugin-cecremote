@@ -9,32 +9,16 @@
 #include "cecplayer.h"
 #include "ceclog.h"
 
-cCECControl::cCECControl(const cCECDevInfo &config,
-                         cPluginCecremote *plugin) :
-    cControl(mCECPlayer = new cCECPlayer(config))
+cCECControl::cCECControl(const cCECMenu &menuitem, cPluginCecremote *plugin) :
+    cControl(mCECPlayer = new cCECPlayer(menuitem))
 {
-    mConfig = config;
     mPlugin = plugin;
-
-    if (config.mPowerOn) {
-        cCECCmd cmd(CEC_POWERON, 0, config.mAddr);
-        mPlugin->PushCmd(cmd);
-    }
-    if (mConfig.mMakeActive) {
-        cCECCmd cmd(CEC_MAKEINACTIVE);
-        mPlugin->PushCmd(cmd);
-    }
+    mMenuItem = menuitem;
+    mPlugin->ExecCmd(mMenuItem.onStart);
 }
 
 cCECControl::~cCECControl() {
-    if (mConfig.mPowerOff) {
-        cCECCmd cmd(CEC_POWEROFF, 0, mConfig.mAddr);
-        mPlugin->PushCmd(cmd);
-    }
-    if (mConfig.mMakeActive) {
-        cCECCmd cmd(CEC_MAKEACTIVE);
-        mPlugin->PushCmd(cmd);
-    }
+    mPlugin->ExecCmd(mMenuItem.onStop);
     delete mCECPlayer;
 }
 
@@ -67,7 +51,7 @@ eOSState cCECControl::ProcessKey(eKeys key)
     case kNone:
         break;
     default:
-        cCECCmd cmd(CEC_VDRKEYPRESS, (int)key, mConfig.mAddr);
+        cCECCmd cmd(CEC_VDRKEYPRESS, (int)key, mMenuItem.mAddress);
         mPlugin->PushCmd(cmd);
         break;
     }

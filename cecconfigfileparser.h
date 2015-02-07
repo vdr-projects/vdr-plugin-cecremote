@@ -26,38 +26,17 @@
 #include <queue>
 #include <set>
 
+#include "cecremote.h"
+
 typedef std::queue<std::string> stringQueue;
 typedef std::list<std::string> stringList;
 typedef std::set<std::string> stringSet;
-//typedef std::map<std::string, stringList> Key;
-//typedef std::map<std::string, Key> Section;
-
-class cCECCommand {
-public:
-    typedef enum {
-        UNDEFINED = 0,
-        POWER_ON = 1,
-        POWER_OFF,
-        EXEC
-    } CEC_COMMAND_TYPE;
-
-    cCECCommand() : mCommandType(UNDEFINED), mCECAddress(0) {}
-    cCECCommand(CEC_COMMAND_TYPE type, int addr) : mCommandType(type), mCECAddress(addr) {}
-    cCECCommand(CEC_COMMAND_TYPE type, std::string exec) :
-        mCommandType(type), mCECAddress(0), mExec(exec) {}
-
-    CEC_COMMAND_TYPE mCommandType;
-    int mCECAddress;
-    std::string mExec;
-};
-
-typedef std::list<cCECCommand> cCECCommandList;
 
 class cCECGlobalOptions {
 public:
     int cec_debug;
-    cCECCommandList onStart;
-    cCECCommandList onStop;
+    cCmdQueue onStart;
+    cCmdQueue onStop;
 public:
     cCECGlobalOptions() : cec_debug(7) {};
 };
@@ -66,13 +45,15 @@ class cCECMenu {
 public:
     std::string mMenuTitle;
     std::string mStillPic;
-    cCECCommandList onStart;
-    cCECCommandList onStop;
+    cec_logical_address mAddress;
+    cCmdQueue onStart;
+    cCmdQueue onStop;
 
     cCECMenu() {};
 };
 
 typedef std::list<cCECMenu> cCECMenuList;
+typedef cCECMenuList::const_iterator cCECMenuListIterator;
 
 class cCECConfigException : public std::exception {
 private:
@@ -95,12 +76,9 @@ public:
 
 class cCECConfigFileParser {
 private:
-    cCECGlobalOptions mGlobalOptions;
-    cCECMenuList mMenuList;
-
     void parseGlobal(const xercesc::DOMNodeList *list);
     void parseMenu(const xercesc::DOMNodeList *list, xercesc::DOMElement *menuElem);
-    void parseList(const xercesc::DOMNodeList *nodelist, cCECCommandList &cmdlist);
+    void parseList(const xercesc::DOMNodeList *nodelist, cCmdQueue &cmdlist);
 
     XMLCh *mWildcard;
     XMLCh *mGlobal;
@@ -114,8 +92,12 @@ private:
     XMLCh *mExec;
     XMLCh *mName;
     XMLCh *mStillPic;
+    XMLCh *mAddress;
 
 public:
+    cCECGlobalOptions mGlobalOptions;
+    cCECMenuList mMenuList;
+
     cCECConfigFileParser();
     ~cCECConfigFileParser();
     bool Parse (const std::string &filename);

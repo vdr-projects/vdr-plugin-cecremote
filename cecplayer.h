@@ -23,13 +23,12 @@ protected:
     void LoadStillPicture (const std::string &filename);
     void DisplayStillPicture (void);
 
-    cCECDevInfo mConfig;
     std::string mStillPic;
     cMutex mPlayerMutex;
     uchar *pStillBuf;
     ssize_t mStillBufLen;
 public:
-    cCECPlayer(const cCECDevInfo &config);
+    cCECPlayer(const cCECMenu &config);
     virtual ~cCECPlayer();
 };
 

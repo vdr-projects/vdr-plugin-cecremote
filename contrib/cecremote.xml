@@ -7,7 +7,7 @@
 		</onstart>
 	</global>
 	
-	<menu name="tv">
+	<menu name="tv" address="0">
 		<onstart>
 			<poweron>0</poweron>
 		</onstart>
@@ -17,15 +17,14 @@
 		</onstop>
 	</menu>
 	
-	<menu name="blueray">
+	<menu name="blueray" address="4">
 		<onstart>
 			<poweron>0</poweron>
 			<poweron>4</poweron>
 		</onstart>
 		<stillpic>/video/conf/plugins/cecremote/blueray.mpg</stillpic>
 		<onstop>
-			<poweroff>0</poweroff>
+			<poweroff>4</poweroff>
 		</onstop>
 	</menu>
-	
 </config>

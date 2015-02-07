@@ -12,18 +12,20 @@
 
 using namespace std;
 
+std::vector<cCECMenu> cCECOsd::mMenuItems;
+
 cCECOsd::cCECOsd(cPluginCecremote *plugin) :
                  cOsdMenu(tr("CEC Device")) {
 
   int cnt = 1;
   char num[4];
-  cCECDevInfo nConf;
+  cCECMenu menuitem;
   string menutxt;
-  cCECDevInfoList *infolist = plugin->GetDevInfoList();
+  cCECMenuList *menulist = plugin->GetMenuList();
 
-  for (cCECDevInfoListIterator i = infolist->begin();
-       i != infolist->end(); i++) {
-      nConf = *i;
+  for (cCECMenuListIterator i = menulist->begin();
+       i != menulist->end(); i++) {
+      menuitem = *i;
       if (cnt <= 9) {
           sprintf(num,"%d ", cnt);
       }
@@ -31,30 +33,31 @@ cCECOsd::cCECOsd(cPluginCecremote *plugin) :
           strcpy (num, "  ");
       }
 
-      menutxt = num + nConf.mMenuName;
-      Add(new cCECOsdItem(cnt, menutxt.c_str(), plugin));
+      menutxt = num + menuitem.mMenuTitle;
+      Add(new cCECOsdItem(menuitem, menutxt.c_str(), plugin));
+      mMenuItems.push_back(menuitem);
       cnt++;
   }
 }
 
-cCECOsdItem::cCECOsdItem(int cnt, const char *menutxt,
+cCECOsdItem::cCECOsdItem(const cCECMenu &menuitem, const char *menutxt,
                          cPluginCecremote *plugin) :
         cOsdItem(menutxt), mControl(NULL) {
-    mCnt = cnt;
+    mMenuItem = menuitem;
     mPlugin = plugin;
-    Dsyslog("Menu %d ->%s", cnt, menutxt);
+    Dsyslog("Menu %s", menutxt);
 }
 
 eOSState cCECOsdItem::ProcessKey(eKeys key) {
     eOSState state = osUnknown;
 
     if (key == kOk) {
-        mPlugin->StartPlayer(mCnt);
+        mPlugin->StartPlayer(mMenuItem);
         return osEnd;
     }
     if ((key > k0) && (key <= k9)) {
         try {
-            mPlugin->StartPlayer(key-k0);
+            mPlugin->StartPlayer(cCECOsd::mMenuItems.at(key-k0));
             state = osEnd;
         } catch (const std::out_of_range &oor) {
         }

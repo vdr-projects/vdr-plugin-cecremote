@@ -96,8 +96,11 @@ bool cPluginCecremote::Start(void)
         Esyslog("Config file %s not found", file.c_str());
         return false;
     }
+    mCECLogLevel = mConfigFileParser.mGlobalOptions.cec_debug;
 /* TODO */
-    mCECRemote = new cCECRemote(mCECLogLevel);
+    mCECRemote = new cCECRemote(mCECLogLevel,
+                                mConfigFileParser.mGlobalOptions.onStart,
+                                mConfigFileParser.mGlobalOptions.onStop);
     return true;
 }
 
@@ -129,25 +132,23 @@ time_t cPluginCecremote::WakeupTime(void)
     return 0;
 }
 
-void cPluginCecremote::StartPlayer(int cnt) {
-    cnt -= 1;
-    Dsyslog("StartPlayer %d", cnt);
-    Isyslog("starting player: %s", mCECDevMenuInfo.at(cnt).mMenuName.c_str());
+void cPluginCecremote::StartPlayer(const cCECMenu &menuitem) {
+    Isyslog("starting player: %s", menuitem.mMenuTitle.c_str());
 
-    cControl::Launch(new cCECControl(mCECDevMenuInfo.at(cnt), this));
+    cControl::Launch(new cCECControl(menuitem, this));
     cControl::Attach();
 }
 
 cOsdObject *cPluginCecremote::MainMenuAction(void)
 {
-    int count = mCECDevMenuInfo.size();
+   /* int count = mCECDevMenuInfo.size(); // TODO
        if (count == 0) {
            return NULL;
        }
        else if (count == 1) {
            StartPlayer(0);
            return NULL;
-       }
+       }*/
     return new cCECOsd(this);
 }
 
