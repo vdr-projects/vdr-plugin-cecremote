@@ -1,10 +1,14 @@
 /*
- * cecremote.c: A plugin for the Video Disk Recorder
+ * CECRemote PlugIn for VDR
  *
- * See the README file for copyright information and how to reach the author.
+ * Copyright (C) 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
  *
- * $Id$
+ * This code is distributed under the terms and conditions of the
+ * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
+ *
+ * This class implements the main VDR plugin code.
  */
+
 #ifndef CECREMOTEPLUGIN_H
 #define CECREMOTEPLUGIN_H
 
@@ -16,33 +20,6 @@
 #include "cecconfigfileparser.h"
 
 class cCECOsd;
-/*
-class cCECDevInfo {
-public:
-    cCECDevInfo() : mAddr(CECDEVICE_UNKNOWN), mMakeActive(false), mPowerOn(false),
-                    mPowerOff(false), mMenuName(""), mStillPic("") {};
-    cCECDevInfo(int addr, const std::string &menuname,
-                const std::string &stillpic, bool makeactive, bool poweron,
-                bool poweroff) {
-        mAddr = (cec_logical_address)addr;
-        mMakeActive = makeactive;
-        mPowerOn = poweron;
-        mPowerOff = poweroff;
-        mMenuName = menuname;
-        mStillPic= stillpic;
-    }
-
-    cec_logical_address mAddr;
-    bool mMakeActive;
-    bool mPowerOn;
-    bool mPowerOff;
-    std::string mMenuName;
-    std::string mStillPic;
-};
-
-typedef std::vector<cCECDevInfo> cCECDevInfoList;
-typedef cCECDevInfoList::const_iterator cCECDevInfoListIterator;
-*/
 
 class cPluginCecremote : public cPlugin {
 
@@ -52,7 +29,6 @@ protected:
     std::string mCfgDir;
     std::string mCfgFile;
     cCECConfigFileParser mConfigFileParser;
-    //cCECDevInfoList mCECDevMenuInfo;
     cCECRemote *mCECRemote;
 
     const std::string GetConfigDir(void) {
@@ -63,7 +39,6 @@ protected:
         const std::string cf = GetConfigDir() + mCfgFile;
         return cf;
     }
-
 
 public:
     cPluginCecremote(void);

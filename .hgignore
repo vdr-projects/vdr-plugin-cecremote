@@ -3,6 +3,7 @@ syntax: glob
 *.orig
 *.o
 *.so
+vdr-cecremote*.tgz
 .dependencies
 po/*.mo
 po/*.pot

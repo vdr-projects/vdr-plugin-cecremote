@@ -1,30 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--  
+	Normally the following cec logical addresses are uses:
+	0 : TV
+	4 : DVD/Blueray player
+	8 : Own libCEC address
+-->
 <config>
 	<global>
 		<cecdebug>7</cecdebug>
+		<!--  On VDR start power on TV, make own device active -->
 		<onstart>
 			<poweron>0</poweron>
+			<makeactive>8</makeactive>
 		</onstart>
-	</global>
-	
-	<menu name="tv" address="0">
-		<onstart>
-			<poweron>0</poweron>
-		</onstart>
-		<stillpic>/video/conf/plugins/cecremote/blueray.mpg</stillpic>
+		<!--  On VDR stop power off TV and DVD/Blueray player -->
 		<onstop>
 			<poweroff>0</poweroff>
+			<poweroff>4</poweroff>
+		</onstop>
+	</global>
+	
+	<!--  Menu for TV -->
+	<menu name="TV" address="0">
+		<!--  When menu is selected, switch on and make TV active -->
+		<!--  TODO config option for selecting broadcast type -->
+		<onstart>
+			<poweron>0</poweron>
+			<makeactive>0</makeactive>
+		</onstart>
+		<stillpic>/video/conf/plugins/cecremote/blueray.mpg</stillpic>
+		<!--  When returning to VDR poweroff TV and make VDR active -->
+		<onstop>
+			<poweroff>0</poweroff>
+			<makeactive>8</makeactive>
 		</onstop>
 	</menu>
 	
-	<menu name="blueray" address="4">
+	<!--  Menu for Blueray/DVD player -->
+	<menu name="Blueray" address="4">
+		<!--  When menu is selected, switch on TV and player and make player active -->
 		<onstart>
 			<poweron>0</poweron>
 			<poweron>4</poweron>
+			<makeactive>4</makeactive>
 		</onstart>
 		<stillpic>/video/conf/plugins/cecremote/blueray.mpg</stillpic>
+		<!--  When returning to VDR poweroff Player and make VDR active -->
 		<onstop>
 			<poweroff>4</poweroff>
+			<makeactive>8</makeactive>
 		</onstop>
 	</menu>
 </config>

@@ -1,14 +1,17 @@
 /*
- * configfileparser.cc: Class for parsing a configuration file.
+ * CECRemote PlugIn for VDR
  *
- * Copyright (C) 2014 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ * Copyright (C) 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
  *
  * This code is distributed under the terms and conditions of the
  * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
+ *
+ * cecconfigfileparser.h: Class for parsing the plugin configuration file.
  */
+
 #include <vdr/plugin.h>
-#include "cecconfigfileparser.h"
 #include "ceclog.h"
+#include "cecconfigfileparser.h"
 #include "stringtools.h"
 
 using namespace std;
@@ -37,6 +40,8 @@ cCECConfigFileParser::cCECConfigFileParser()
     mName = XMLString::transcode("name");
     mStillPic = XMLString::transcode("stillpic");
     mAddress = XMLString::transcode("address");
+    mMakeActive = XMLString::transcode("makeactive");
+    mMakeInactive = XMLString::transcode("makeinactive");
 }
 
 cCECConfigFileParser::~cCECConfigFileParser()
@@ -54,6 +59,8 @@ cCECConfigFileParser::~cCECConfigFileParser()
     XMLString::release(&mName);
     XMLString::release(&mStillPic);
     XMLString::release(&mAddress);
+    XMLString::release(&mMakeActive);
+    XMLString::release(&mMakeInactive);
 }
 
 void cCECConfigFileParser::parseList(const DOMNodeList *nodelist,
@@ -100,6 +107,22 @@ void cCECConfigFileParser::parseList(const DOMNodeList *nodelist,
                                 XMLString::parseInt(curElem->getTextContent());
                 cmd.mExec = "";
                 Dsyslog("         POWEROFF %d\n", cmd.mAddress);
+                cmdlist.push_back(cmd);
+            } else if (XMLString::compareIString(curElem->getNodeName(),
+                                                mMakeActive) == 0) {
+                cmd.mCmd = CEC_MAKEACTIVE;
+                cmd.mAddress = (cec_logical_address)
+                     XMLString::parseInt(curElem->getTextContent());
+                cmd.mExec = "";
+                Dsyslog("         MAKEACTIVE %d\n", cmd.mAddress);
+                cmdlist.push_back(cmd);
+            } else if (XMLString::compareIString(curElem->getNodeName(),
+                                                mMakeInactive) == 0) {
+                cmd.mCmd = CEC_MAKEINACTIVE;
+                cmd.mAddress = (cec_logical_address)
+                     XMLString::parseInt(curElem->getTextContent());
+                cmd.mExec = "";
+                Dsyslog("         MAKEINACTIVE %d\n", cmd.mAddress);
                 cmdlist.push_back(cmd);
             } else if (XMLString::compareIString(curElem->getNodeName(),
                                                  mExec) == 0) {

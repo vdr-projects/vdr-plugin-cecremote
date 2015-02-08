@@ -1,8 +1,12 @@
 /*
- * cecosd.cc
+ * CECRemote PlugIn for VDR
  *
- *  Created on: 27.12.2014
- *      Author: uli
+ * Copyright (C) 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ *
+ * This code is distributed under the terms and conditions of the
+ * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
+ *
+ * This class implements the OSD menu.
  */
 
 #include <algorithm>

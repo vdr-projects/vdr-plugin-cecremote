@@ -1,9 +1,12 @@
 /*
- * cecremote.c: A plugin for the Video Disk Recorder
+ * CECRemote PlugIn for VDR
  *
- * See the README file for copyright information and how to reach the author.
+ * Copyright (C) 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
  *
- * $Id$
+ * This code is distributed under the terms and conditions of the
+ * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
+ *
+ * This class implements the main VDR plugin code.
  */
 
 
@@ -15,7 +18,7 @@
 #include "cecosd.h"
 #include "stringtools.h"
 
-static const char *VERSION        = "0.0.1";
+static const char *VERSION        = "0.0.2";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
 static const char *MAINMENUENTRY  = "CECremote";
 
@@ -93,7 +96,7 @@ bool cPluginCecremote::Start(void)
 {
     string file = GetConfigFile();
     if (!mConfigFileParser.Parse(file)) {
-        Esyslog("Config file %s not found", file.c_str());
+        Esyslog("Error on parsing config file file %s", file.c_str());
         return false;
     }
     mCECLogLevel = mConfigFileParser.mGlobalOptions.cec_debug;
@@ -141,7 +144,7 @@ void cPluginCecremote::StartPlayer(const cCECMenu &menuitem) {
 
 cOsdObject *cPluginCecremote::MainMenuAction(void)
 {
-   /* int count = mCECDevMenuInfo.size(); // TODO
+   /* int count = mCECDevMenuInfo.size(); // TODO handle only one entry
        if (count == 0) {
            return NULL;
        }

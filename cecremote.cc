@@ -1,9 +1,14 @@
 /*
- * cecremote.cc
+ * CECRemote PlugIn for VDR
  *
- *  Created on: 25.12.2014
- *      Author: uli
+ * Copyright (C) 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ *
+ * This code is distributed under the terms and conditions of the
+ * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
+ *
+ * This class implements the remote receiving and processing the CEC commands.
  */
+
 #include "cecremote.h"
 #include "ceclog.h"
 
@@ -187,7 +192,7 @@ void cCECRemote::Action(void)
             break;
         case CEC_POWERON: // TODO
             Dsyslog("Power on");
-            if (TextViewOn(cmd.mAddress) != 0) {
+            if (mCECAdapter->PowerOnDevices(cmd.mAddress) != 0) {
                 Esyslog("PowerOnDevice failed for %s",
                         mCECAdapter->ToString(cmd.mAddress));
             }

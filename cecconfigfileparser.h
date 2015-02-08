@@ -1,10 +1,12 @@
 /*
- * configfileparser.h: Class for parsing a configuration file.
+ * CECRemote PlugIn for VDR
  *
- * Copyright (C) 2010 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ * Copyright (C) 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
  *
  * This code is distributed under the terms and conditions of the
  * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
+ *
+ * cecconfigfileparser.h: Class for parsing the plugin configuration file.
  */
 
 #ifndef CECCONFIGFILEPARSER_H_
@@ -93,6 +95,8 @@ private:
     XMLCh *mName;
     XMLCh *mStillPic;
     XMLCh *mAddress;
+    XMLCh *mMakeActive;
+    XMLCh *mMakeInactive;
 
 public:
     cCECGlobalOptions mGlobalOptions;

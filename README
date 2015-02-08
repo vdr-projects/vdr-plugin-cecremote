@@ -55,9 +55,10 @@ CEC version:   1.4
 power status:  on
 language:      eng
 
-In the plugin config directory create the file cecremote.conf (an example can
+In the plugin config directory create the file cecremote.xml (an example can
 be found in the contrib directory) with an device entry for each device which
-should be handled by this plugin. In this example device#8 (osd string=CECTester)
-must be ignored.
+should be handled by this plugin. 
 
+In this example device#8 (osd string=CECTester) is the address of the libCEC 
+device (VDR).
 
