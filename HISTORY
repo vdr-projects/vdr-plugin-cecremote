@@ -8,3 +8,9 @@ VDR Plugin 'cecremote' Revision History
 2015-02-08: Version 0.0.2
 
 - Basic functionality implemented.
+
+2015-02-14: Version 0.0.3
+
+- Remove need of std++11
+- When no stillpic tag is available, do not start a player
+
