@@ -83,6 +83,7 @@ public:
     int getCECLogLevel() {return mCECLogLevel;}
     ICECAdapter            *mCECAdapter;
 private:
+    static eKeys mDefaultKeyMap[CEC_USER_CONTROL_CODE_MAX+2][2];
     int                    mCECLogLevel;
     uint8_t                mDevicesFound;
     libcec_configuration   mCECConfig;
@@ -99,6 +100,7 @@ private:
     cKeyList &CECtoVDRKey(cec_user_control_code code);
     cec_user_control_code VDRtoCECKey(eKeys key);
     bool TextViewOn(cec_logical_address address);
+    void InitKeyFromDefault(cVdrKeyMap &map);
 
     cCmdQueue mOnStart;
     cCmdQueue mOnStop;

@@ -17,6 +17,7 @@
 using namespace std;
 #include <cecloader.h>
 
+eKeys cCECRemote::mDefaultKeyMap[CEC_USER_CONTROL_CODE_MAX+2][2];
 // Callback for CEC KeyPress
 int CecKeyPress(void *cbParam, const cec_keypress key)
 {
@@ -237,6 +238,21 @@ void cCECRemote::Action(void)
     }
 }
 
+void cCECRemote::InitKeyFromDefault(cVdrKeyMap &map)
+{
+    for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX+1; i++) {
+        map[i].clear();
+        if (mDefaultKeyMap[i][0] != kNone) {
+            map[i].push_back(mDefaultKeyMap[i][0]);
+        }
+        if (mDefaultKeyMap[i][1] != kNone) {
+            map[i].push_back(mDefaultKeyMap[i][1]);
+        }
+    }
+    // Empty list
+    map[CEC_USER_CONTROL_CODE_MAX+1].clear();
+}
+
 bool cCECRemote::Initialize(void)
 {
     Dsyslog("cCECRemote::Initialize");
@@ -305,90 +321,99 @@ bool cCECRemote::Initialize(void)
         }
     }
 
+    for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX+1; i++) {
+        mDefaultKeyMap[i][0] = kNone;
+        mDefaultKeyMap[i][1] = kNone;
+    }
+
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_SELECT             ][0] = kOk;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_UP                 ][0] = kUp;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_DOWN               ][0] = kDown;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_LEFT               ][0] = kLeft;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_RIGHT              ][0] = kRight;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_RIGHT_UP           ][0] = kRight;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_RIGHT_UP           ][1] = kUp;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_RIGHT_DOWN         ][0] = kRight;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_RIGHT_DOWN         ][1] = kDown;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_LEFT_UP            ][0] = kLeft;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_LEFT_UP            ][1] = kUp;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_LEFT_DOWN          ][0] = kRight;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_LEFT_DOWN          ][1] = kDown;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_ROOT_MENU          ][0] = kMenu;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_SETUP_MENU         ][0] = kSetup;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_CONTENTS_MENU      ][0] = kSetup;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER0            ][0] = k0;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER1            ][0] = k1;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER2            ][0] = k2;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER3            ][0] = k3;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER4            ][0] = k4;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER5            ][0] = k5;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER6            ][0] = k6;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER7            ][0] = k7;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER8            ][0] = k8;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER9            ][0] = k9;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_ENTER              ][0] = kOk;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_CLEAR              ][0] = kBack;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_CHANNEL_UP         ][0] = kChanUp;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_CHANNEL_DOWN       ][0] = kChanDn;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_PREVIOUS_CHANNEL   ][0] = kChanPrev;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_SOUND_SELECT       ][0] = kAudio;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_DISPLAY_INFORMATION][0] = kInfo;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAGE_UP            ][0] = kNext;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAGE_DOWN          ][0] = kPrev;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_POWER              ][0] = kPower;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_VOLUME_UP          ][0] = kVolUp;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_VOLUME_DOWN        ][0] = kVolDn;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_MUTE               ][0] = kMute;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_PLAY               ][0] = kPlay;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_STOP               ][0] = kStop;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAUSE              ][0] = kPause;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_RECORD             ][0] = kRecord;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_REWIND             ][0] = kFastRew;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_FAST_FORWARD       ][0] = kFastFwd;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_FORWARD            ][0] = kFastFwd;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_BACKWARD           ][0] = kFastRew;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_SUB_PICTURE        ][0] = kSubtitles;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_F1_BLUE            ][0] = kBlue;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_F2_RED             ][0] = kRed;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_F3_GREEN           ][0] = kGreen;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_F4_YELLOW          ][0] = kYellow;
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_AN_RETURN          ][0] = kBack;
+
+/*   mDefaultKeyMap[CEC_USER_CONTROL_CODE_VIDEO_ON_DEMAND             ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_ELECTRONIC_PROGRAM_GUIDE    ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_TIMER_PROGRAMMING           ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_INITIAL_CONFIGURATION       ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_PLAY_FUNCTION               ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAUSE_PLAY_FUNCTION         ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_RECORD_FUNCTION             ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAUSE_RECORD_FUNCTION       ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_STOP_FUNCTION               ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_MUTE_FUNCTION               ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_RESTORE_VOLUME_FUNCTION     ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_TUNE_FUNCTION               ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_SELECT_MEDIA_FUNCTION       ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_SELECT_AV_INPUT_FUNCTION    ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_SELECT_AUDIO_INPUT_FUNCTION ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_POWER_TOGGLE_FUNCTION       ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_POWER_OFF_FUNCTION          ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_POWER_ON_FUNCTION           ] = { }
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_F5                          ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_DATA                        ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_STOP_RECORD                 ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAUSE_RECORD                ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_ANGLE                       ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_EJECT                       ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_FAVORITE_MENU               ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_EXIT                        ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_DOT                         ] = {  };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NEXT_FAVORITE               ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_INPUT_SELECT                ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_HELP                        ] = { };
+    mDefaultKeyMap[CEC_USER_CONTROL_CODE_AN_CHANNELS_LIST            ] = { };*/
+
     Dsyslog("Load keymap");
-    mKeyMap.resize(CEC_USER_CONTROL_CODE_MAX + 2, {});
-    mKeyMap[CEC_USER_CONTROL_CODE_SELECT                      ] = { kOk };
-    mKeyMap[CEC_USER_CONTROL_CODE_UP                          ] = { kUp };
-    mKeyMap[CEC_USER_CONTROL_CODE_DOWN                        ] = { kDown };
-    mKeyMap[CEC_USER_CONTROL_CODE_LEFT                        ] = { kLeft };
-    mKeyMap[CEC_USER_CONTROL_CODE_RIGHT                       ] = { kRight };
-    mKeyMap[CEC_USER_CONTROL_CODE_RIGHT_UP                    ] = { kRight, kUp };
-    mKeyMap[CEC_USER_CONTROL_CODE_RIGHT_DOWN                  ] = { kRight, kDown };
-    mKeyMap[CEC_USER_CONTROL_CODE_LEFT_UP                     ] = { kLeft, kUp };
-    mKeyMap[CEC_USER_CONTROL_CODE_LEFT_DOWN                   ] = { kRight, kUp };
-    mKeyMap[CEC_USER_CONTROL_CODE_ROOT_MENU                   ] = { kMenu };
-    mKeyMap[CEC_USER_CONTROL_CODE_SETUP_MENU                  ] = { kSetup };
-    mKeyMap[CEC_USER_CONTROL_CODE_CONTENTS_MENU               ] = { kSetup };
-    mKeyMap[CEC_USER_CONTROL_CODE_FAVORITE_MENU               ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_EXIT                        ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER0                     ] = { k0 };
-    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER1                     ] = { k1 };
-    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER2                     ] = { k2 };
-    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER3                     ] = { k3 };
-    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER4                     ] = { k4 };
-    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER5                     ] = { k5 };
-    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER6                     ] = { k6 };
-    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER7                     ] = { k7 };
-    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER8                     ] = { k8 };
-    mKeyMap[CEC_USER_CONTROL_CODE_NUMBER9                     ] = { k9 };
-    mKeyMap[CEC_USER_CONTROL_CODE_DOT                         ] = {  };
-    mKeyMap[CEC_USER_CONTROL_CODE_ENTER                       ] = { kOk };
-    mKeyMap[CEC_USER_CONTROL_CODE_CLEAR                       ] = { kBack };
-    mKeyMap[CEC_USER_CONTROL_CODE_NEXT_FAVORITE               ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_CHANNEL_UP                  ] = { kChanUp };
-    mKeyMap[CEC_USER_CONTROL_CODE_CHANNEL_DOWN                ] = { kChanDn };
-    mKeyMap[CEC_USER_CONTROL_CODE_PREVIOUS_CHANNEL            ] = { kChanPrev };
-    mKeyMap[CEC_USER_CONTROL_CODE_SOUND_SELECT                ] = { kAudio };
-    mKeyMap[CEC_USER_CONTROL_CODE_INPUT_SELECT                ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_DISPLAY_INFORMATION         ] = { kInfo };
-    mKeyMap[CEC_USER_CONTROL_CODE_HELP                        ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_PAGE_UP                     ] = { kNext };
-    mKeyMap[CEC_USER_CONTROL_CODE_PAGE_DOWN                   ] = { kPrev };
-    mKeyMap[CEC_USER_CONTROL_CODE_POWER                       ] = { kPower };
-    mKeyMap[CEC_USER_CONTROL_CODE_VOLUME_UP                   ] = { kVolUp };
-    mKeyMap[CEC_USER_CONTROL_CODE_VOLUME_DOWN                 ] = { kVolDn };
-    mKeyMap[CEC_USER_CONTROL_CODE_MUTE                        ] = { kMute };
-    mKeyMap[CEC_USER_CONTROL_CODE_PLAY                        ] = { kPlay };
-    mKeyMap[CEC_USER_CONTROL_CODE_STOP                        ] = { kStop };
-    mKeyMap[CEC_USER_CONTROL_CODE_PAUSE                       ] = { kPause };
-    mKeyMap[CEC_USER_CONTROL_CODE_RECORD                      ] = { kRecord };
-    mKeyMap[CEC_USER_CONTROL_CODE_REWIND                      ] = { kFastRew };
-    mKeyMap[CEC_USER_CONTROL_CODE_FAST_FORWARD                ] = { kFastFwd };
-    mKeyMap[CEC_USER_CONTROL_CODE_EJECT                       ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_FORWARD                     ] = { kFastFwd };
-    mKeyMap[CEC_USER_CONTROL_CODE_BACKWARD                    ] = { kFastRew };
-    mKeyMap[CEC_USER_CONTROL_CODE_STOP_RECORD                 ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_PAUSE_RECORD                ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_ANGLE                       ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_SUB_PICTURE                 ] = { kSubtitles };
-    mKeyMap[CEC_USER_CONTROL_CODE_VIDEO_ON_DEMAND             ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_ELECTRONIC_PROGRAM_GUIDE    ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_TIMER_PROGRAMMING           ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_INITIAL_CONFIGURATION       ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_PLAY_FUNCTION               ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_PAUSE_PLAY_FUNCTION         ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_RECORD_FUNCTION             ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_PAUSE_RECORD_FUNCTION       ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_STOP_FUNCTION               ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_MUTE_FUNCTION               ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_RESTORE_VOLUME_FUNCTION     ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_TUNE_FUNCTION               ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_SELECT_MEDIA_FUNCTION       ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_SELECT_AV_INPUT_FUNCTION    ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_SELECT_AUDIO_INPUT_FUNCTION ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_POWER_TOGGLE_FUNCTION       ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_POWER_OFF_FUNCTION          ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_POWER_ON_FUNCTION           ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_F1_BLUE                     ] = { kBlue };
-    mKeyMap[CEC_USER_CONTROL_CODE_F2_RED                      ] = { kRed };
-    mKeyMap[CEC_USER_CONTROL_CODE_F3_GREEN                    ] = { kGreen };
-    mKeyMap[CEC_USER_CONTROL_CODE_F4_YELLOW                   ] = { kYellow };
-    mKeyMap[CEC_USER_CONTROL_CODE_F5                          ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_DATA                        ] = { };
-    mKeyMap[CEC_USER_CONTROL_CODE_AN_RETURN                   ] = { kBack };
-    mKeyMap[CEC_USER_CONTROL_CODE_AN_CHANNELS_LIST            ] = { };
-    // Empty list
-    mKeyMap[CEC_USER_CONTROL_CODE_MAX+1                       ] = { };
+    InitKeyFromDefault(mKeyMap);
 
     Dsyslog("END cCECRemote::Initialize");
     return false;
