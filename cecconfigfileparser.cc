@@ -189,7 +189,7 @@ void cCECConfigFileParser::parseMenu(const DOMNodeList *list, DOMElement *menuEl
                     mStillPic) == 0) {
                 if (li->getLength() > 1) {
                     string s = "Too much arguments";
-                    s += std::to_string( li->getLength());
+                    s += StringTools::IntToStr(li->getLength());
                     throw cCECConfigException(0, s);
                 }
                 char *str = XMLString::transcode(curElem->getTextContent());
@@ -242,7 +242,7 @@ void cCECConfigFileParser::parseGlobal(const DOMNodeList *list)
                                           mCecDebug) == 0) {
                 if (li->getLength() > 1) {
                     string s = "Too much arguments";
-                    s += std::to_string(li->getLength());
+                    s += StringTools::IntToStr(li->getLength());
                     throw cCECConfigException(0, s);
                 }
                 mGlobalOptions.cec_debug =

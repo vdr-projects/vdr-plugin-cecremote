@@ -51,7 +51,7 @@ public:
     cCmdQueue onStart;
     cCmdQueue onStop;
 
-    cCECMenu() {};
+    cCECMenu() : mAddress(CECDEVICE_UNKNOWN) {};
 };
 
 typedef std::list<cCECMenu> cCECMenuList;

@@ -10,6 +10,7 @@
  */
 
 #include <algorithm>
+#include <stdexcept>
 #include "cecremoteplugin.h"
 #include "cecosd.h"
 #include "ceclog.h"
@@ -61,9 +62,10 @@ eOSState cCECOsdItem::ProcessKey(eKeys key) {
     }
     if ((key > k0) && (key <= k9)) {
         try {
-            mPlugin->StartPlayer(cCECOsd::mMenuItems.at(key-k0));
+            mPlugin->StartPlayer(cCECOsd::mMenuItems.at(key-k1));
             state = osEnd;
         } catch (const std::out_of_range &oor) {
+            Isyslog("StartPlayer Out of range");
         }
     }
     return state;

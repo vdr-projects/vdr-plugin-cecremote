@@ -172,6 +172,7 @@ void cCECRemote::Action(void)
     cec_user_control_code ceckey;
     eKeys k;
 
+    Dsyslog("cCECRemote start worker thread");
     while (Running()) {
         cmd = WaitCmd();
         if (cmd.mCmd != CEC_TIMEOUT) {
@@ -236,10 +237,12 @@ void cCECRemote::Action(void)
             break;
         }
     }
+    Dsyslog("cCECRemote stop worker thread");
 }
 
 void cCECRemote::InitKeyFromDefault(cVdrKeyMap &map)
 {
+    map.resize(CEC_USER_CONTROL_CODE_MAX + 2);
     for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX+1; i++) {
         map[i].clear();
         if (mDefaultKeyMap[i][0] != kNone) {

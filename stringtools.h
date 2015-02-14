@@ -21,6 +21,13 @@ public:
         std::transform(str.begin(), str.end(), str.begin(), ::toupper);
         return str;
     }
+    static std::string IntToStr (int val) {
+        char buf[20];
+        std::string s;
+        sprintf(buf,"%d", val);
+        s = buf;
+        return s;
+    }
 };
 
 #endif /* STRINGTOOLS_H_ */

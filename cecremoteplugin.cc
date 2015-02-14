@@ -18,7 +18,7 @@
 #include "cecosd.h"
 #include "stringtools.h"
 
-static const char *VERSION        = "0.0.2";
+static const char *VERSION        = "0.0.3";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
 static const char *MAINMENUENTRY  = "CECremote";
 
@@ -136,10 +136,18 @@ time_t cPluginCecremote::WakeupTime(void)
 }
 
 void cPluginCecremote::StartPlayer(const cCECMenu &menuitem) {
-    Isyslog("starting player: %s", menuitem.mMenuTitle.c_str());
 
-    cControl::Launch(new cCECControl(menuitem, this));
-    cControl::Attach();
+    // If no <stillpic> is used, execute only onStart section
+    if (menuitem.mStillPic.empty()) {
+        Isyslog("Executing: %s", menuitem.mMenuTitle.c_str());
+        ExecCmd(menuitem.onStart);
+    }
+    // otherwise start a new player
+    else {
+        Isyslog("starting player: %s", menuitem.mMenuTitle.c_str());
+        cControl::Launch(new cCECControl(menuitem, this));
+        cControl::Attach();
+    }
 }
 
 cOsdObject *cPluginCecremote::MainMenuAction(void)

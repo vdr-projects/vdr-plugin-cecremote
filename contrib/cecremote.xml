@@ -28,6 +28,8 @@
 			<poweron>0</poweron>
 			<makeactive>0</makeactive>
 		</onstart>
+		
+		<!--  stillpic starts a VDR-Player -->
 		<stillpic>/video/conf/plugins/cecremote/blueray.mpg</stillpic>
 		<!--  When returning to VDR poweroff TV and make VDR active -->
 		<onstop>
@@ -51,4 +53,24 @@
 			<makeactive>8</makeactive>
 		</onstop>
 	</menu>
+	
+	<!--  Menu to just power on TV -->
+	<menu name="TV ON" address="0">
+		<!-- When menu is selected, switch on TV,                    -->
+		<!-- leaving VDR the active device. Start no player, no      -->
+		<!-- stillpic tag, so that the TV displays the VDR output    -->
+		<!-- When stillpic is not used, onstop is ignored            -->
+		<onstart>
+			<poweron>0</poweron>
+		</onstart>
+	</menu>
+	<!--  Menu to power off TV -->
+	<menu name="TV OFF" address="0">
+		<!-- When menu is selected, switch off TV        -->
+		<onstart>
+			<poweroff>0</poweroff>
+			<makeactive>8</makeactive>
+		</onstart>
+	</menu>
+	
 </config>
