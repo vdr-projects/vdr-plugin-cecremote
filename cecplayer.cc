@@ -93,7 +93,4 @@ void cCECPlayer::Activate(bool On) {
     if (On) {
         LoadStillPicture(mStillPic);
     }
-    else {
-        //Stop();
-    }
 }

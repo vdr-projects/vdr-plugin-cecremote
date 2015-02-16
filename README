@@ -13,52 +13,110 @@ the Free Software Foundation; either version 2 of the License, or
 See the file COPYING for more information.
 
 Description:
+==============
 
 Plugin to receive and send commands via CEC.
 
 Installation:
+==============
 
 First get connected device via the command :
      echo "scan" | cec-client -s -d 1 
      
 The output should look like:
-opening a connection to the CEC adapter...
-requesting CEC bus information ...
-CEC bus information
-===================
-device #0: TV
-address:       0.0.0.0
-active source: no
-vendor:        Panasonic
-osd string:    TV
-CEC version:   unknown
-power status:  on
-language:      ???
+    opening a connection to the CEC adapter...
+    requesting CEC bus information ...
+    CEC bus information
+    ===================
+    device #0: TV
+    address:       0.0.0.0
+    active source: no
+    vendor:        Panasonic
+    osd string:    TV
+    CEC version:   unknown
+    power status:  on
+    language:      ???
 
 
-device #4: Playback 1
-address:       f.f.f.f
-active source: no
-vendor:        Samsung
-osd string:    BD Player
-CEC version:   1.4
-power status:  standby
-language:      ???
+    device #4: Playback 1
+    address:       f.f.f.f
+    active source: no
+    vendor:        Samsung
+    osd string:    BD Player
+    CEC version:   1.4
+    power status:  standby
+    language:      ???
 
 
-device #8: Playback 2
-address:       1.0.0.0
-active source: no
-vendor:        Panasonic
-osd string:    CECTester
-CEC version:   1.4
-power status:  on
-language:      eng
+    device #8: Playback 2
+    address:       1.0.0.0
+    active source: no
+    vendor:        Panasonic
+    osd string:    CECTester
+    CEC version:   1.4
+    power status:  on
+    language:      eng
 
-In the plugin config directory create the file cecremote.xml (an example can
-be found in the contrib directory) with an device entry for each device which
-should be handled by this plugin. 
+In the plugin configuration directory create the file cecremote.xml (an example 
+can be found in the contrib directory) with an device entry for each device 
+which should be handled by this plugin. 
 
 In this example device#8 (osd string=CECTester) is the address of the libCEC 
 device (VDR).
+
+Format of the configuration file :
+===================================
+
+The configuration file is in XML format The root element is <config>. Within
+this element one <global> child element is used to specify global options
+for this plugin and several <menu> child elements.
+
+* Global
+====================================
+
+The child elements of <global> are <cecdebug>, <onstart> and <onstop>.
+
+<cecdebug> : Debug level for CEC dbugging (see cec_log_level in cectypes.h)
+<onstart>  : A command list which is executed upon plugin start.
+<onstop>   : A command list which is executed upon plugin shutdown.
+
+For the desciption of a command list see below.
+
+* Menu
+====================================
+
+Defines a menu for executing CEC and shell commands.
+
+The menu tag must have the following attributes:
+  name    : The name of the menu (displayed in the OSD)
+  address : CEC device address.
+  
+The child elements of <menu> are <onstart>, <onstop>, <stillpic>,
+<onpoweron>, <onpoweroff>. <onstart>, <onstop> and <onpoweron>, <onpoweroff> 
+are mutually exclusive.
+
+<stillpic>  : Starts a stillpic player and waits until the player is stopped.
+              This tag can not be used with <onpoweron> and <onpoweroff>.
+<onstart>   : A command list which is executed when the menu entry is selected.
+<onstop>    : A command list which is executed if <stillpic> is present and 
+              the player is stopped.
+<onpoweron> : A command list which is executed if the device is currently 
+              powered off.
+<onpoweroff>: A command list which is executed if the device is currently 
+              powered on.
+
+* Command lists
+====================================
+
+A command list defines a list of actions to be executed.
+
+The child elements of a command list are <poweron>, <poweroff>, <makeactive>
+and <exec>.
+
+<poweron>CEC Device Address</poweron>       : Powers the device on.
+<poweroff>CEC Device Address</poweroff>     : Powers the device off.
+<makeactive>CEC Device Address</makeactive> : Makes the given device the active
+                                              device.
+<exec>Command</exec>                        : Executes a shell command.
+
 

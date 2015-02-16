@@ -30,16 +30,6 @@ cCECControl::~cCECControl() {
 void cCECControl::Hide(void)
 {
     Dsyslog("Hide cCECControl");
- //   cMutexLock MutexLock(&mControlMutex);
-  /*  if (mMenuPlaylist != NULL) {
-        mMenuPlaylist->Clear();
-        delete mMenuPlaylist;
-        cStatus::MsgOsdClear();
-#ifdef USE_GRAPHTFT
-        cStatus::MsgOsdMenuDestroy();
-#endif
-    }
-    mMenuPlaylist = NULL;*/
 }
 
 

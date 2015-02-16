@@ -58,7 +58,8 @@ const char *cPluginCecremote::MainMenuEntry(void)
 
 const char *cPluginCecremote::CommandLineHelp(void)
 {
-    return "-c  --configdir <dir>     Directory for config files : cecremote\n";
+    return "-c  --configdir <dir>     Directory for config files : cecremote\n"
+           "-x  --configfile <file>   Config file : cecremote.xml";
 }
 
 bool cPluginCecremote::ProcessArgs(int argc, char *argv[])
@@ -66,15 +67,19 @@ bool cPluginCecremote::ProcessArgs(int argc, char *argv[])
     static struct option long_options[] =
     {
             { "configdir",      required_argument, NULL, 'c' },
+            { "configfile",     required_argument, NULL, 'x' },
             { NULL }
     };
     int c, option_index = 0;
 
-    while ((c = getopt_long(argc, argv, "c:",
+    while ((c = getopt_long(argc, argv, "c:x:",
             long_options, &option_index)) != -1) {
         switch (c) {
         case 'c':
             mCfgDir.assign(optarg);
+            break;
+        case 'x':
+            mCfgFile.assign(optarg);
             break;
         default:
             Esyslog("CECRemotePlugin unknown option %c", c);
@@ -100,7 +105,6 @@ bool cPluginCecremote::Start(void)
         return false;
     }
     mCECLogLevel = mConfigFileParser.mGlobalOptions.cec_debug;
-/* TODO */
     mCECRemote = new cCECRemote(mCECLogLevel,
                                 mConfigFileParser.mGlobalOptions.onStart,
                                 mConfigFileParser.mGlobalOptions.onStop);
@@ -157,14 +161,10 @@ void cPluginCecremote::StartPlayer(const cCECMenu &menuitem)
 
 cOsdObject *cPluginCecremote::MainMenuAction(void)
 {
-   /* int count = mCECDevMenuInfo.size(); // TODO handle only one entry
-       if (count == 0) {
-           return NULL;
-       }
-       else if (count == 1) {
-           StartPlayer(0);
-           return NULL;
-       }*/
+    if (cCECOsd::mMenuItems.size() == 1) {
+        StartPlayer(cCECOsd::mMenuItems[0]);
+        return NULL;
+    }
     return new cCECOsd(this);
 }
 

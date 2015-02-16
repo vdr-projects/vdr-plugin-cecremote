@@ -45,7 +45,7 @@ int CecCommand(void *cbParam, const cec_command command)
 // Callback for CEC Alert
 int CecAlert(void *cbParam, const libcec_alert type, const libcec_parameter param)
 {
-    Dsyslog("CecAlert %d", type);
+    Dsyslog("CecAlert %d)", type);
     switch (type)
     {
     case CEC_ALERT_CONNECTION_LOST:
