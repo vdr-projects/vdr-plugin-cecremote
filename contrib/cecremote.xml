@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--  
-	Normally the following cec logical addresses are uses:
+	Normally the following cec logical addresses are used:
 	0 : TV
 	4 : DVD/Blueray player
 	8 : Own libCEC address
@@ -73,4 +73,26 @@
 		</onstart>
 	</menu>
 	
+	<!--  Menu to togle power of TV -->
+	<menu name="TV TOGGLE" address="0">
+		<!-- When menu is selected, toggle TV power state -->
+		<onpoweron>
+			<!--  Switch on the programmable power outlet for the TV -->
+			<exec>sispmctl -o 3</exec>
+			<!--  Wait until TV settles -->
+			<exec>sleep 10</exec>
+			<!--  Send CEC commands to power on TV -->
+			<poweron>0</poweron>
+			<makeactive>8</makeactive>
+		</onpoweron>
+		<onpoweroff>
+		<!--  Send CEC commands to power off TV -->
+			<poweroff>0</poweroff>
+			<makeactive>8</makeactive>
+			<!--  Wait until TV finishes switching off -->
+			<exec>sleep 10</exec>
+			<!--  Switch off the programmable power outlet for the TV -->
+			<exec>sispmctl -f 3</exec>
+		</onpoweroff>
+	</menu>
 </config>

@@ -44,14 +44,26 @@ public:
 };
 
 class cCECMenu {
+    friend class cCECConfigFileParser;
 public:
+    typedef enum {
+        UNDEFINED,
+        USE_ONSTART,
+        USE_ONPOWER
+    } PowerToggleState;
     std::string mMenuTitle;
     std::string mStillPic;
     cec_logical_address mAddress;
     cCmdQueue onStart;
     cCmdQueue onStop;
+    cCmdQueue onPowerOn;
+    cCmdQueue onPowerOff;
 
-    cCECMenu() : mAddress(CECDEVICE_UNKNOWN) {};
+    cCECMenu() : mAddress(CECDEVICE_UNKNOWN), mPowerToggle(UNDEFINED) {};
+
+    bool isMenuPowerToggle() const { return (mPowerToggle == USE_ONPOWER); };
+private:
+    PowerToggleState mPowerToggle;
 };
 
 typedef std::list<cCECMenu> cCECMenuList;
@@ -97,6 +109,8 @@ private:
     XMLCh *mAddress;
     XMLCh *mMakeActive;
     XMLCh *mMakeInactive;
+    XMLCh *mOnPowerOn;
+    XMLCh *mOnPowerOff;
 
 public:
     cCECGlobalOptions mGlobalOptions;

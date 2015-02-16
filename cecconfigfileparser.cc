@@ -42,6 +42,8 @@ cCECConfigFileParser::cCECConfigFileParser()
     mAddress = XMLString::transcode("address");
     mMakeActive = XMLString::transcode("makeactive");
     mMakeInactive = XMLString::transcode("makeinactive");
+    mOnPowerOn = XMLString::transcode("onpoweron");
+    mOnPowerOff = XMLString::transcode("onpoweroff");
 }
 
 cCECConfigFileParser::~cCECConfigFileParser()
@@ -61,6 +63,8 @@ cCECConfigFileParser::~cCECConfigFileParser()
     XMLString::release(&mAddress);
     XMLString::release(&mMakeActive);
     XMLString::release(&mMakeInactive);
+    XMLString::release(&mOnPowerOn);
+    XMLString::release(&mOnPowerOff);
 }
 
 void cCECConfigFileParser::parseList(const DOMNodeList *nodelist,
@@ -200,12 +204,62 @@ void cCECConfigFileParser::parseMenu(const DOMNodeList *list, DOMElement *menuEl
             }
             else if (XMLString::compareIString(curElem->getNodeName(),
                     mOnStart) == 0) {
-                parseList(li, menu.onStart);
+                if ((menu.mPowerToggle == cCECMenu::UNDEFINED) ||
+                    (menu.mPowerToggle == cCECMenu::USE_ONSTART))
+                {
+                    menu.mPowerToggle = cCECMenu::USE_ONSTART;
+                    parseList(li, menu.onStart);
+                }
+                else
+                {
+                    string s = "Either <onstart> or <onpower..> is allowed";
+                    throw cCECConfigException(0, s);
+                }
             }
             else if (XMLString::compareIString(curElem->getNodeName(),
                     mOnStop) == 0) {
-                parseList(li, menu.onStop);
+                if ((menu.mPowerToggle == cCECMenu::UNDEFINED) ||
+                   (menu.mPowerToggle == cCECMenu::USE_ONSTART))
+               {
+                   menu.mPowerToggle = cCECMenu::USE_ONSTART;
+                   parseList(li, menu.onStop);
+               }
+               else
+               {
+                   string s = "Either <onstop> or <onpower..> is allowed";
+                   throw cCECConfigException(0, s);
+               }
             }
+            // TODO
+            else if (XMLString::compareIString(curElem->getNodeName(),
+                    mOnPowerOn) == 0) {
+                if ((menu.mPowerToggle == cCECMenu::UNDEFINED) ||
+                    (menu.mPowerToggle == cCECMenu::USE_ONPOWER))
+                {
+                    menu.mPowerToggle = cCECMenu::USE_ONPOWER;
+                    parseList(li, menu.onPowerOn);
+                }
+                else
+                {
+                    string s = "Either <onstart>/<onstop> or <onpoweron> is allowed";
+                    throw cCECConfigException(0, s);
+                }
+            }
+            else if (XMLString::compareIString(curElem->getNodeName(),
+                    mOnPowerOff) == 0) {
+                if ((menu.mPowerToggle == cCECMenu::UNDEFINED) ||
+                   (menu.mPowerToggle == cCECMenu::USE_ONPOWER))
+               {
+                   menu.mPowerToggle = cCECMenu::USE_ONPOWER;
+                   parseList(li, menu.onPowerOff);
+               }
+               else
+               {
+                   string s = "Either <onstart>/<onstop> or <onpoweroff> is allowed";
+                   throw cCECConfigException(0, s);
+               }
+            }
+            // TODO
             else {
                 char *str = XMLString::transcode(curElem->getNodeName());
                 string s = "Invalid Command ";
@@ -214,6 +268,16 @@ void cCECConfigFileParser::parseMenu(const DOMNodeList *list, DOMElement *menuEl
                 throw cCECConfigException(0, s);
             }
         }
+    }
+    if (menu.mPowerToggle == cCECMenu::UNDEFINED) {
+        string s = "At least one of the following tags are needed: <onstart> <onstop> <onpoweron> <onpoweroff>";
+        throw cCECConfigException(0, s);
+    }
+    if ((menu.mPowerToggle == cCECMenu::USE_ONPOWER) &&
+        (!menu.mStillPic.empty()))
+    {
+        string s = "<StillPic> not allowed for <onpoweron> or <onpoweroff>";
+        throw cCECConfigException(0, s);
     }
     mMenuList.push_back(menu);
 }

@@ -230,6 +230,12 @@ void cCECRemote::Action(void)
                 }
             }
             break;
+        case CEC_EXECSHELL:
+            Dsyslog ("Exec: %s", cmd.mExec.c_str());
+            if (system(cmd.mExec.c_str()) < 0) {
+                Esyslog("Exec failed");
+            }
+            break;
         case CEC_TIMEOUT:
             break;
         default:
@@ -420,6 +426,32 @@ bool cCECRemote::Initialize(void)
 
     Dsyslog("END cCECRemote::Initialize");
     return false;
+}
+
+void cCECRemote::ExecToggle(cec_logical_address addr,
+                            const cCmdQueue &poweron, const cCmdQueue &poweroff)
+{
+    // Wait until queue is empty
+    cCondWait w;
+    bool full = true;
+    while (full) {
+        mQueueMutex.Lock();
+        full = !mQueue.empty();
+        mQueueMutex.Unlock();
+        if (full) {
+            w.Wait(100);
+       }
+    }
+
+    cec_power_status status = mCECAdapter->GetDevicePowerStatus(addr);
+    Dsyslog("ExecToggle: %s", mCECAdapter->ToString(status));
+
+    if (status == CEC_POWER_STATUS_ON) {
+        ExecCmd(poweroff);
+    }
+    else {
+        ExecCmd(poweron);
+    }
 }
 
 void cCECRemote::ExecCmd(const cCmdQueue &cmdList)

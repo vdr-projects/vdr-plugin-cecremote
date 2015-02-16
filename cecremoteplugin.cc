@@ -135,12 +135,17 @@ time_t cPluginCecremote::WakeupTime(void)
     return 0;
 }
 
-void cPluginCecremote::StartPlayer(const cCECMenu &menuitem) {
-
+void cPluginCecremote::StartPlayer(const cCECMenu &menuitem)
+{
     // If no <stillpic> is used, execute only onStart section
     if (menuitem.mStillPic.empty()) {
         Isyslog("Executing: %s", menuitem.mMenuTitle.c_str());
-        ExecCmd(menuitem.onStart);
+        if (menuitem.isMenuPowerToggle()) {
+            ExecToggle(menuitem);
+        }
+        else {
+            ExecCmd(menuitem.onStart);
+        }
     }
     // otherwise start a new player
     else {

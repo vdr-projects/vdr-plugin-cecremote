@@ -79,10 +79,13 @@ public:
     ~cCECRemote();
     bool Initialize(void);
     void PushCmd(const cCECCmd &cmd);
+
     void ExecCmd(const cCmdQueue &cmdList);
+    void ExecToggle(cec_logical_address addr, const cCmdQueue &poweron, const cCmdQueue &poweroff);
     int getCECLogLevel() {return mCECLogLevel;}
     ICECAdapter            *mCECAdapter;
 private:
+
     static eKeys mDefaultKeyMap[CEC_USER_CONTROL_CODE_MAX+2][2];
     int                    mCECLogLevel;
     uint8_t                mDevicesFound;

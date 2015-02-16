@@ -39,6 +39,9 @@ protected:
         const std::string cf = GetConfigDir() + mCfgFile;
         return cf;
     }
+    void ExecToggle(const cCECMenu menu) {
+        mCECRemote->ExecToggle(menu.mAddress, menu.onPowerOn, menu.onPowerOff);
+    }
 
 public:
     cPluginCecremote(void);
