@@ -2,21 +2,21 @@
 <!--  
 	Normally the following cec logical addresses are used:
 	0 : TV
-	4 : DVD/Blueray player
-	8 : Own libCEC address
+	4 : Own libCEC address
+	8 : DVD/Blueray player
 -->
 <config>
 	<global>
 		<cecdebug>7</cecdebug>
-		<!--  On VDR start power on TV, make own device active -->
+		<!--  On VDR start power on TV, make VDR device active -->
 		<onstart>
 			<poweron>0</poweron>
-			<makeactive>8</makeactive>
+			<makeactive />
 		</onstart>
 		<!--  On VDR stop power off TV and DVD/Blueray player -->
 		<onstop>
 			<poweroff>0</poweroff>
-			<poweroff>4</poweroff>
+			<poweroff>8</poweroff>
 		</onstop>
 	</global>
 	
@@ -26,31 +26,36 @@
 		<!--  TODO config option for selecting broadcast type -->
 		<onstart>
 			<poweron>0</poweron>
-			<makeactive>0</makeactive>
+			<makeinactive />
 		</onstart>
 		
-		<!--  stillpic starts a VDR-Player -->
-		<stillpic>/video/conf/plugins/cecremote/blueray.mpg</stillpic>
+		<!-- player starts a VDR-Player -->
+		<player file="/video/conf/plugins/cecremote/blueray.mpg">
+			<stop>Stop</stop>
+			<stop>Back</stop>
+		</player>
 		<!--  When returning to VDR poweroff TV and make VDR active -->
 		<onstop>
 			<poweroff>0</poweroff>
-			<makeactive>8</makeactive>
+			<makeactive />
 		</onstop>
 	</menu>
 	
 	<!--  Menu for Blueray/DVD player -->
-	<menu name="Blueray" address="4">
+	<menu name="Blueray" address="8">
 		<!--  When menu is selected, switch on TV and player and make player active -->
 		<onstart>
 			<poweron>0</poweron>
-			<poweron>4</poweron>
-			<makeactive>4</makeactive>
+			<poweron>8</poweron>
 		</onstart>
-		<stillpic>/video/conf/plugins/cecremote/blueray.mpg</stillpic>
-		<!--  When returning to VDR poweroff Player and make VDR active -->
+		<player file="/video/conf/plugins/cecremote/blueray.mpg">
+			<stop>Back</stop>
+			<stop>Menu</stop>
+		</player>
+		<!--  When returning to VDR poweroff DVD Player and make VDR active -->
 		<onstop>
-			<poweroff>4</poweroff>
-			<makeactive>8</makeactive>
+			<poweroff>8</poweroff>
+			<makeactive />
 		</onstop>
 	</menu>
 	
@@ -58,8 +63,8 @@
 	<menu name="TV ON" address="0">
 		<!-- When menu is selected, switch on TV,                    -->
 		<!-- leaving VDR the active device. Start no player, no      -->
-		<!-- stillpic tag, so that the TV displays the VDR output    -->
-		<!-- When stillpic is not used, onstop is ignored            -->
+		<!-- player tag, so that the TV displays the VDR output    -->
+		<!-- When player is not used, onstop is ignored            -->
 		<onstart>
 			<poweron>0</poweron>
 		</onstart>
@@ -69,7 +74,7 @@
 		<!-- When menu is selected, switch off TV        -->
 		<onstart>
 			<poweroff>0</poweroff>
-			<makeactive>8</makeactive>
+			<makeactive />
 		</onstart>
 	</menu>
 	
@@ -83,12 +88,12 @@
 			<exec>sleep 10</exec>
 			<!--  Send CEC commands to power on TV -->
 			<poweron>0</poweron>
-			<makeactive>8</makeactive>
+			<makeactive />
 		</onpoweron>
 		<onpoweroff>
 		<!--  Send CEC commands to power off TV -->
 			<poweroff>0</poweroff>
-			<makeactive>8</makeactive>
+			<makeactive />
 			<!--  Wait until TV finishes switching off -->
 			<exec>sleep 10</exec>
 			<!--  Switch off the programmable power outlet for the TV -->

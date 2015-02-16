@@ -87,16 +87,16 @@ For the desciption of a command list see below.
 
 Defines a menu for executing CEC and shell commands.
 
-The menu tag must have the following attributes:
+The <menu> tag must have the following attributes:
   name    : The name of the menu (displayed in the OSD)
   address : CEC device address.
   
-The child elements of <menu> are <onstart>, <onstop>, <stillpic>,
+The child elements of <menu> are <onstart>, <onstop>, <player>,
 <onpoweron>, <onpoweroff>. <onstart>, <onstop> and <onpoweron>, <onpoweroff> 
 are mutually exclusive.
 
-<stillpic>  : Starts a stillpic player and waits until the player is stopped.
-              This tag can not be used with <onpoweron> and <onpoweroff>.
+<player>    : (see below).
+              
 <onstart>   : A command list which is executed when the menu entry is selected.
 <onstop>    : A command list which is executed if <stillpic> is present and 
               the player is stopped.
@@ -104,6 +104,17 @@ are mutually exclusive.
               powered off.
 <onpoweroff>: A command list which is executed if the device is currently 
               powered on.
+
+* Player 
+====================================
+Starts a stillpic player and waits until the player is stopped. This tag can 
+not be used with <onpoweron> and <onpoweroff>.
+
+The <player> tag must have the following attribute:
+  file : Filename of the still-picture in mpeg format.
+  
+The child element of <player> is <stop>. The <stop> tag can be used
+several times and contains a VDR-Key to stop this player.
 
 * Command lists
 ====================================
@@ -116,7 +127,7 @@ and <exec>.
 <poweron>CEC Device Address</poweron>       : Powers the device on.
 <poweroff>CEC Device Address</poweroff>     : Powers the device off.
 <makeactive>CEC Device Address</makeactive> : Makes the given device the active
-                                              device.
+                                              device. (TODO check Device Address)
 <exec>Command</exec>                        : Executes a shell command.
 
 

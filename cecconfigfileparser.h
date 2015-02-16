@@ -30,9 +30,7 @@
 
 #include "cecremote.h"
 
-typedef std::queue<std::string> stringQueue;
-typedef std::list<std::string> stringList;
-typedef std::set<std::string> stringSet;
+typedef std::set<eKeys> keySet;
 
 class cCECGlobalOptions {
 public:
@@ -53,6 +51,7 @@ public:
     } PowerToggleState;
     std::string mMenuTitle;
     std::string mStillPic;
+    keySet mStopKeys;
     cec_logical_address mAddress;
     cCmdQueue onStart;
     cCmdQueue onStop;
@@ -62,6 +61,7 @@ public:
     cCECMenu() : mAddress(CECDEVICE_UNKNOWN), mPowerToggle(UNDEFINED) {};
 
     bool isMenuPowerToggle() const { return (mPowerToggle == USE_ONPOWER); };
+    bool isStopKey(eKeys key) { return (mStopKeys.find(key) != mStopKeys.end()); };
 private:
     PowerToggleState mPowerToggle;
 };
@@ -93,7 +93,8 @@ private:
     void parseGlobal(const xercesc::DOMNodeList *list);
     void parseMenu(const xercesc::DOMNodeList *list, xercesc::DOMElement *menuElem);
     void parseList(const xercesc::DOMNodeList *nodelist, cCmdQueue &cmdlist);
-
+    void parsePlayer(const xercesc::DOMNodeList *nodelist, xercesc::DOMElement *playElem,
+                     cCECMenu &menu);
     XMLCh *mWildcard;
     XMLCh *mGlobal;
     XMLCh *mMenu;
@@ -105,12 +106,14 @@ private:
     XMLCh *mPowerOff;
     XMLCh *mExec;
     XMLCh *mName;
-    XMLCh *mStillPic;
+    XMLCh *mPlayer;
     XMLCh *mAddress;
     XMLCh *mMakeActive;
     XMLCh *mMakeInactive;
     XMLCh *mOnPowerOn;
     XMLCh *mOnPowerOff;
+    XMLCh *mFile;
+    XMLCh *mStop;
 
 public:
     cCECGlobalOptions mGlobalOptions;

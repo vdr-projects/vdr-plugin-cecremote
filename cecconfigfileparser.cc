@@ -38,12 +38,14 @@ cCECConfigFileParser::cCECConfigFileParser()
     mPowerOff = XMLString::transcode("poweroff");
     mExec = XMLString::transcode("exec");
     mName = XMLString::transcode("name");
-    mStillPic = XMLString::transcode("stillpic");
+    mPlayer = XMLString::transcode("player");
     mAddress = XMLString::transcode("address");
     mMakeActive = XMLString::transcode("makeactive");
     mMakeInactive = XMLString::transcode("makeinactive");
     mOnPowerOn = XMLString::transcode("onpoweron");
     mOnPowerOff = XMLString::transcode("onpoweroff");
+    mFile = XMLString::transcode("file");
+    mStop =  XMLString::transcode("stop");
 }
 
 cCECConfigFileParser::~cCECConfigFileParser()
@@ -59,12 +61,79 @@ cCECConfigFileParser::~cCECConfigFileParser()
     XMLString::release(&mPowerOff);
     XMLString::release(&mExec);
     XMLString::release(&mName);
-    XMLString::release(&mStillPic);
+    XMLString::release(&mPlayer);
     XMLString::release(&mAddress);
     XMLString::release(&mMakeActive);
     XMLString::release(&mMakeInactive);
     XMLString::release(&mOnPowerOn);
     XMLString::release(&mOnPowerOff);
+    XMLString::release(&mFile);
+    XMLString::release(&mStop);
+}
+
+void cCECConfigFileParser::parsePlayer(const DOMNodeList *nodelist,
+                                       DOMElement *playElem, cCECMenu &menu)
+{
+    const XMLCh *attr;
+
+    attr = playElem->getAttribute(mFile);
+    char *str = XMLString::transcode(attr);
+    menu.mStillPic = str;
+    XMLString::release(&str);
+    if (menu.mStillPic.empty()) {
+        string s = "Missing file name";
+        Esyslog(s.c_str());
+        throw cCECConfigException(0, s);
+    }
+    Dsyslog("StillPic = %s\n", menu.mStillPic.c_str());
+    const XMLSize_t nodeCount = nodelist->getLength();
+
+    for(XMLSize_t i = 0; i < nodeCount; ++i)
+    {
+        DOMNode* currentNode = nodelist->item(i);
+
+        if (currentNode->getNodeType() == DOMNode::ELEMENT_NODE)  // is element
+        {
+            char *str = XMLString::transcode(currentNode->getNodeName());
+            Dsyslog("     player %s\n", str);
+            XMLString::release(&str);
+            // Found node which is an Element. Re-cast node as element
+            DOMElement* curElem =
+                    dynamic_cast<xercesc::DOMElement*>(currentNode);
+
+            DOMNodeList *li = curElem->getChildNodes();
+            if (li->getLength() > 1) {
+                str = XMLString::transcode(currentNode->getNodeName());
+                string s = "Too much arguments for ";
+                s += str;
+                XMLString::release(&str);
+                throw cCECConfigException(0, s);
+            }
+            if (XMLString::compareIString(curElem->getNodeName(),
+                                          mStop) == 0) {
+                str = XMLString::transcode(curElem->getTextContent());
+                eKeys k = cKey::FromString(str);
+                string s = "Invalid key ";
+                s += str;
+                XMLString::release(&str);
+                if (k == kNone) {
+                    throw cCECConfigException(0, s);
+                }
+                menu.mStopKeys.insert(k);
+            }
+            else {
+                str = XMLString::transcode(currentNode->getNodeName());
+                string s = "Invalid command ";
+                s += str;
+                XMLString::release(&str);
+                throw cCECConfigException(0, s);
+            }
+        }
+    }
+    if (menu.mStopKeys.size() < 1) {
+        string s = "<player> requires at least one <stop>";
+        throw cCECConfigException(0, s);
+    }
 }
 
 void cCECConfigFileParser::parseList(const DOMNodeList *nodelist,
@@ -115,16 +184,14 @@ void cCECConfigFileParser::parseList(const DOMNodeList *nodelist,
             } else if (XMLString::compareIString(curElem->getNodeName(),
                                                 mMakeActive) == 0) {
                 cmd.mCmd = CEC_MAKEACTIVE;
-                cmd.mAddress = (cec_logical_address)
-                     XMLString::parseInt(curElem->getTextContent());
+                cmd.mAddress = CECDEVICE_UNKNOWN;
                 cmd.mExec = "";
                 Dsyslog("         MAKEACTIVE %d\n", cmd.mAddress);
                 cmdlist.push_back(cmd);
             } else if (XMLString::compareIString(curElem->getNodeName(),
                                                 mMakeInactive) == 0) {
                 cmd.mCmd = CEC_MAKEINACTIVE;
-                cmd.mAddress = (cec_logical_address)
-                     XMLString::parseInt(curElem->getTextContent());
+                cmd.mAddress = CECDEVICE_UNKNOWN;
                 cmd.mExec = "";
                 Dsyslog("         MAKEINACTIVE %d\n", cmd.mAddress);
                 cmdlist.push_back(cmd);
@@ -190,17 +257,8 @@ void cCECConfigFileParser::parseMenu(const DOMNodeList *list, DOMElement *menuEl
             DOMNodeList *li = curElem->getChildNodes();
 
             if (XMLString::compareIString(curElem->getNodeName(),
-                    mStillPic) == 0) {
-                if (li->getLength() > 1) {
-                    string s = "Too much arguments";
-                    s += StringTools::IntToStr(li->getLength());
-                    throw cCECConfigException(0, s);
-                }
-                char *str = XMLString::transcode(curElem->getTextContent());
-                menu.mStillPic = str;
-                XMLString::release(&str);
-
-                Dsyslog("StillPic = %s\n", menu.mStillPic.c_str());
+                    mPlayer) == 0) {
+                parsePlayer(li, curElem, menu);
             }
             else if (XMLString::compareIString(curElem->getNodeName(),
                     mOnStart) == 0) {
@@ -230,7 +288,6 @@ void cCECConfigFileParser::parseMenu(const DOMNodeList *list, DOMElement *menuEl
                    throw cCECConfigException(0, s);
                }
             }
-            // TODO
             else if (XMLString::compareIString(curElem->getNodeName(),
                     mOnPowerOn) == 0) {
                 if ((menu.mPowerToggle == cCECMenu::UNDEFINED) ||
@@ -259,7 +316,6 @@ void cCECConfigFileParser::parseMenu(const DOMNodeList *list, DOMElement *menuEl
                    throw cCECConfigException(0, s);
                }
             }
-            // TODO
             else {
                 char *str = XMLString::transcode(curElem->getNodeName());
                 string s = "Invalid Command ";

@@ -19,7 +19,7 @@ using namespace std;
 
 eKeys cCECRemote::mDefaultKeyMap[CEC_USER_CONTROL_CODE_MAX+2][2];
 // Callback for CEC KeyPress
-int CecKeyPress(void *cbParam, const cec_keypress key)
+static int CecKeyPressCallback(void *cbParam, const cec_keypress key)
 {
     cCECRemote *rem = (cCECRemote *)cbParam;
 
@@ -34,7 +34,7 @@ int CecKeyPress(void *cbParam, const cec_keypress key)
 }
 
 // Callback for CEC Command
-int CecCommand(void *cbParam, const cec_command command)
+static int CecCommandCallback(void *cbParam, const cec_command command)
 {
     cCECRemote *rem = (cCECRemote *)cbParam;
     Dsyslog("CEC Command %d : %s", command.opcode, rem->mCECAdapter->ToString(command.opcode));
@@ -43,7 +43,7 @@ int CecCommand(void *cbParam, const cec_command command)
 
 
 // Callback for CEC Alert
-int CecAlert(void *cbParam, const libcec_alert type, const libcec_parameter param)
+static int CecAlertCallback(void *cbParam, const libcec_alert type, const libcec_parameter param)
 {
     Dsyslog("CecAlert %d)", type);
     switch (type)
@@ -59,7 +59,7 @@ int CecAlert(void *cbParam, const libcec_alert type, const libcec_parameter para
     return 0;
 }
 
-int CecLogMessage(void *cbParam, const cec_log_message message)
+static int CecLogMessageCallback(void *cbParam, const cec_log_message message)
 {
     cCECRemote *rem = (cCECRemote *)cbParam;
     if ((message.level & rem->getCECLogLevel()) == message.level)
@@ -101,6 +101,12 @@ int CecLogMessage(void *cbParam, const cec_log_message message)
     return 0;
 }
 
+static void CECSourceActivatedCallback (void *cbParam,
+                                        const cec_logical_address address,
+                                        const uint8_t activated)
+{
+    Dsyslog("CECSourceActivatedCallback adress %d activated %d", address, activated);
+}
 /*
  * CEC remote
  */
@@ -208,11 +214,11 @@ void cCECRemote::Action(void)
             break;
         case CEC_MAKEACTIVE:
             Dsyslog ("Make active");
-            mCECAdapter->SetActiveSource();
+            mCECAdapter->SetActiveSource(); /* TODO check */
             break;
         case CEC_MAKEINACTIVE:
             Dsyslog ("Make inactive");
-            mCECAdapter->SetInactiveView();
+            mCECAdapter->SetInactiveView(); /* TODO check */
             break;
         case CEC_VDRKEYPRESS:
             ceckey = VDRtoCECKey((eKeys)cmd.mVal);
@@ -267,10 +273,11 @@ bool cCECRemote::Initialize(void)
     Dsyslog("cCECRemote::Initialize");
     // Initialize Callbacks
     mCECCallbacks.Clear();
-    mCECCallbacks.CBCecLogMessage  = &::CecLogMessage;
-    mCECCallbacks.CBCecKeyPress    = &::CecKeyPress;
-    mCECCallbacks.CBCecCommand     = &::CecCommand;
-    mCECCallbacks.CBCecAlert       = &::CecAlert;
+    mCECCallbacks.CBCecLogMessage  = &::CecLogMessageCallback;
+    mCECCallbacks.CBCecKeyPress    = &::CecKeyPressCallback;
+    mCECCallbacks.CBCecCommand     = &::CecCommandCallback;
+    mCECCallbacks.CBCecAlert       = &::CecAlertCallback;
+    mCECCallbacks.CBCecSourceActivated = &::CECSourceActivatedCallback;
 
     // Setup CEC configuration
     mCECConfig.Clear();
@@ -464,9 +471,11 @@ void cCECRemote::ExecCmd(const cCmdQueue &cmdList)
 
 void cCECRemote::PushCmd(const cCECCmd &cmd)
 {
-    Dsyslog("cCECRemote::PushCmd %d", cmd.mCmd);
+    Dsyslog("cCECRemote::PushCmd %d (size %d)", cmd.mCmd, mQueue.size());
     cMutexLock lock(&mQueueMutex);
+    mQueueMutex.Lock();
     mQueue.push_back(cmd);
+    mQueueMutex.Unlock();
     mQueueWait.Signal();
 }
 

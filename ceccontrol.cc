@@ -37,24 +37,19 @@ eOSState cCECControl::ProcessKey(eKeys key)
 {
     cKey k;
     if (key != kNone) Dsyslog("cCECControl ProcessKey %d %s", key, k.ToString(key,false));
-    eOSState state = osContinue;
-    switch (key) {
-    case kMenu:
-    case kStop:
-        state = osEnd;
-        break;
-    case kNone:
-        break;
-    default:
-        cCECCmd cmd(CEC_VDRKEYPRESS, (int)key, mMenuItem.mAddress);
-        mPlugin->PushCmd(cmd);
-        break;
+
+    if (mMenuItem.isStopKey(key)) {
+        Hide();
+        return osEnd;
+    }
+    if (key == kNone) {
+        return osContinue;
     }
 
-    if (state == osEnd) {
-        Hide();
-    }
-    return (state);
+    cCECCmd cmd(CEC_VDRKEYPRESS, (int)key, mMenuItem.mAddress);
+    mPlugin->PushCmd(cmd);
+
+    return (osContinue);
 }
 
 

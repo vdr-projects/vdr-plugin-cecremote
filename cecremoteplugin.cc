@@ -18,7 +18,7 @@
 #include "cecosd.h"
 #include "stringtools.h"
 
-static const char *VERSION        = "0.0.3";
+static const char *VERSION        = "0.1.0";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
 static const char *MAINMENUENTRY  = "CECremote";
 
