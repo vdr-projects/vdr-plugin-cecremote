@@ -14,3 +14,9 @@ VDR Plugin 'cecremote' Revision History
 - Remove need of std++11
 - When no stillpic tag is available, do not start a player
 
+2015-02-16: Version 0.1.0
+
+- Add basic documentation.
+- Add option -x to select a filename for the configuration file.
+- Renamed the <stillpic> tag to <player> and add a configuration tag to select
+  Keys for stopping the player.
