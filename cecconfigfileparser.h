@@ -11,13 +11,14 @@
 
 #ifndef CECCONFIGFILEPARSER_H_
 #define CECCONFIGFILEPARSER_H_
-
+/*
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/sax/HandlerBase.hpp>
 #include <xercesc/util/XMLString.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
-
+*/
+#include <pugixml.hpp>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -81,39 +82,28 @@ public:
     ~cCECConfigException() throw() {};
 
     const char *what() const throw() {
-        static std::string s = "Syntax error: ";
-       // s += std::to_string( mLineNr );
-        s += " " + mTxt;
+        char buf[10];
+        sprintf(buf,"%d\n", mLineNr);
+        static std::string s = "Syntax error in line ";
+        s += buf + mTxt;
         return s.c_str();
     }
 };
 
 class cCECConfigFileParser {
 private:
-    void parseGlobal(const xercesc::DOMNodeList *list);
-    void parseMenu(const xercesc::DOMNodeList *list, xercesc::DOMElement *menuElem);
-    void parseList(const xercesc::DOMNodeList *nodelist, cCmdQueue &cmdlist);
-    void parsePlayer(const xercesc::DOMNodeList *nodelist, xercesc::DOMElement *playElem,
-                     cCECMenu &menu);
-    XMLCh *mWildcard;
-    XMLCh *mGlobal;
-    XMLCh *mMenu;
-    XMLCh *mConfig;
-    XMLCh *mCecDebug;
-    XMLCh *mOnStart;
-    XMLCh *mOnStop;
-    XMLCh *mPowerOn;
-    XMLCh *mPowerOff;
-    XMLCh *mExec;
-    XMLCh *mName;
-    XMLCh *mPlayer;
-    XMLCh *mAddress;
-    XMLCh *mMakeActive;
-    XMLCh *mMakeInactive;
-    XMLCh *mOnPowerOn;
-    XMLCh *mOnPowerOff;
-    XMLCh *mFile;
-    XMLCh *mStop;
+    int getLineNumber(long offset);
+    bool hasElements(const pugi::xml_node node);
+    void parseGlobal(const pugi::xml_node node);
+    void parseMenu(const pugi::xml_node node);
+    void parseList(const pugi::xml_node node, cCmdQueue &cmdlist);
+    void parsePlayer(const pugi::xml_node node, cCECMenu &menu);
+
+    static const char *ONSTART;
+    static const char *ONSTOP;
+    static const char *ONPOWERON;
+    static const char *ONPOWEROFF;
+    const char* mXmlFile;
 
 public:
     cCECGlobalOptions mGlobalOptions;

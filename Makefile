@@ -33,13 +33,6 @@ ifneq (exists, $(shell pkg-config libcec && echo exists))
   $(error ******************************************************************)
 endif
 
-# Check for xerces-c
-
-ifneq (exists, $(shell pkg-config xerces-c && echo exists))
-  $(warning ******************************************************************)
-  $(warning 'xerces-c' not detected!)
-  $(error ******************************************************************)
-endif
 
 CFLAGS   = $(call PKGCFG,cflags)
 CXXFLAGS = $(call PKGCFG,cxxflags)
@@ -73,10 +66,8 @@ LIBS += $(shell pkg-config --libs libcec)
 CFLAGS += $(shell pkg-config --cflags libcec)
 CXXFLAGS += $(shell pkg-config --cflags libcec)
 
-# Flags for xerces xml parser
-LIBS += $(shell pkg-config --libs xerces-c)
-CFLAGS += $(shell pkg-config --cflags xerces-c)
-CXXFLAGS += $(shell pkg-config --cflags xerces-c)
+# Flags for pugixml xml parser
+LIBS += -lpugixml #$(shell pkg-config --libs xerces-c)
 
 ### The object files (add further files here):
 

@@ -12,6 +12,14 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 See the file COPYING for more information.
 
+Requirements
+==============
+  libCEC V2.2.0 
+  http://libcec.pulse-eight.com/
+  
+  PugiXML V1.5, XML parser for C++
+  http://pugixml.org/
+  
 Description:
 ==============
 
