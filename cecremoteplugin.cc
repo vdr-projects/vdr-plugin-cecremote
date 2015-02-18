@@ -18,7 +18,7 @@
 #include "cecosd.h"
 #include "stringtools.h"
 
-static const char *VERSION        = "0.1.0";
+static const char *VERSION        = "0.1.1";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
 static const char *MAINMENUENTRY  = "CECremote";
 
@@ -187,14 +187,27 @@ bool cPluginCecremote::Service(const char *Id, void *Data)
 
 const char **cPluginCecremote::SVDRPHelpPages(void)
 {
-    // Return help text for SVDRP commands this plugin implements
-    return NULL;
+    static const char *HelpPages[] = {
+            "LIST:  List CEC devices\n",
+            "KEYS:  List default keymap\n",
+            NULL
+    };
+    return HelpPages;
 }
+
 
 cString cPluginCecremote::SVDRPCommand(const char *Command, const char *Option, int &ReplyCode)
 {
-    // Process SVDRP commands this plugin implements
-    return NULL;
+    ReplyCode = 214;
+    if (strcasecmp(Command, "LIST") == 0) {
+        return mCECRemote->ListDevices();
+    }
+    else if (strcasecmp(Command, "KEYS") == 0) {
+        return "Not yet implemented";
+    }
+
+    ReplyCode = 901;
+    return "Error: Unexpected option";
 }
 
 VDRPLUGINCREATOR(cPluginCecremote); // Don't touch this!

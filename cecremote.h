@@ -77,12 +77,13 @@ public:
     cCECRemote(int loglevel, const cCmdQueue &onStart,
                const cCmdQueue &onStop);
     ~cCECRemote();
-    bool Initialize(void);
+    virtual bool Initialize(void) {return false;};
     void PushCmd(const cCECCmd &cmd);
 
     void ExecCmd(const cCmdQueue &cmdList);
     void ExecToggle(cec_logical_address addr, const cCmdQueue &poweron, const cCmdQueue &poweroff);
     int getCECLogLevel() {return mCECLogLevel;}
+    cString ListDevices();
     ICECAdapter            *mCECAdapter;
 private:
 

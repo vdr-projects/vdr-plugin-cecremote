@@ -20,3 +20,9 @@ VDR Plugin 'cecremote' Revision History
 - Add option -x to select a filename for the configuration file.
 - Renamed the <stillpic> tag to <player> and add a configuration tag to select
   Keys for stopping the player.
+  
+2015-02-18: Version 0.1.1
+
+- Bugfix in initialization.
+- Modify keymap.
+- Add svdrp command LIST to list active CEC devices.
