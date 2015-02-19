@@ -277,14 +277,16 @@ cCECRemote::cCECRemote(int loglevel, const cCmdQueue &onStart,
       mDefaultKeyMap[CEC_USER_CONTROL_CODE_EJECT                       ] = { };
       mDefaultKeyMap[CEC_USER_CONTROL_CODE_FAVORITE_MENU               ] = { };
 
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_DOT                         ] = {  };
+      mDefaultKeyMap[CEC_USER_CONTROL_CODE_DOT                         ] = { };
       mDefaultKeyMap[CEC_USER_CONTROL_CODE_NEXT_FAVORITE               ] = { };
       mDefaultKeyMap[CEC_USER_CONTROL_CODE_INPUT_SELECT                ] = { };
       mDefaultKeyMap[CEC_USER_CONTROL_CODE_HELP                        ] = { };
       mDefaultKeyMap[CEC_USER_CONTROL_CODE_AN_CHANNELS_LIST            ] = { };*/
 
     Dsyslog("Load keymap");
-    InitKeyFromDefault(mKeyMap);
+    InitCECKeyFromDefault("default");
+    InitVDRKeyFromDefault("default");
+    SetActiveKeymaps("default", "default");
 
     Dsyslog("END cCECRemote::Initialize");
     Start();
@@ -299,6 +301,21 @@ cCECRemote::~cCECRemote()
         mCECAdapter->Close();
         UnloadLibCec(mCECAdapter);
     }
+}
+
+cString cCECRemote::ListKeymaps()
+{
+    cString s = "Keymaps CEC->VDR";
+    for (map<string, cVdrKeyMap>::iterator i = mVdrKeyMap.begin();
+         i != mVdrKeyMap.end(); ++i) {
+        s = cString::sprintf("%s\n  %s", *s, i->first.c_str());
+    }
+    s = cString::sprintf("%s\nKeymaps VDR->CEC", *s);
+    for (map<string, cCecKeyMap>::iterator i = mCecKeyMap.begin();
+         i != mCecKeyMap.end(); ++i) {
+        s = cString::sprintf("%s\n  %s", *s, i->first.c_str());
+    }
+    return s;
 }
 
 cString cCECRemote::ListDevices()
@@ -335,31 +352,29 @@ cString cCECRemote::ListDevices()
     return s;
 }
 
-cKeyList &cCECRemote::CECtoVDRKey(cec_user_control_code code)
+void cCECRemote::SetActiveKeymaps(const string &vdrkeymapid,
+                                  const string &ceckeymapid)
 {
-    if ((code >= 0) && (code <= CEC_USER_CONTROL_CODE_MAX)) {
-        return mKeyMap[code];
-    }
-    return mKeyMap[CEC_USER_CONTROL_CODE_MAX+1]; // Empty list
+    mActiveVdrKeyMap = mVdrKeyMap.at(vdrkeymapid);
+    mActiveCecKeyMap = mCecKeyMap.at(ceckeymapid);
 }
 
-cec_user_control_code cCECRemote::VDRtoCECKey(eKeys key)
+cKeyList cCECRemote::CECtoVDRKey(cec_user_control_code code)
 {
-    int i;
-    cKeyList inputKeys;
-
-    for (i = 0; i <= CEC_USER_CONTROL_CODE_MAX; i++)
-    {
-        inputKeys = CECtoVDRKey((cec_user_control_code)i);
-        for (cKeyListIterator keys = inputKeys.begin();
-             keys != inputKeys.end(); ++keys) {
-            eKeys k = *keys;
-            if (k == key) {
-                return (cec_user_control_code)i;
-            }
-        }
+    if ((code >= 0) && (code <= CEC_USER_CONTROL_CODE_MAX)) {
+        return mActiveVdrKeyMap[code];
     }
-    return CEC_USER_CONTROL_CODE_UNKNOWN;
+    cKeyList empty;
+    return empty; // Empty list
+}
+
+cCecList cCECRemote::VDRtoCECKey(eKeys key)
+{
+    if ((key >= 0) && (key <= kNone)) {
+         return mActiveCecKeyMap[key];
+    }
+    cCecList empty;
+    return empty;
 }
 
 bool cCECRemote::TextViewOn(cec_logical_address address)
@@ -374,6 +389,7 @@ bool cCECRemote::TextViewOn(cec_logical_address address)
 void cCECRemote::Action(void)
 {
     cCECCmd cmd;
+    cCecList ceckmap;
     cec_user_control_code ceckey;
     eKeys k;
 
@@ -388,7 +404,7 @@ void cCECRemote::Action(void)
         {
         case CEC_KEYRPRESS:
             if ((cmd.mVal >= 0) && (cmd.mVal <= CEC_USER_CONTROL_CODE_MAX)) {
-                const cKeyList &inputKeys = mKeyMap[cmd.mVal];
+                const cKeyList &inputKeys = mActiveVdrKeyMap[cmd.mVal];
                 cKeyListIterator ikeys;
                 for (ikeys = inputKeys.begin(); ikeys != inputKeys.end(); ++ikeys) {
                     k = *ikeys;
@@ -420,18 +436,23 @@ void cCECRemote::Action(void)
             mCECAdapter->SetInactiveView(); /* TODO check */
             break;
         case CEC_VDRKEYPRESS:
-            ceckey = VDRtoCECKey((eKeys)cmd.mVal);
-            Dsyslog ("Send Keypress VDR %d - > CEC 0x%02x", cmd.mVal, ceckey);
-            if (ceckey != CEC_USER_CONTROL_CODE_UNKNOWN) {
-                if (!mCECAdapter->SendKeypress(cmd.mAddress, ceckey, true)) {
-                    Esyslog("Keypress to %d %s failed",
-                            cmd.mAddress, mCECAdapter->ToString(cmd.mAddress));
-                    return;
-                }
-                cCondWait::SleepMs(50);
-                if (!mCECAdapter->SendKeyRelease(cmd.mAddress, true)) {
-                    Esyslog("SendKeyRelease to %d %s failed",
-                            cmd.mAddress, mCECAdapter->ToString(cmd.mAddress));
+            ceckmap = VDRtoCECKey((eKeys)cmd.mVal);
+
+            for (cCecListIterator ci = ceckmap.begin(); ci != ceckmap.end();
+                 ++ci) {
+                ceckey = *ci;
+                Dsyslog ("Send Keypress VDR %d - > CEC 0x%02x", cmd.mVal, ceckey);
+                if (ceckey != CEC_USER_CONTROL_CODE_UNKNOWN) {
+                    if (!mCECAdapter->SendKeypress(cmd.mAddress, ceckey, true)) {
+                        Esyslog("Keypress to %d %s failed",
+                                cmd.mAddress, mCECAdapter->ToString(cmd.mAddress));
+                        return;
+                    }
+                    cCondWait::SleepMs(50);
+                    if (!mCECAdapter->SendKeyRelease(cmd.mAddress, true)) {
+                        Esyslog("SendKeyRelease to %d %s failed",
+                                cmd.mAddress, mCECAdapter->ToString(cmd.mAddress));
+                    }
                 }
             }
             break;
@@ -451,8 +472,9 @@ void cCECRemote::Action(void)
     Dsyslog("cCECRemote stop worker thread");
 }
 
-void cCECRemote::InitKeyFromDefault(cVdrKeyMap &map)
+void cCECRemote::InitVDRKeyFromDefault(string id)
 {
+    cVdrKeyMap map;
     map.resize(CEC_USER_CONTROL_CODE_MAX + 2);
     for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX+1; i++) {
         map[i].clear();
@@ -465,6 +487,34 @@ void cCECRemote::InitKeyFromDefault(cVdrKeyMap &map)
     }
     // Empty list
     map[CEC_USER_CONTROL_CODE_MAX+1].clear();
+    mVdrKeyMap.insert(std::pair<string, cVdrKeyMap>(id, map));
+}
+
+cec_user_control_code cCECRemote::getFirstCEC(eKeys key)
+{
+    for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX; i++) {
+        if ((mDefaultKeyMap[i][0] == key) &&
+            (mDefaultKeyMap[i][1] == kNone)) {
+            return (cec_user_control_code)i;
+        }
+    }
+    return CEC_USER_CONTROL_CODE_UNKNOWN;
+}
+
+void cCECRemote::InitCECKeyFromDefault(string id)
+{
+    cCecKeyMap map;
+    cec_user_control_code ceckey;
+    map.resize(kNone);
+    for (int i = 0; i < kNone; i++) {
+        map[i].clear();
+        ceckey = getFirstCEC((eKeys)i);
+        if (ceckey != CEC_USER_CONTROL_CODE_UNKNOWN) {
+            map[i].push_back(ceckey);
+        }
+    }
+
+    mCecKeyMap.insert(std::pair<string, cCecKeyMap>(id, map));
 }
 
 void cCECRemote::ExecToggle(cec_logical_address addr,

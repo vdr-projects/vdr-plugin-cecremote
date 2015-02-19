@@ -6,6 +6,27 @@
 	8 : DVD/Blueray player
 -->
 <config>
+	<!-- Key mapping CEC Key to VDR -->
+	
+	<!-- 
+	<ceckeymap id="cecdefault">
+		<key code="CEC_USER_CONTROL_CODE_SELECT">
+			<value>kOK</value>
+		</key>
+		<key code="CEC_USER_CONTROL_CODE_RIGHT_UP">
+			<value>kRight</value>
+			<value>kUp</value>
+		</key>
+	</ceckeymap>
+	-->
+	<!-- Key mapping VDR Key to CEC -->
+	<!-- 
+	<vdrkeymap id="vdrdefault">
+		<key code="kOK">
+			<value>CEC_USER_CONTROL_CODE_SELECT</value>
+		</key>
+	</vdrkeymap>
+	-->
 	<global>
 		<cecdebug>7</cecdebug>
 		<!--  On VDR start power on TV, make VDR device active -->
@@ -22,6 +43,7 @@
 	
 	<!--  Menu for TV -->
 	<menu name="TV" address="0">
+		
 		<!--  When menu is selected, switch on and make TV active -->
 		<!--  TODO config option for selecting broadcast type -->
 		<onstart>
@@ -31,6 +53,7 @@
 		
 		<!-- player starts a VDR-Player -->
 		<player file="/video/conf/plugins/cecremote/blueray.mpg">
+		<!--  <keymaps cec="cecdefault" vdr="vdrdefault" /> -->
 			<stop>Stop</stop>
 			<stop>Back</stop>
 		</player>
@@ -49,6 +72,7 @@
 			<poweron>8</poweron>
 		</onstart>
 		<player file="/video/conf/plugins/cecremote/blueray.mpg">
+		<!--  <keymaps cec="cecdefault" vdr="vdrdefault" /> -->
 			<stop>Back</stop>
 			<stop>Menu</stop>
 		</player>

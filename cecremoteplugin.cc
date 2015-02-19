@@ -188,8 +188,8 @@ bool cPluginCecremote::Service(const char *Id, void *Data)
 const char **cPluginCecremote::SVDRPHelpPages(void)
 {
     static const char *HelpPages[] = {
-            "LIST:  List CEC devices\n",
-            "KEYS:  List default keymap\n",
+            "LIST:    List CEC devices\n",
+            "KEYMAPS: List available keymap\n",
             NULL
     };
     return HelpPages;
@@ -202,8 +202,8 @@ cString cPluginCecremote::SVDRPCommand(const char *Command, const char *Option, 
     if (strcasecmp(Command, "LIST") == 0) {
         return mCECRemote->ListDevices();
     }
-    else if (strcasecmp(Command, "KEYS") == 0) {
-        return "Not yet implemented";
+    else if (strcasecmp(Command, "KEYMAPS") == 0) {
+        return mCECRemote->ListKeymaps();
     }
 
     ReplyCode = 901;
