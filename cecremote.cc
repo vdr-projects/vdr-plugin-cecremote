@@ -21,12 +21,16 @@ using namespace std;
 // Callback for CEC KeyPress
 static int CecKeyPressCallback(void *cbParam, const cec_keypress key)
 {
+    static cec_user_control_code lastkey = CEC_USER_CONTROL_CODE_UNKNOWN;
     cCECRemote *rem = (cCECRemote *)cbParam;
 
     Dsyslog("key pressed %d (%d)", key.keycode, key.duration);
-    if ((key.keycode >= 0) && (key.keycode <= CEC_USER_CONTROL_CODE_MAX) &&
-        (key.duration == 0))
+    if (
+        ((key.keycode >= 0) && (key.keycode <= CEC_USER_CONTROL_CODE_MAX)) &&
+        ((key.duration == 0) || (key.keycode != lastkey))
+       )
     {
+        lastkey = key.keycode;
         cCECCmd cmd(CEC_KEYRPRESS, (int)key.keycode);
         rem->PushCmd(cmd);
     }
@@ -37,21 +41,24 @@ static int CecKeyPressCallback(void *cbParam, const cec_keypress key)
 static int CecCommandCallback(void *cbParam, const cec_command command)
 {
     cCECRemote *rem = (cCECRemote *)cbParam;
-    Dsyslog("CEC Command %d : %s", command.opcode, rem->mCECAdapter->ToString(command.opcode));
+    Dsyslog("CEC Command %d : %s", command.opcode,
+                                   rem->mCECAdapter->ToString(command.opcode));
     return 0;
 }
 
 
 // Callback for CEC Alert
-static int CecAlertCallback(void *cbParam, const libcec_alert type, const libcec_parameter param)
+static int CecAlertCallback(void *cbParam, const libcec_alert type,
+                            const libcec_parameter param)
 {
     Dsyslog("CecAlert %d)", type);
     switch (type)
     {
     case CEC_ALERT_CONNECTION_LOST:
-        /* TODO */
-        Esyslog("Connection lost - trying to reconnect");
-
+        Esyslog("Connection lost");
+        break;
+    case CEC_ALERT_TV_POLL_FAILED:
+        Isyslog("TV Poll failed");
         break;
     default:
         break;
@@ -86,8 +93,8 @@ static int CecLogMessageCallback(void *cbParam, const cec_log_message message)
             break;
         }
 
-        char strFullLog[128]; // TODO
-        snprintf(strFullLog, 127, "CEC %s %s", strLevel.c_str(), message.message);
+        char strFullLog[1040];
+        snprintf(strFullLog, 1039, "CEC %s %s", strLevel.c_str(), message.message);
         if (message.level == CEC_LOG_ERROR)
         {
             Esyslog(strFullLog);
@@ -111,17 +118,16 @@ static void CECSourceActivatedCallback (void *cbParam,
  * CEC remote
  */
 
-cCECRemote::cCECRemote(int loglevel, const cCmdQueue &onStart,
-                       const cCmdQueue &onStop, cPluginCecremote *plugin):
+cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugin):
         cRemote("CEC"),
         cThread("CEC receiver"),
         mDevicesFound(0)
 {
     mPlugin = plugin;
     mCECAdapter = NULL;
-    mCECLogLevel = loglevel;
-    mOnStart = onStart;
-    mOnStop = onStop;
+    mCECLogLevel = options.cec_debug;
+    mOnStart = options.onStart;
+    mOnStop = options.onStop;
     Dsyslog("cCECRemote::Initialize");
     // Initialize Callbacks
     mCECCallbacks.Clear();
@@ -136,10 +142,10 @@ cCECRemote::cCECRemote(int loglevel, const cCmdQueue &onStart,
     strncpy(mCECConfig.strDeviceName, "VDR", sizeof(mCECConfig.strDeviceName));
     mCECConfig.clientVersion       = CEC_CLIENT_VERSION_CURRENT;
     mCECConfig.bActivateSource     = CEC_TRUE;
-    // TODO make this configurable mCECConfig.iComboKeyTimeoutMs
+    mCECConfig.iComboKeyTimeoutMs = options.iComboKeyTimeoutMs;
 
     mCECConfig.deviceTypes.Add(CEC_DEVICE_TYPE_RECORDING_DEVICE);
-    mCECConfig.deviceTypes.Add(CEC_DEVICE_TYPE_TUNER);
+    // TODO check mCECConfig.deviceTypes.Add(CEC_DEVICE_TYPE_TUNER);
     mCECConfig.callbackParam = this;
     mCECConfig.callbacks = &mCECCallbacks;
     // Initialize libcec
@@ -213,10 +219,11 @@ cString cCECRemote::ListDevices()
 
     for (int i = 0; i < mDevicesFound; i++)
     {
-        s = cString::sprintf("%s\n  Device %d path: %s port: %s Firmware %04d", *s, i,
-                            mCECAdapterDescription[0].strComPath,
-                            mCECAdapterDescription[0].strComName,
-                            mCECAdapterDescription[0].iFirmwareVersion);
+        s = cString::sprintf("%s\n  Device %d path: %s port: %s Firmware %04d",
+                             *s, i,
+                             mCECAdapterDescription[0].strComPath,
+                             mCECAdapterDescription[0].strComName,
+                             mCECAdapterDescription[0].iFirmwareVersion);
     }
 
     s = cString::sprintf("%s\n\nActive Devices:", *s);
@@ -225,11 +232,12 @@ cString cCECRemote::ListDevices()
     {
         if (devices[j])
         {
-            cec_logical_address logical_addres = (cec_logical_address) j;
+            cec_logical_address logical_addres = (cec_logical_address)j;
 
             uint16_t phaddr = mCECAdapter->GetDevicePhysicalAddress(logical_addres);
             cec_osd_name name = mCECAdapter->GetDeviceOSDName(logical_addres);
-            cec_vendor_id vendor = (cec_vendor_id)mCECAdapter->GetDeviceVendorId(logical_addres);
+            cec_vendor_id vendor = (cec_vendor_id)
+                                    mCECAdapter->GetDeviceVendorId(logical_addres);
             s = cString::sprintf("%s\n  %d# %-15.15s@%04x %-15.15s %-14.14s %-15.15s", *s,
                                  logical_addres,
                                  mCECAdapter->ToString(logical_addres),
@@ -285,20 +293,27 @@ void cCECRemote::Action(void)
                         mCECAdapter->ToString(cmd.mAddress));
             }
             break;
-        case CEC_POWEROFF: // TODO
+        case CEC_POWEROFF:
             Dsyslog("Power off");
             if (mCECAdapter->StandbyDevices(cmd.mAddress) != 0) {
                 Esyslog("PowerOnDevice failed for %s",
                         mCECAdapter->ToString(cmd.mAddress));
             }
             break;
+        case CEC_TEXTVIEWON:
+            Dsyslog("Textviewon");
+            if (TextViewOn(cmd.mAddress) != 0) {
+                Esyslog("TextViewOn failed for %s",
+                        mCECAdapter->ToString(cmd.mAddress));
+            }
+            break;
         case CEC_MAKEACTIVE:
             Dsyslog ("Make active");
-            mCECAdapter->SetActiveSource(); /* TODO check */
+            mCECAdapter->SetActiveSource();
             break;
         case CEC_MAKEINACTIVE:
             Dsyslog ("Make inactive");
-            mCECAdapter->SetInactiveView(); /* TODO check */
+            mCECAdapter->SetInactiveView();
             break;
         case CEC_VDRKEYPRESS:
             ceckmap = mPlugin->mKeyMaps.VDRtoCECKey((eKeys)cmd.mVal);

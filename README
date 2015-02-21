@@ -28,9 +28,10 @@ Plugin to receive and send commands via CEC.
 Installation:
 ==============
 
-First get connected device via the command :
-     echo "scan" | cec-client -s -d 1 
-     
+First get connected device either via the cec-client if the plugin is not 
+running :
+     echo "scan" | cec-client -s -d 1
+
 The output should look like:
     opening a connection to the CEC adapter...
     requesting CEC bus information ...
@@ -41,22 +42,12 @@ The output should look like:
     active source: no
     vendor:        Panasonic
     osd string:    TV
-    CEC version:   unknown
+    CEC version:   1.4
     power status:  on
-    language:      ???
+    language:      ger
 
 
     device #4: Playback 1
-    address:       f.f.f.f
-    active source: no
-    vendor:        Samsung
-    osd string:    BD Player
-    CEC version:   1.4
-    power status:  standby
-    language:      ???
-
-
-    device #8: Playback 2
     address:       1.0.0.0
     active source: no
     vendor:        Panasonic
@@ -64,6 +55,33 @@ The output should look like:
     CEC version:   1.4
     power status:  on
     language:      eng
+
+
+    device #8: Playback 2
+    address:       2.0.0.0
+    active source: no
+    vendor:        Samsung
+    osd string:    BD Player
+    CEC version:   1.4
+    power status:  on
+    language:      ???
+
+
+On a running VDR with the cecremote plugin running, this information can
+be retrieved via:
+   svdrpsend plug cecremote LSTD
+
+The output should look like:
+
+220 vdr SVDRP VideoDiskRecorder 2.0.7; Sat Feb 21 16:56:03 2015; UTF-8
+214-Available CEC Devices:
+214-  Device 0 path: /sys/devices/pci0000:00/0000:00:14.0/usb1/1-3 port: /dev/ttyACM0 Firmware 0004
+214-
+214-Active Devices:
+214-  0# TV             @0000 TV              TV             Panasonic
+214-  4# Playback 1     @1000 VDR             VDR            Panasonic
+214   8# Playback 2     @2000 BD Player       BD Player      Samsung
+221 vdr closing connection
 
 In the plugin configuration directory create the file cecremote.xml (an example 
 can be found in the contrib directory) with an device entry for each device 
@@ -77,7 +95,70 @@ Format of the configuration file :
 
 The configuration file is in XML format The root element is <config>. Within
 this element one <global> child element is used to specify global options
-for this plugin and several <menu> child elements.
+for this plugin and several <menu>, <ceckeymap> and <vdrkeymap> child elements.
+
+* Ceckeymap
+====================================
+This element contains definitions for mapping a CEC Key to one or more VDR keys.
+The <ceckeymap> tag must have the attribute "id" specified. This id is used 
+later in the <player> section to address this key map.
+
+This tag creates a new key map with a preconfigured map. Elements of this map
+can be overwritten with <key> elements.
+
+* Vdrkeymap
+====================================
+This element contains definitions for mapping a VDR Key to one or more CEC keys.
+The <vdrkeymap> tag must have the attribute "id" specified. This id is used 
+later in the <player> section to address this key map.
+
+This tag creates a new key map with a preconfigured map. Elements of this map
+can be overwritten with <key> elements.
+
+* Key
+====================================
+This element is used within <ceckeymap> or <vdrkeymap> to overwrite existing
+map entries. The <key> tag must have the attribute "code" specified. This
+specifies the key code to redefine. If used in <ceckeymap> code
+is a CEC key name (see svdrpsend plug cecremote LSTK for the name of the
+supported CEC key codes). When used in <vdrkeymap> the code is the vdr 
+key name as used for example in keymacros.conf.
+
+The <key> element can have <value> elements which specifies the key codes
+to map. If no <value> element is specified, this key code is not mapped and
+so this key is not usable.
+
+* Value
+====================================
+This element is used within <key> to assign key codes to the key map.
+
+If the <value> element is used in <vdrkeymap> the <value> element contains
+a CEC key name (see svdrpsend plug cecremote LSTK for the name of the
+supported CEC key codes). When used in <ceckeymap> the <value> element is the 
+vdr key name as used for example in keymacros.conf.
+
+The following example create a new key map with id "TV" where the VDR key OK
+is mapped the the CEC "ROOT_MENU" key:
+
+  <vdrkeymap id="TV">
+    <key code="OK">
+      <value>ROOT_MENU</value>
+    </key>
+  </vdrkeymap>
+
+The next example creates an other key map with id "TV". If the CEC key code
+"SELECT" is received, this key is mapped to the VDR menu key. The key code
+"RIGHT_UP" is mapped to only "right" and not as default to right+up.
+
+  <ceckeymap id="TV">
+    <key code="SELECT">
+      <value>Menu</value>
+    </key>
+    <key code="RIGHT_UP">
+      <value>Right</value>
+    </key>
+  </ceckeymap>
+
 
 * Global
 ====================================
@@ -121,8 +202,13 @@ not be used with <onpoweron> and <onpoweroff>.
 The <player> tag must have the following attribute:
   file : Filename of the still-picture in mpeg format.
   
-The child element of <player> is <stop>. The <stop> tag can be used
-several times and contains a VDR-Key to stop this player.
+The child elements of <player> are <stop>.and <keymaps> 
+
+<stop>    : Can be used several times and contains a VDR-Key to stop this player.
+<keymaps> : The <keymaps> tag has the attributes "cec" and "vdr" which
+            addresses the id specified within <ceckeymap> or <vdrkeymap>.
+            When the player is started, these keymaps are activated. If a tag is
+            missing, the default keymap is used. 
 
 * Command lists
 ====================================
@@ -134,8 +220,18 @@ and <exec>.
 
 <poweron>CEC Device Address</poweron>       : Powers the device on.
 <poweroff>CEC Device Address</poweroff>     : Powers the device off.
-<makeactive>CEC Device Address</makeactive> : Makes the given device the active
-                                              device. (TODO check Device Address)
+<makeactive/>                               : Makes the VDR the active device.
+<makeinactive/>                             : Remove the VDR as the active device.
+<textviewon>CEC Device Address</textviewon> : Send the TextViewOn CEC command to
+                                              the CEC device.
 <exec>Command</exec>                        : Executes a shell command.
 
+
+* SVDRP Commands
+=====================================
+LSTK     : List all supported CEC keycodes
+LSTD     : List active CEC devices
+KEYM     : List available key maps
+VDRK [id]: Display the VDR->CEC key map with the given id
+CECK [id]: Display the CEC->VDR key map with the given id
 

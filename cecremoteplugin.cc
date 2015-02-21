@@ -19,7 +19,7 @@
 #include "stringtools.h"
 #include "ceckeymaps.h"
 
-static const char *VERSION        = "0.1.1";
+static const char *VERSION        = "0.2.0";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
 static const char *MAINMENUENTRY  = "CECremote";
 
@@ -106,9 +106,7 @@ bool cPluginCecremote::Start(void)
         return false;
     }
     mCECLogLevel = mConfigFileParser.mGlobalOptions.cec_debug;
-    mCECRemote = new cCECRemote(mCECLogLevel,
-                                mConfigFileParser.mGlobalOptions.onStart,
-                                mConfigFileParser.mGlobalOptions.onStop,
+    mCECRemote = new cCECRemote(mConfigFileParser.mGlobalOptions,
                                 this);
     return true;
 }

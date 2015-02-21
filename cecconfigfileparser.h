@@ -30,10 +30,12 @@ typedef std::set<eKeys> keySet;
 class cCECGlobalOptions {
 public:
     int cec_debug;
+    uint32_t iComboKeyTimeoutMs;
     cCmdQueue onStart;
     cCmdQueue onStop;
+
 public:
-    cCECGlobalOptions() : cec_debug(7) {};
+    cCECGlobalOptions() : cec_debug(7), iComboKeyTimeoutMs(1000) {};
 };
 
 class cCECMenu {
@@ -117,6 +119,14 @@ private:
     static const char *XML_FILE;
     static const char *XML_CEC;
     static const char *XML_VDR;
+    static const char *XML_POWERON;
+    static const char *XML_POWEROFF;
+    static const char *XML_MAKEACTIVE;
+    static const char *XML_MAKEINACTIVE;
+    static const char *XML_EXEC;
+    static const char *XML_TEXTVIEWON;
+    static const char *XML_COMBOKEYTIMEOUTMS;
+    static const char *XML_CECDEBUG;
 
     const char* mXmlFile;
 

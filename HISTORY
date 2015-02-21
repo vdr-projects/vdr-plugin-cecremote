@@ -31,3 +31,7 @@ VDR Plugin 'cecremote' Revision History
 
 - Switched XML Parser to pugixml (http://pugixml.org/).
 - Make keymaps konfigurable.
+- SVDRP Command to debug and list keymaps and CEC devices.
+- New <combokeytimeoutms> in <global> config to set the libCEC combo key 
+  timeout.
+

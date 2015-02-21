@@ -40,7 +40,8 @@ typedef enum {
     CEC_POWERON,
     CEC_POWEROFF,
     CEC_VDRKEYPRESS,
-    CEC_EXECSHELL
+    CEC_EXECSHELL,
+    CEC_TEXTVIEWON
 } CECCommand;
 
 class cCECCmd {
@@ -72,11 +73,11 @@ typedef std::list<cCECCmd> cCmdQueue;
 typedef cCmdQueue::const_iterator cCmdQueueIterator;
 
 class cPluginCecremote;
+class cCECGlobalOptions;
 
 class cCECRemote : public cRemote, private cThread {
 public:
-    cCECRemote(int loglevel, const cCmdQueue &onStart,
-               const cCmdQueue &onStop, cPluginCecremote *plugin);
+    cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugin);
     ~cCECRemote();
     virtual bool Initialize(void) {return false;};
     void PushCmd(const cCECCmd &cmd);

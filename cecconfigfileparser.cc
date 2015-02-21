@@ -35,6 +35,14 @@ const char *cCECConfigFileParser::XML_KEYMAPS = "keymaps";
 const char *cCECConfigFileParser::XML_FILE = "file";
 const char *cCECConfigFileParser::XML_CEC = "cec";
 const char *cCECConfigFileParser::XML_VDR = "vdr";
+const char *cCECConfigFileParser::XML_POWERON = "poweron";
+const char *cCECConfigFileParser::XML_POWEROFF = "poweroff";
+const char *cCECConfigFileParser::XML_MAKEACTIVE = "makeactive";
+const char *cCECConfigFileParser::XML_MAKEINACTIVE = "makeinactive";
+const char *cCECConfigFileParser::XML_EXEC = "exec";
+const char *cCECConfigFileParser::XML_TEXTVIEWON = "textviewon";
+const char *cCECConfigFileParser::XML_COMBOKEYTIMEOUTMS = "combokeytimeoutms";
+const char *cCECConfigFileParser::XML_CECDEBUG = "cecdebug";
 
 void cCECConfigFileParser::parsePlayer(const xml_node node, cCECMenu &menu)
 {
@@ -117,7 +125,7 @@ void cCECConfigFileParser::parseList(const xml_node node,
                 s += currentNode.name();
                 throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
             }
-            if (strcasecmp(currentNode.name(), "poweron") == 0) {
+            if (strcasecmp(currentNode.name(), XML_POWERON) == 0) {
                 cmd.mCmd = CEC_POWERON;
                 cmd.mAddress = (cec_logical_address)
                                                 currentNode.text().as_int(-1);
@@ -125,26 +133,32 @@ void cCECConfigFileParser::parseList(const xml_node node,
                 Dsyslog("         POWERON %d\n", cmd.mAddress);
                 cmdlist.push_back(cmd);
             }
-            else if (strcasecmp(currentNode.name(), "poweroff") == 0) {
+            else if (strcasecmp(currentNode.name(), XML_POWEROFF) == 0) {
                 cmd.mCmd = CEC_POWEROFF;
                 cmd.mAddress = (cec_logical_address)
                                                 currentNode.text().as_int(-1);
                 cmd.mExec = "";
                 Dsyslog("         POWEROFF %d\n", cmd.mAddress);
                 cmdlist.push_back(cmd);
-            } else if (strcasecmp(currentNode.name(), "makeactive") == 0) {
+            } else if (strcasecmp(currentNode.name(), XML_MAKEACTIVE) == 0) {
                 cmd.mCmd = CEC_MAKEACTIVE;
                 cmd.mAddress = CECDEVICE_UNKNOWN;
                 cmd.mExec = "";
                 Dsyslog("         MAKEACTIVE %d\n", cmd.mAddress);
                 cmdlist.push_back(cmd);
-            } else if (strcasecmp(currentNode.name(),"makeinactive") == 0) {
+            } else if (strcasecmp(currentNode.name(),XML_MAKEINACTIVE) == 0) {
                 cmd.mCmd = CEC_MAKEINACTIVE;
                 cmd.mAddress = CECDEVICE_UNKNOWN;
                 cmd.mExec = "";
                 Dsyslog("         MAKEINACTIVE %d\n", cmd.mAddress);
                 cmdlist.push_back(cmd);
-            } else if (strcasecmp(currentNode.name(), "exec") == 0) {
+            } else if (strcasecmp(currentNode.name(),XML_TEXTVIEWON) == 0) {
+                cmd.mCmd = CEC_TEXTVIEWON;
+                cmd.mAddress = (cec_logical_address)currentNode.text().as_int(-1);
+                cmd.mExec = "";
+                Dsyslog("         CEC_TEXTVIEWON %d\n", cmd.mAddress);
+                cmdlist.push_back(cmd);
+            } else if (strcasecmp(currentNode.name(), XML_EXEC) == 0) {
                 cmd.mCmd = CEC_EXECSHELL;
                 cmd.mAddress = CECDEVICE_UNKNOWN;
                 cmd.mExec = currentNode.text().as_string();
@@ -267,7 +281,7 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
         {
             Dsyslog("   Global Option %s\n", currentNode.name());
 
-            if (strcasecmp(currentNode.name(), "cecdebug") == 0) {
+            if (strcasecmp(currentNode.name(), XML_CECDEBUG) == 0) {
                 if (!currentNode.first_child()) {
                     string s = "No nodes allowed for cecdebug: ";
                     s += currentNode.first_child().name();
@@ -275,6 +289,15 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
                 }
                 mGlobalOptions.cec_debug = currentNode.text().as_int(-1);
                 Dsyslog("CECDebug = %d \n", mGlobalOptions.cec_debug);
+            }
+            else if (strcasecmp(currentNode.name(), XML_COMBOKEYTIMEOUTMS) == 0) {
+                if (!currentNode.first_child()) {
+                    string s = "No nodes allowed for cecdebug: ";
+                    s += currentNode.first_child().name();
+                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                }
+                mGlobalOptions.iComboKeyTimeoutMs = currentNode.text().as_int(1000);
+                Dsyslog("ComboKeyTimeoutMs = %d \n", mGlobalOptions.iComboKeyTimeoutMs);
             }
             else if (strcasecmp(currentNode.name(), XML_ONSTART) == 0) {
                 parseList(currentNode, mGlobalOptions.onStart);
