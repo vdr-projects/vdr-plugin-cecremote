@@ -19,6 +19,7 @@ cCECControl::cCECControl(const cCECMenu &menuitem, cPluginCecremote *plugin) :
 {
     mPlugin = plugin;
     mMenuItem = menuitem;
+    mPlugin->mKeyMaps.SetActiveKeymaps(menuitem.mVDRKeymap, menuitem.mCECKeymap);
     mPlugin->ExecCmd(mMenuItem.onStart);
 }
 
@@ -31,7 +32,6 @@ void cCECControl::Hide(void)
 {
     Dsyslog("Hide cCECControl");
 }
-
 
 eOSState cCECControl::ProcessKey(eKeys key)
 {

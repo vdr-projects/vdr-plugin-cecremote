@@ -11,13 +11,7 @@
 
 #ifndef CECCONFIGFILEPARSER_H_
 #define CECCONFIGFILEPARSER_H_
-/*
-#include <xercesc/dom/DOM.hpp>
-#include <xercesc/parsers/XercesDOMParser.hpp>
-#include <xercesc/sax/HandlerBase.hpp>
-#include <xercesc/util/XMLString.hpp>
-#include <xercesc/util/PlatformUtils.hpp>
-*/
+
 #include <pugixml.hpp>
 #include <fstream>
 #include <iostream>
@@ -58,8 +52,13 @@ public:
     cCmdQueue onStop;
     cCmdQueue onPowerOn;
     cCmdQueue onPowerOff;
+    std::string mCECKeymap;
+    std::string mVDRKeymap;
 
-    cCECMenu() : mAddress(CECDEVICE_UNKNOWN), mPowerToggle(UNDEFINED) {};
+    cCECMenu() : mAddress(CECDEVICE_UNKNOWN),
+                 mCECKeymap(cCECkeymaps::DEFAULTKEYMAP),
+                 mVDRKeymap(cCECkeymaps::DEFAULTKEYMAP),
+                 mPowerToggle(UNDEFINED) {};
 
     bool isMenuPowerToggle() const { return (mPowerToggle == USE_ONPOWER); };
     bool isStopKey(eKeys key) { return (mStopKeys.find(key) != mStopKeys.end()); };
@@ -101,18 +100,24 @@ private:
     void parseList(const pugi::xml_node node, cCmdQueue &cmdlist);
     void parsePlayer(const pugi::xml_node node, cCECMenu &menu);
 
-    static const char *GLOBAL;
-    static const char *MENU;
-    static const char *CECKEYMAP;
-    static const char *VDRKEYMAP;
-    static const char *ONSTART;
-    static const char *ONSTOP;
-    static const char *ONPOWERON;
-    static const char *ONPOWEROFF;
-    static const char *ID;
-    static const char *KEY;
-    static const char *CODE;
-    static const char *VALUE;
+    static const char *XML_GLOBAL;
+    static const char *XML_MENU;
+    static const char *XML_CECKEYMAP;
+    static const char *XML_VDRKEYMAP;
+    static const char *XML_ONSTART;
+    static const char *XML_ONSTOP;
+    static const char *XML_ONPOWERON;
+    static const char *XML_ONPOWEROFF;
+    static const char *XML_ID;
+    static const char *XML_KEY;
+    static const char *XML_CODE;
+    static const char *XML_VALUE;
+    static const char *XML_STOP;
+    static const char *XML_KEYMAPS;
+    static const char *XML_FILE;
+    static const char *XML_CEC;
+    static const char *XML_VDR;
+
     const char* mXmlFile;
 
 public:

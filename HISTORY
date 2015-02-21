@@ -29,4 +29,5 @@ VDR Plugin 'cecremote' Revision History
 
 2015-02-??: Version 0.2.0
 
-- Switched XML Parser to pugixml (http://pugixml.org/)
+- Switched XML Parser to pugixml (http://pugixml.org/).
+- Make keymaps konfigurable.

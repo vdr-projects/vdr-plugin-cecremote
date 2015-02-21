@@ -50,7 +50,7 @@
 		
 		<!-- player starts a VDR-Player -->
 		<player file="/video/conf/plugins/cecremote/blueray.mpg">
-		<!--  <keymaps cec="TV" vdr="TV" /> -->
+			<keymaps cec="TV" vdr="TV" />
 			<stop>Stop</stop>
 			<stop>Back</stop>
 		</player>

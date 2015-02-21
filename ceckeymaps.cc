@@ -14,6 +14,8 @@
 
 using namespace std;
 
+const char *cCECkeymaps::DEFAULTKEYMAP = "default";
+
 cCECkeymaps::cCECkeymaps() {
     for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX+1; i++) {
         mDefaultKeyMap[i][0] = kNone;
@@ -189,9 +191,9 @@ cCECkeymaps::cCECkeymaps() {
     mCECKeyNames[CEC_USER_CONTROL_CODE_HELP                        ] = "HELP";
     mCECKeyNames[CEC_USER_CONTROL_CODE_AN_CHANNELS_LIST            ] = "AN_CHANNELS_LIST";
     Dsyslog("Load keymap");
-    InitCECKeyFromDefault("default");
-    InitVDRKeyFromDefault("default");
-    SetActiveKeymaps("default", "default");
+    InitCECKeyFromDefault(DEFAULTKEYMAP);
+    InitVDRKeyFromDefault(DEFAULTKEYMAP);
+    SetActiveKeymaps(DEFAULTKEYMAP, DEFAULTKEYMAP);
 }
 
 // List known keymaps. Output is suitable for using with SVDRP

@@ -10,6 +10,7 @@
  */
 
 #include <vdr/plugin.h>
+#include <stdio.h>
 #include "ceclog.h"
 #include "cecconfigfileparser.h"
 #include "stringtools.h"
@@ -17,22 +18,27 @@
 using namespace std;
 using namespace pugi;
 
-const char *cCECConfigFileParser::ONSTART = "onstart";
-const char *cCECConfigFileParser::ONSTOP  = "onstop";
-const char *cCECConfigFileParser::ONPOWERON = "onpoweron";
-const char *cCECConfigFileParser::ONPOWEROFF = "onpoweroff";
-const char *cCECConfigFileParser::GLOBAL = "global";
-const char *cCECConfigFileParser::MENU = "menu";
-const char *cCECConfigFileParser::CECKEYMAP = "ceckeymap";
-const char *cCECConfigFileParser::VDRKEYMAP = "vdrkeymap";
-const char *cCECConfigFileParser::ID = "id";
-const char *cCECConfigFileParser::KEY = "key";
-const char *cCECConfigFileParser::CODE = "code";
-const char *cCECConfigFileParser::VALUE = "value";
+const char *cCECConfigFileParser::XML_ONSTART = "onstart";
+const char *cCECConfigFileParser::XML_ONSTOP  = "onstop";
+const char *cCECConfigFileParser::XML_ONPOWERON = "onpoweron";
+const char *cCECConfigFileParser::XML_ONPOWEROFF = "onpoweroff";
+const char *cCECConfigFileParser::XML_GLOBAL = "global";
+const char *cCECConfigFileParser::XML_MENU = "menu";
+const char *cCECConfigFileParser::XML_CECKEYMAP = "ceckeymap";
+const char *cCECConfigFileParser::XML_VDRKEYMAP = "vdrkeymap";
+const char *cCECConfigFileParser::XML_ID = "id";
+const char *cCECConfigFileParser::XML_KEY = "key";
+const char *cCECConfigFileParser::XML_CODE = "code";
+const char *cCECConfigFileParser::XML_VALUE = "value";
+const char *cCECConfigFileParser::XML_STOP = "stop";
+const char *cCECConfigFileParser::XML_KEYMAPS = "keymaps";
+const char *cCECConfigFileParser::XML_FILE = "file";
+const char *cCECConfigFileParser::XML_CEC = "cec";
+const char *cCECConfigFileParser::XML_VDR = "vdr";
 
 void cCECConfigFileParser::parsePlayer(const xml_node node, cCECMenu &menu)
 {
-    menu.mStillPic = node.attribute("file").as_string("");
+    menu.mStillPic = node.attribute(XML_FILE).as_string("");
     if (menu.mStillPic.empty()) {
         string s = "Missing file name";
         Esyslog(s.c_str());
@@ -52,7 +58,7 @@ void cCECConfigFileParser::parsePlayer(const xml_node node, cCECMenu &menu)
                 s += currentNode.name();
                 throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
             }
-            if (strcasecmp(currentNode.name(), "stop") == 0) {
+            if (strcasecmp(currentNode.name(), XML_STOP) == 0) {
                 eKeys k = cKey::FromString(currentNode.text().as_string());
                 if (k == kNone) {
                     string s = "Invalid key ";
@@ -60,6 +66,14 @@ void cCECConfigFileParser::parsePlayer(const xml_node node, cCECMenu &menu)
                     throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
                 }
                 menu.mStopKeys.insert(k);
+            }
+            else if (strcasecmp(currentNode.name(), XML_KEYMAPS) == 0) {
+                menu.mVDRKeymap = currentNode.attribute(XML_VDR).
+                                        as_string(cCECkeymaps::DEFAULTKEYMAP);
+                menu.mCECKeymap = currentNode.attribute(XML_CEC).
+                                                        as_string(cCECkeymaps::DEFAULTKEYMAP);
+                Dsyslog("              Keymap VDR %s CEC %s",
+                        menu.mVDRKeymap.c_str(), menu.mCECKeymap.c_str());
             }
             else {
                 string s = "Invalid command ";
@@ -172,7 +186,7 @@ void cCECConfigFileParser::parseMenu(const xml_node node)
             if (strcasecmp(currentNode.name(), "player") == 0) {
                parsePlayer(currentNode, menu);
             }
-            else if (strcasecmp(currentNode.name(), ONSTART) == 0) {
+            else if (strcasecmp(currentNode.name(), XML_ONSTART) == 0) {
                 if ((menu.mPowerToggle == cCECMenu::UNDEFINED) ||
                     (menu.mPowerToggle == cCECMenu::USE_ONSTART))
                 {
@@ -185,7 +199,7 @@ void cCECConfigFileParser::parseMenu(const xml_node node)
                     throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
                 }
             }
-            else if (strcasecmp(currentNode.name(), ONSTOP) == 0) {
+            else if (strcasecmp(currentNode.name(), XML_ONSTOP) == 0) {
                 if ((menu.mPowerToggle == cCECMenu::UNDEFINED) ||
                    (menu.mPowerToggle == cCECMenu::USE_ONSTART))
                {
@@ -198,7 +212,7 @@ void cCECConfigFileParser::parseMenu(const xml_node node)
                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
                }
             }
-            else if (strcasecmp(currentNode.name(), ONPOWERON) == 0) {
+            else if (strcasecmp(currentNode.name(), XML_ONPOWERON) == 0) {
                 if ((menu.mPowerToggle == cCECMenu::UNDEFINED) ||
                     (menu.mPowerToggle == cCECMenu::USE_ONPOWER))
                 {
@@ -211,7 +225,7 @@ void cCECConfigFileParser::parseMenu(const xml_node node)
                     throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
                 }
             }
-            else if (strcasecmp(currentNode.name(), ONPOWEROFF) == 0) {
+            else if (strcasecmp(currentNode.name(), XML_ONPOWEROFF) == 0) {
                 if ((menu.mPowerToggle == cCECMenu::UNDEFINED) ||
                    (menu.mPowerToggle == cCECMenu::USE_ONPOWER))
                {
@@ -262,10 +276,10 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
                 mGlobalOptions.cec_debug = currentNode.text().as_int(-1);
                 Dsyslog("CECDebug = %d \n", mGlobalOptions.cec_debug);
             }
-            else if (strcasecmp(currentNode.name(), ONSTART) == 0) {
+            else if (strcasecmp(currentNode.name(), XML_ONSTART) == 0) {
                 parseList(currentNode, mGlobalOptions.onStart);
             }
-            else if (strcasecmp(currentNode.name(), ONSTOP) == 0) {
+            else if (strcasecmp(currentNode.name(), XML_ONSTOP) == 0) {
                 parseList(currentNode, mGlobalOptions.onStop);
             }
             else {
@@ -279,7 +293,7 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
 
 void cCECConfigFileParser::parseVDRKeymap(const xml_node node, cCECkeymaps &keymaps)
 {
-    string id = node.attribute(ID).as_string("");
+    string id = node.attribute(XML_ID).as_string("");
     if (id.empty()) {
         string s = "Missing id for vdr keymap";
         Esyslog(s.c_str());
@@ -294,13 +308,13 @@ void cCECConfigFileParser::parseVDRKeymap(const xml_node node, cCECkeymaps &keym
 
         if (currentNode.type() == node_element)  // is element
         {
-            if (strcasecmp(currentNode.name(), KEY) != 0) {
+            if (strcasecmp(currentNode.name(), XML_KEY) != 0) {
                 string s = "Invalid node ";
                 s += currentNode.name();
                 Esyslog(s.c_str());
                 throw cCECConfigException(getLineNumber(node.offset_debug()), s);
             }
-            string code = currentNode.attribute(CODE).as_string("");
+            string code = currentNode.attribute(XML_CODE).as_string("");
             if (code.empty()) {
                 string s = "Missing code in vdr keymap";
                 Esyslog(s.c_str());
@@ -319,7 +333,7 @@ void cCECConfigFileParser::parseVDRKeymap(const xml_node node, cCECkeymaps &keym
                     ceckeynode = ceckeynode.next_sibling()) {
                 if (ceckeynode.type() == node_element)  // is element
                 {
-                    if (strcasecmp(ceckeynode.name(), VALUE) != 0) {
+                    if (strcasecmp(ceckeynode.name(), XML_VALUE) != 0) {
                         string s = "Invalid node ";
                         s += ceckeynode.name();
                         Esyslog(s.c_str());
@@ -341,7 +355,7 @@ void cCECConfigFileParser::parseVDRKeymap(const xml_node node, cCECkeymaps &keym
 
 void cCECConfigFileParser::parseCECKeymap(const xml_node node, cCECkeymaps &keymaps)
 {
-    string id = node.attribute(ID).as_string("");
+    string id = node.attribute(XML_ID).as_string("");
     if (id.empty()) {
         string s = "Missing id for vdr keymap";
         Esyslog(s.c_str());
@@ -356,13 +370,13 @@ void cCECConfigFileParser::parseCECKeymap(const xml_node node, cCECkeymaps &keym
 
         if (currentNode.type() == node_element)  // is element
         {
-            if (strcasecmp(currentNode.name(), KEY) != 0) {
+            if (strcasecmp(currentNode.name(), XML_KEY) != 0) {
                 string s = "Invalid node ";
                 s += currentNode.name();
                 Esyslog(s.c_str());
                 throw cCECConfigException(getLineNumber(node.offset_debug()), s);
             }
-            string code = currentNode.attribute(CODE).as_string("");
+            string code = currentNode.attribute(XML_CODE).as_string("");
             if (code.empty()) {
                 string s = "Missing code in vdr keymap";
                 Esyslog(s.c_str());
@@ -381,7 +395,7 @@ void cCECConfigFileParser::parseCECKeymap(const xml_node node, cCECkeymaps &keym
                     vdrkeynode = vdrkeynode.next_sibling()) {
                 if (vdrkeynode.type() == node_element)  // is element
                 {
-                    if (strcasecmp(vdrkeynode.name(), VALUE) != 0) {
+                    if (strcasecmp(vdrkeynode.name(), XML_VALUE) != 0) {
                         string s = "Invalid node ";
                         s += vdrkeynode.name();
                         Esyslog(s.c_str());
@@ -451,10 +465,10 @@ bool cCECConfigFileParser::Parse(const string &filename, cCECkeymaps &keymaps) {
             Dsyslog("Node Name %s\n", currentNode.name());
 
             if (!(
-                    (strcasecmp(currentNode.name(), GLOBAL) != 0) ||
-                    (strcasecmp(currentNode.name(), MENU) != 0) ||
-                    (strcasecmp(currentNode.name(), CECKEYMAP) != 0) ||
-                    (strcasecmp(currentNode.name(), VDRKEYMAP) != 0)
+                    (strcasecmp(currentNode.name(), XML_GLOBAL) != 0) ||
+                    (strcasecmp(currentNode.name(), XML_MENU) != 0) ||
+                    (strcasecmp(currentNode.name(), XML_CECKEYMAP) != 0) ||
+                    (strcasecmp(currentNode.name(), XML_VDRKEYMAP) != 0)
                )) {
                 Esyslog("Invalid Node %s", currentNode.name());
 
@@ -465,28 +479,28 @@ bool cCECConfigFileParser::Parse(const string &filename, cCECkeymaps &keymaps) {
 
     try {
         // First parse global node
-        currentNode = elementRoot.child(GLOBAL);
+        currentNode = elementRoot.child(XML_GLOBAL);
         parseGlobal(currentNode);
 
-        currentNode = currentNode.next_sibling(GLOBAL);
+        currentNode = currentNode.next_sibling(XML_GLOBAL);
         if (currentNode) {
             Esyslog("Only one global node is allowed");
             return false;
         }
 
         // Parse ceckeymaps
-        for (currentNode = elementRoot.child(CECKEYMAP); currentNode;
-             currentNode = currentNode.next_sibling(CECKEYMAP)) {
+        for (currentNode = elementRoot.child(XML_CECKEYMAP); currentNode;
+             currentNode = currentNode.next_sibling(XML_CECKEYMAP)) {
             parseCECKeymap(currentNode, keymaps);
         }
         // Parse vdrkeymaps
-        for (currentNode = elementRoot.child(VDRKEYMAP); currentNode;
-             currentNode = currentNode.next_sibling(VDRKEYMAP)) {
+        for (currentNode = elementRoot.child(XML_VDRKEYMAP); currentNode;
+             currentNode = currentNode.next_sibling(XML_VDRKEYMAP)) {
             parseVDRKeymap(currentNode, keymaps);
         }
         // Parse all menus
-        for (currentNode = elementRoot.child(MENU); currentNode;
-             currentNode = currentNode.next_sibling(MENU)) {
+        for (currentNode = elementRoot.child(XML_MENU); currentNode;
+             currentNode = currentNode.next_sibling(XML_MENU)) {
             parseMenu(currentNode);
         }
 

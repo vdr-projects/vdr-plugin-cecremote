@@ -64,6 +64,8 @@ public:
     cString ListKeycodes();
     cString ListCECKeyMap(const std::string &id);
     cString ListVDRKeyMap(const std::string &id);
+
+    static const char *DEFAULTKEYMAP;
 };
 
 #endif /* _CECKEYMAPS_H_ */
