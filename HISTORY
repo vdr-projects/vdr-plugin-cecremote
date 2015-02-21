@@ -27,7 +27,7 @@ VDR Plugin 'cecremote' Revision History
 - Modify keymap.
 - Add svdrp command LIST to list active CEC devices.
 
-2015-02-??: Version 0.2.0
+2015-02-21: Version 0.2.0
 
 - Switched XML Parser to pugixml (http://pugixml.org/).
 - Make keymaps konfigurable.
