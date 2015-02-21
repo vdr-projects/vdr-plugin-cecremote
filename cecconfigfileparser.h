@@ -94,24 +94,34 @@ class cCECConfigFileParser {
 private:
     int getLineNumber(long offset);
     bool hasElements(const pugi::xml_node node);
+    void parseVDRKeymap(const pugi::xml_node node, cCECkeymaps &keymaps);
+    void parseCECKeymap(const pugi::xml_node node, cCECkeymaps &keymaps);
     void parseGlobal(const pugi::xml_node node);
     void parseMenu(const pugi::xml_node node);
     void parseList(const pugi::xml_node node, cCmdQueue &cmdlist);
     void parsePlayer(const pugi::xml_node node, cCECMenu &menu);
 
+    static const char *GLOBAL;
+    static const char *MENU;
+    static const char *CECKEYMAP;
+    static const char *VDRKEYMAP;
     static const char *ONSTART;
     static const char *ONSTOP;
     static const char *ONPOWERON;
     static const char *ONPOWEROFF;
+    static const char *ID;
+    static const char *KEY;
+    static const char *CODE;
+    static const char *VALUE;
     const char* mXmlFile;
 
 public:
     cCECGlobalOptions mGlobalOptions;
     cCECMenuList mMenuList;
 
-    cCECConfigFileParser();
-    ~cCECConfigFileParser();
-    bool Parse (const std::string &filename);
+    cCECConfigFileParser() : mXmlFile(NULL) {};
+
+    bool Parse(const std::string &filename, cCECkeymaps &keymaps);
 };
 
 #endif /* CONFIGFILEPARSER_H_ */

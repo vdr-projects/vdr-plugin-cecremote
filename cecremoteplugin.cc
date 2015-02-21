@@ -17,6 +17,7 @@
 #include "ceclog.h"
 #include "cecosd.h"
 #include "stringtools.h"
+#include "ceckeymaps.h"
 
 static const char *VERSION        = "0.1.1";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
@@ -100,14 +101,15 @@ bool cPluginCecremote::Initialize(void)
 bool cPluginCecremote::Start(void)
 {
     string file = GetConfigFile();
-    if (!mConfigFileParser.Parse(file)) {
+    if (!mConfigFileParser.Parse(file, mKeyMaps)) {
         Esyslog("Error on parsing config file file %s", file.c_str());
         return false;
     }
     mCECLogLevel = mConfigFileParser.mGlobalOptions.cec_debug;
     mCECRemote = new cCECRemote(mCECLogLevel,
                                 mConfigFileParser.mGlobalOptions.onStart,
-                                mConfigFileParser.mGlobalOptions.onStop);
+                                mConfigFileParser.mGlobalOptions.onStop,
+                                this);
     return true;
 }
 
@@ -188,22 +190,35 @@ bool cPluginCecremote::Service(const char *Id, void *Data)
 const char **cPluginCecremote::SVDRPHelpPages(void)
 {
     static const char *HelpPages[] = {
-            "LIST:    List CEC devices\n",
-            "KEYMAPS: List available keymap\n",
+            "LSTK\nList known CEC keycodes\n",
+            "LSTD\nList CEC devices\n",
+            "KEYM\nList available key map\n",
+            "VDRK [id]\nDisplay VDR->CEC key map with id\n",
+            "CECK [id]\nDisplay CEC->VDR key map with id\n",
             NULL
     };
     return HelpPages;
 }
 
-
 cString cPluginCecremote::SVDRPCommand(const char *Command, const char *Option, int &ReplyCode)
 {
     ReplyCode = 214;
-    if (strcasecmp(Command, "LIST") == 0) {
+    if (strcasecmp(Command, "LSTD") == 0) {
         return mCECRemote->ListDevices();
     }
-    else if (strcasecmp(Command, "KEYMAPS") == 0) {
-        return mCECRemote->ListKeymaps();
+    else if (strcasecmp(Command, "KEYM") == 0) {
+        return mKeyMaps.ListKeymaps();
+    }
+    else if (strcasecmp(Command, "LSTK") == 0) {
+        return mKeyMaps.ListKeycodes();
+    }
+    else if (strcasecmp(Command, "VDRK") == 0) {
+        string s = Option;
+        return mKeyMaps.ListVDRKeyMap(s);
+    }
+    else if (strcasecmp(Command, "CECK") == 0) {
+        string s = Option;
+        return mKeyMaps.ListCECKeyMap(s);
     }
 
     ReplyCode = 901;

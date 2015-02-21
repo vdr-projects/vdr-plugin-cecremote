@@ -28,6 +28,7 @@ protected:
 
     std::string mCfgDir;
     std::string mCfgFile;
+
     cCECConfigFileParser mConfigFileParser;
     cCECRemote *mCECRemote;
 
@@ -69,6 +70,7 @@ public:
     void PushCmd(const cCECCmd &cmd) {mCECRemote->PushCmd(cmd);}
     void ExecCmd(const cCmdQueue &cmdList) {mCECRemote->ExecCmd(cmdList);}
     cCECMenuList *GetMenuList() {return &mConfigFileParser.mMenuList; }
+    cCECkeymaps mKeyMaps;
 };
 
 #endif

@@ -11,13 +11,13 @@
 
 #include "cecremote.h"
 #include "ceclog.h"
+#include "cecremoteplugin.h"
 
 // We need this for cecloader.h
 #include <iostream>
 using namespace std;
 #include <cecloader.h>
 
-eKeys cCECRemote::mDefaultKeyMap[CEC_USER_CONTROL_CODE_MAX+2][2];
 // Callback for CEC KeyPress
 static int CecKeyPressCallback(void *cbParam, const cec_keypress key)
 {
@@ -112,11 +112,12 @@ static void CECSourceActivatedCallback (void *cbParam,
  */
 
 cCECRemote::cCECRemote(int loglevel, const cCmdQueue &onStart,
-                       const cCmdQueue &onStop):
+                       const cCmdQueue &onStop, cPluginCecremote *plugin):
         cRemote("CEC"),
         cThread("CEC receiver"),
         mDevicesFound(0)
 {
+    mPlugin = plugin;
     mCECAdapter = NULL;
     mCECLogLevel = loglevel;
     mOnStart = onStart;
@@ -191,103 +192,6 @@ cCECRemote::cCECRemote(int loglevel, const cCmdQueue &onStart,
         }
     }
 
-    for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX+1; i++) {
-        mDefaultKeyMap[i][0] = kNone;
-        mDefaultKeyMap[i][1] = kNone;
-    }
-
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_SELECT             ][0] = kOk;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_UP                 ][0] = kUp;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_DOWN               ][0] = kDown;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_LEFT               ][0] = kLeft;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_RIGHT              ][0] = kRight;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_RIGHT_UP           ][0] = kRight;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_RIGHT_UP           ][1] = kUp;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_RIGHT_DOWN         ][0] = kRight;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_RIGHT_DOWN         ][1] = kDown;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_LEFT_UP            ][0] = kLeft;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_LEFT_UP            ][1] = kUp;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_LEFT_DOWN          ][0] = kRight;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_LEFT_DOWN          ][1] = kDown;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_ROOT_MENU          ][0] = kMenu;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_SETUP_MENU         ][0] = kSetup;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_CONTENTS_MENU      ][0] = kMenu;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER0            ][0] = k0;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER1            ][0] = k1;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER2            ][0] = k2;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER3            ][0] = k3;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER4            ][0] = k4;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER5            ][0] = k5;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER6            ][0] = k6;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER7            ][0] = k7;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER8            ][0] = k8;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_NUMBER9            ][0] = k9;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_ENTER              ][0] = kOk;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_CLEAR              ][0] = kBack;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_CHANNEL_UP         ][0] = kChanUp;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_CHANNEL_DOWN       ][0] = kChanDn;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_PREVIOUS_CHANNEL   ][0] = kChanPrev;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_SOUND_SELECT       ][0] = kAudio;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_DISPLAY_INFORMATION][0] = kInfo;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAGE_UP            ][0] = kNext;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAGE_DOWN          ][0] = kPrev;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_POWER              ][0] = kPower;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_VOLUME_UP          ][0] = kVolUp;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_VOLUME_DOWN        ][0] = kVolDn;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_MUTE               ][0] = kMute;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_PLAY               ][0] = kPlay;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_STOP               ][0] = kStop;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAUSE              ][0] = kPause;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_RECORD             ][0] = kRecord;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_REWIND             ][0] = kFastRew;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_FAST_FORWARD       ][0] = kFastFwd;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_FORWARD            ][0] = kFastFwd;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_BACKWARD           ][0] = kFastRew;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_SUB_PICTURE        ][0] = kSubtitles;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_F1_BLUE            ][0] = kBlue;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_F2_RED             ][0] = kRed;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_F3_GREEN           ][0] = kGreen;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_F4_YELLOW          ][0] = kYellow;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_AN_RETURN          ][0] = kBack;
-    mDefaultKeyMap[CEC_USER_CONTROL_CODE_EXIT               ][0] = kBack;
-
-    /*   mDefaultKeyMap[CEC_USER_CONTROL_CODE_VIDEO_ON_DEMAND             ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_ELECTRONIC_PROGRAM_GUIDE    ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_TIMER_PROGRAMMING           ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_INITIAL_CONFIGURATION       ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_PLAY_FUNCTION               ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAUSE_PLAY_FUNCTION         ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_RECORD_FUNCTION             ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAUSE_RECORD_FUNCTION       ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_STOP_FUNCTION               ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_MUTE_FUNCTION               ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_RESTORE_VOLUME_FUNCTION     ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_TUNE_FUNCTION               ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_SELECT_MEDIA_FUNCTION       ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_SELECT_AV_INPUT_FUNCTION    ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_SELECT_AUDIO_INPUT_FUNCTION ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_POWER_TOGGLE_FUNCTION       ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_POWER_OFF_FUNCTION          ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_POWER_ON_FUNCTION           ] = { }
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_F5                          ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_DATA                        ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_STOP_RECORD                 ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAUSE_RECORD                ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_ANGLE                       ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_EJECT                       ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_FAVORITE_MENU               ] = { };
-
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_DOT                         ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_NEXT_FAVORITE               ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_INPUT_SELECT                ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_HELP                        ] = { };
-      mDefaultKeyMap[CEC_USER_CONTROL_CODE_AN_CHANNELS_LIST            ] = { };*/
-
-    Dsyslog("Load keymap");
-    InitCECKeyFromDefault("default");
-    InitVDRKeyFromDefault("default");
-    SetActiveKeymaps("default", "default");
-
     Dsyslog("END cCECRemote::Initialize");
     Start();
     Dsyslog("cCECRemote start");
@@ -301,21 +205,6 @@ cCECRemote::~cCECRemote()
         mCECAdapter->Close();
         UnloadLibCec(mCECAdapter);
     }
-}
-
-cString cCECRemote::ListKeymaps()
-{
-    cString s = "Keymaps CEC->VDR";
-    for (map<string, cVdrKeyMap>::iterator i = mVdrKeyMap.begin();
-         i != mVdrKeyMap.end(); ++i) {
-        s = cString::sprintf("%s\n  %s", *s, i->first.c_str());
-    }
-    s = cString::sprintf("%s\nKeymaps VDR->CEC", *s);
-    for (map<string, cCecKeyMap>::iterator i = mCecKeyMap.begin();
-         i != mCecKeyMap.end(); ++i) {
-        s = cString::sprintf("%s\n  %s", *s, i->first.c_str());
-    }
-    return s;
 }
 
 cString cCECRemote::ListDevices()
@@ -352,31 +241,6 @@ cString cCECRemote::ListDevices()
     return s;
 }
 
-void cCECRemote::SetActiveKeymaps(const string &vdrkeymapid,
-                                  const string &ceckeymapid)
-{
-    mActiveVdrKeyMap = mVdrKeyMap.at(vdrkeymapid);
-    mActiveCecKeyMap = mCecKeyMap.at(ceckeymapid);
-}
-
-cKeyList cCECRemote::CECtoVDRKey(cec_user_control_code code)
-{
-    if ((code >= 0) && (code <= CEC_USER_CONTROL_CODE_MAX)) {
-        return mActiveVdrKeyMap[code];
-    }
-    cKeyList empty;
-    return empty; // Empty list
-}
-
-cCecList cCECRemote::VDRtoCECKey(eKeys key)
-{
-    if ((key >= 0) && (key <= kNone)) {
-         return mActiveCecKeyMap[key];
-    }
-    cCecList empty;
-    return empty;
-}
-
 bool cCECRemote::TextViewOn(cec_logical_address address)
 {
     cec_command data;
@@ -389,7 +253,7 @@ bool cCECRemote::TextViewOn(cec_logical_address address)
 void cCECRemote::Action(void)
 {
     cCECCmd cmd;
-    cCecList ceckmap;
+    cCECList ceckmap;
     cec_user_control_code ceckey;
     eKeys k;
 
@@ -404,7 +268,8 @@ void cCECRemote::Action(void)
         {
         case CEC_KEYRPRESS:
             if ((cmd.mVal >= 0) && (cmd.mVal <= CEC_USER_CONTROL_CODE_MAX)) {
-                const cKeyList &inputKeys = mActiveVdrKeyMap[cmd.mVal];
+                const cKeyList &inputKeys =
+                        mPlugin->mKeyMaps.CECtoVDRKey((cec_user_control_code)cmd.mVal);
                 cKeyListIterator ikeys;
                 for (ikeys = inputKeys.begin(); ikeys != inputKeys.end(); ++ikeys) {
                     k = *ikeys;
@@ -436,9 +301,9 @@ void cCECRemote::Action(void)
             mCECAdapter->SetInactiveView(); /* TODO check */
             break;
         case CEC_VDRKEYPRESS:
-            ceckmap = VDRtoCECKey((eKeys)cmd.mVal);
+            ceckmap = mPlugin->mKeyMaps.VDRtoCECKey((eKeys)cmd.mVal);
 
-            for (cCecListIterator ci = ceckmap.begin(); ci != ceckmap.end();
+            for (cCECListIterator ci = ceckmap.begin(); ci != ceckmap.end();
                  ++ci) {
                 ceckey = *ci;
                 Dsyslog ("Send Keypress VDR %d - > CEC 0x%02x", cmd.mVal, ceckey);
@@ -470,51 +335,6 @@ void cCECRemote::Action(void)
         }
     }
     Dsyslog("cCECRemote stop worker thread");
-}
-
-void cCECRemote::InitVDRKeyFromDefault(string id)
-{
-    cVdrKeyMap map;
-    map.resize(CEC_USER_CONTROL_CODE_MAX + 2);
-    for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX+1; i++) {
-        map[i].clear();
-        if (mDefaultKeyMap[i][0] != kNone) {
-            map[i].push_back(mDefaultKeyMap[i][0]);
-        }
-        if (mDefaultKeyMap[i][1] != kNone) {
-            map[i].push_back(mDefaultKeyMap[i][1]);
-        }
-    }
-    // Empty list
-    map[CEC_USER_CONTROL_CODE_MAX+1].clear();
-    mVdrKeyMap.insert(std::pair<string, cVdrKeyMap>(id, map));
-}
-
-cec_user_control_code cCECRemote::getFirstCEC(eKeys key)
-{
-    for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX; i++) {
-        if ((mDefaultKeyMap[i][0] == key) &&
-            (mDefaultKeyMap[i][1] == kNone)) {
-            return (cec_user_control_code)i;
-        }
-    }
-    return CEC_USER_CONTROL_CODE_UNKNOWN;
-}
-
-void cCECRemote::InitCECKeyFromDefault(string id)
-{
-    cCecKeyMap map;
-    cec_user_control_code ceckey;
-    map.resize(kNone);
-    for (int i = 0; i < kNone; i++) {
-        map[i].clear();
-        ceckey = getFirstCEC((eKeys)i);
-        if (ceckey != CEC_USER_CONTROL_CODE_UNKNOWN) {
-            map[i].push_back(ceckey);
-        }
-    }
-
-    mCecKeyMap.insert(std::pair<string, cCecKeyMap>(id, map));
 }
 
 void cCECRemote::ExecToggle(cec_logical_address addr,
