@@ -34,4 +34,4 @@ VDR Plugin 'cecremote' Revision History
 - SVDRP Command to debug and list keymaps and CEC devices.
 - New <combokeytimeoutms> in <global> config to set the libCEC combo key 
   timeout.
-
+- Add <textviewon> CEC command.
