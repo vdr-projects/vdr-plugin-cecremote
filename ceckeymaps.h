@@ -36,8 +36,8 @@ typedef cCECList::const_iterator cCECListIterator;
 
 class cCECkeymaps {
 private:
-    eKeys mDefaultKeyMap[CEC_USER_CONTROL_CODE_MAX+2][2];
-    const char *mCECKeyNames[CEC_USER_CONTROL_CODE_MAX];
+    eKeys mDefaultKeyMap[CEC_USER_CONTROL_CODE_MAX+1][2];
+    const char *mCECKeyNames[CEC_USER_CONTROL_CODE_MAX+1];
 
     std::map<std::string, cVDRKeyMap> mVDRKeyMap;
     std::map<std::string, cCECKeyMap> mCECKeyMap;
