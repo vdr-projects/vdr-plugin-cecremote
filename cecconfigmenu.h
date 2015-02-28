@@ -17,11 +17,8 @@
 
 class cCECConfigMenu: public cMenuSetupPage {
 private:
-   // static int mWorkingMode;
     static int mShowMainMenu;
-   // static const char *WORKINGMODE;
     static const char *ENABLEMAINMENU;
-   // static cMediaDetectorThread *mDetector;
 
     cCECConfigMenu(void) {};
 

@@ -59,7 +59,6 @@
 	
 	<!--  Menu for TV -->
 	<menu name="TV" id="TV">
-		
 		<!--  When menu is selected, switch on and make TV active -->
 		<!--  TODO config option for selecting broadcast type -->
 		<onstart>

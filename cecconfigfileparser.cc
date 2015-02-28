@@ -45,6 +45,9 @@ const char *cCECConfigFileParser::XML_TEXTVIEWON = "textviewon";
 const char *cCECConfigFileParser::XML_COMBOKEYTIMEOUTMS = "combokeytimeoutms";
 const char *cCECConfigFileParser::XML_CECDEBUG = "cecdebug";
 const char *cCECConfigFileParser::XML_CECDEVICETYPE = "cecdevicetype";
+const char *cCECConfigFileParser::XML_DEVICE = "device";
+const char *cCECConfigFileParser::XML_PHYSICAL = "physical";
+const char *cCECConfigFileParser::XML_LOGICAL = "logical";
 
 /*
  * Parse <player file="">
@@ -360,6 +363,7 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
                     throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
                 }
                 mGlobalOptions.mDeviceTypes.push_back(t);
+                Dsyslog("CECDevicetype = %d \n", t);
             }
             else {
                 string s = "Invalid Node ";
@@ -501,6 +505,66 @@ void cCECConfigFileParser::parseCECKeymap(const xml_node node, cCECkeymaps &keym
 }
 
 /*
+ * parse elements between <device id="">
+ */
+void cCECConfigFileParser::parseDevice(const xml_node node)
+{
+    cCECDevice device;
+    string id = node.attribute(XML_ID).as_string("");
+    if (id.empty()) {
+        string s = "Missing id for vdr keymap";
+        Esyslog(s.c_str());
+        throw cCECConfigException(getLineNumber(node.offset_debug()), s);
+    }
+
+    Dsyslog ("DEVICE %s\n", id.c_str());
+    //device.id = id;
+    for (xml_node currentNode = node.first_child(); currentNode;
+         currentNode = currentNode.next_sibling()) {
+
+        if (currentNode.type() == node_element)  // is element
+        {
+            if (strcasecmp(currentNode.name(), XML_PHYSICAL) == 0) {
+                device.mPhysicalAddress = strtol(currentNode.text().as_string(),
+                                                 NULL, 16);
+                if (device.mPhysicalAddress == -1) {
+                    string s = "Invalid physical address ";
+                    s += currentNode.text().as_string();
+                    Esyslog(s.c_str());
+                    throw cCECConfigException(getLineNumber(node.offset_debug()), s);
+                }
+                Dsyslog ("   Physical Address = %04x", device.mPhysicalAddress);
+            }
+            else if (strcasecmp(currentNode.name(), XML_LOGICAL) == 0) {
+                device.mLogicalAddressDefined = (cec_logical_address)
+                                currentNode.text().as_int(CECDEVICE_UNKNOWN);
+                if ((device.mLogicalAddressDefined < 0) &&
+                    (device.mLogicalAddressDefined > CECDEVICE_BROADCAST)) {
+                    string s = "Invalid logical address ";
+                    s += currentNode.text().as_string();
+                    Esyslog(s.c_str());
+                    throw cCECConfigException(getLineNumber(node.offset_debug()), s);
+                }
+                Dsyslog ("   Logical Address = %d", device.mLogicalAddressDefined);
+            }
+            else {
+                string s = "Invalid node ";
+                s += currentNode.name();
+                Esyslog(s.c_str());
+                throw cCECConfigException(getLineNumber(node.offset_debug()), s);
+            }
+        }
+    }
+    if ((device.mPhysicalAddress == -1) &&
+        (device.mLogicalAddressDefined == CECDEVICE_UNKNOWN)) {
+        string s = "Nothing defined for device";
+        s += id;
+        Esyslog(s.c_str());
+        throw cCECConfigException(getLineNumber(node.offset_debug()), s);
+    }
+    mDeviceMap.insert(std::pair<string, cCECDevice>(id, device));
+}
+/*
  * Helper function to get the line number from the byte offset in the XML
  * error.
  */
@@ -571,6 +635,13 @@ bool cCECConfigFileParser::Parse(const string &filename, cCECkeymaps &keymaps) {
         }
     }
 
+    // Create the default device for TV
+    cCECDevice device;
+    device.mLogicalAddressDefined = CECDEVICE_TV;
+    device.mLogicalAddressUsed = CECDEVICE_TV;
+    device.mPhysicalAddress = 0x0000;
+    string id = "TV";
+    mDeviceMap.insert(std::pair<string, cCECDevice>(id, device));
     try {
         // First parse global node
         currentNode = elementRoot.child(XML_GLOBAL);
@@ -589,12 +660,17 @@ bool cCECConfigFileParser::Parse(const string &filename, cCECkeymaps &keymaps) {
         }
         // Parse vdrkeymaps
         for (currentNode = elementRoot.child(XML_VDRKEYMAP); currentNode;
-             currentNode = currentNode.next_sibling(XML_VDRKEYMAP)) {
+                currentNode = currentNode.next_sibling(XML_VDRKEYMAP)) {
             parseVDRKeymap(currentNode, keymaps);
+        }
+        // Parse device
+        for (currentNode = elementRoot.child(XML_DEVICE); currentNode;
+                currentNode = currentNode.next_sibling(XML_DEVICE)) {
+            parseDevice(currentNode);
         }
         // Parse all menus
         for (currentNode = elementRoot.child(XML_MENU); currentNode;
-             currentNode = currentNode.next_sibling(XML_MENU)) {
+                currentNode = currentNode.next_sibling(XML_MENU)) {
             parseMenu(currentNode);
         }
 

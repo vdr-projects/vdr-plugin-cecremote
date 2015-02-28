@@ -43,6 +43,21 @@ public:
     cCECGlobalOptions() : cec_debug(7), mComboKeyTimeoutMs(1000) {};
 };
 
+// Class for storing information of devices (<device> tag)
+class cCECDevice {
+public:
+    //std::string id;
+    uint16_t mPhysicalAddress;
+    cec_logical_address mLogicalAddressDefined;
+    cec_logical_address mLogicalAddressUsed;
+
+    cCECDevice() : mPhysicalAddress(-1),
+                   mLogicalAddressDefined(CECDEVICE_UNKNOWN),
+                   mLogicalAddressUsed(CECDEVICE_UNKNOWN) {};
+};
+
+typedef std::map<std::string, cCECDevice> mCECDeviceMap;
+
 // Class for storing information on <menu> tags.
 class cCECMenu {
     friend class cCECConfigFileParser;
@@ -121,6 +136,8 @@ private:
     // parse <onstart> and <onstop>
     void parseList(const pugi::xml_node node, cCmdQueue &cmdlist);
     void parsePlayer(const pugi::xml_node node, cCECMenu &menu);
+    // parse elements between <device id="">
+    void parseDevice(const pugi::xml_node node);
 
     // Keywords used in the XML config file
     static const char *XML_GLOBAL;
@@ -149,6 +166,9 @@ private:
     static const char *XML_COMBOKEYTIMEOUTMS;
     static const char *XML_CECDEBUG;
     static const char *XML_CECDEVICETYPE;
+    static const char *XML_DEVICE;
+    static const char *XML_PHYSICAL;
+    static const char *XML_LOGICAL;
 
     // Filename of the configuration file.
     const char* mXmlFile;
@@ -158,6 +178,8 @@ public:
     cCECGlobalOptions mGlobalOptions;
     // List of the parsed menu items.
     cCECMenuList mMenuList;
+    // List of devices
+    mCECDeviceMap mDeviceMap;
 
     cCECConfigFileParser() : mXmlFile(NULL) {};
 
