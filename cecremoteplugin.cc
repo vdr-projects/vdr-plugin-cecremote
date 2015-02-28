@@ -148,7 +148,7 @@ void cPluginCecremote::StartPlayer(const cCECMenu &menuitem)
             ExecToggle(menuitem);
         }
         else {
-            ExecCmd(menuitem.onStart);
+            PushCmdQueue(menuitem.mOnStart);
         }
     }
     // otherwise start a new player

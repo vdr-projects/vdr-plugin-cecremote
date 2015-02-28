@@ -81,7 +81,7 @@ public:
     ~cCECRemote();
     virtual bool Initialize(void) {return false;};
     void PushCmd(const cCECCmd &cmd);
-    void ExecCmd(const cCmdQueue &cmdList);
+    void PushCmdQueue(const cCmdQueue &cmdList);
     void ExecToggle(cec_logical_address addr, const cCmdQueue &poweron,
                     const cCmdQueue &poweroff);
     int getCECLogLevel() {return mCECLogLevel;}
@@ -94,9 +94,9 @@ private:
     libcec_configuration   mCECConfig;
     ICECCallbacks          mCECCallbacks;
     cec_adapter_descriptor mCECAdapterDescription[MAX_CEC_ADAPTERS];
-    cMutex                 mQueueMutex;
-    cCondWait              mQueueWait;
-    cCmdQueue              mQueue;
+    cMutex                 mWorkerQueueMutex;
+    cCondWait              mWorkerQueueWait;
+    cCmdQueue              mWorkerQueue;
     cPluginCecremote       *mPlugin;
 
     void Action(void);

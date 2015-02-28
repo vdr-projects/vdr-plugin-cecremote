@@ -18,6 +18,7 @@
 using namespace std;
 using namespace pugi;
 
+// Keywords used in the XML config file
 const char *cCECConfigFileParser::XML_ONSTART = "onstart";
 const char *cCECConfigFileParser::XML_ONSTOP  = "onstop";
 const char *cCECConfigFileParser::XML_ONPOWERON = "onpoweron";
@@ -43,7 +44,11 @@ const char *cCECConfigFileParser::XML_EXEC = "exec";
 const char *cCECConfigFileParser::XML_TEXTVIEWON = "textviewon";
 const char *cCECConfigFileParser::XML_COMBOKEYTIMEOUTMS = "combokeytimeoutms";
 const char *cCECConfigFileParser::XML_CECDEBUG = "cecdebug";
+const char *cCECConfigFileParser::XML_CECDEVICETYPE = "cecdevicetype";
 
+/*
+ * Parse <player file="">
+ */
 void cCECConfigFileParser::parsePlayer(const xml_node node, cCECMenu &menu)
 {
     menu.mStillPic = node.attribute(XML_FILE).as_string("");
@@ -96,6 +101,9 @@ void cCECConfigFileParser::parsePlayer(const xml_node node, cCECMenu &menu)
     }
 }
 
+/*
+ * Check if a tag contains child elements.
+ */
 bool cCECConfigFileParser::hasElements(const xml_node node)
 {
     for (xml_node currentNode = node.first_child(); currentNode;
@@ -109,6 +117,9 @@ bool cCECConfigFileParser::hasElements(const xml_node node)
     return false;
 }
 
+/*
+ * parse <onstart> and <onstop>
+ */
 void cCECConfigFileParser::parseList(const xml_node node,
                                      cCmdQueue &cmdlist)
 {
@@ -174,6 +185,9 @@ void cCECConfigFileParser::parseList(const xml_node node,
     }
 }
 
+/*
+ * parse elements between <menu name="" [address="" id=""]>
+ */
 void cCECConfigFileParser::parseMenu(const xml_node node)
 {
     cCECMenu menu;
@@ -205,7 +219,7 @@ void cCECConfigFileParser::parseMenu(const xml_node node)
                     (menu.mPowerToggle == cCECMenu::USE_ONSTART))
                 {
                     menu.mPowerToggle = cCECMenu::USE_ONSTART;
-                    parseList(currentNode, menu.onStart);
+                    parseList(currentNode, menu.mOnStart);
                 }
                 else
                 {
@@ -218,7 +232,7 @@ void cCECConfigFileParser::parseMenu(const xml_node node)
                    (menu.mPowerToggle == cCECMenu::USE_ONSTART))
                {
                    menu.mPowerToggle = cCECMenu::USE_ONSTART;
-                   parseList(currentNode, menu.onStop);
+                   parseList(currentNode, menu.mOnStop);
                }
                else
                {
@@ -231,7 +245,7 @@ void cCECConfigFileParser::parseMenu(const xml_node node)
                     (menu.mPowerToggle == cCECMenu::USE_ONPOWER))
                 {
                     menu.mPowerToggle = cCECMenu::USE_ONPOWER;
-                    parseList(currentNode, menu.onPowerOn);
+                    parseList(currentNode, menu.mOnPowerOn);
                 }
                 else
                 {
@@ -244,7 +258,7 @@ void cCECConfigFileParser::parseMenu(const xml_node node)
                    (menu.mPowerToggle == cCECMenu::USE_ONPOWER))
                {
                    menu.mPowerToggle = cCECMenu::USE_ONPOWER;
-                   parseList(currentNode, menu.onPowerOff);
+                   parseList(currentNode, menu.mOnPowerOff);
                }
                else
                {
@@ -272,6 +286,31 @@ void cCECConfigFileParser::parseMenu(const xml_node node)
     mMenuList.push_back(menu);
 }
 
+/*
+ * Convert device type string to cec_device_type
+ */
+cec_device_type cCECConfigFileParser::getDeviceType(const string &s)
+{
+    if (strcasecmp(s.c_str(), "TV") == 0) {
+        return CEC_DEVICE_TYPE_TV;
+    }
+    else if (strcasecmp(s.c_str(), "RECORDING_DEVICE") == 0) {
+        return CEC_DEVICE_TYPE_RECORDING_DEVICE;
+    }
+    else if (strcasecmp(s.c_str(), "TUNER") == 0) {
+        return CEC_DEVICE_TYPE_TUNER ;
+    }
+    else if (strcasecmp(s.c_str(), "PLAYBACK_DEVICE") == 0) {
+        return CEC_DEVICE_TYPE_PLAYBACK_DEVICE ;
+    }
+    else if (strcasecmp(s.c_str(), "AUDIO_SYSTEM") == 0) {
+        return CEC_DEVICE_TYPE_AUDIO_SYSTEM ;
+    }
+    return CEC_DEVICE_TYPE_RESERVED;
+}
+/*
+ *  Parse elements between <global> nodes.
+ */
 void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
 {
     for (xml_node currentNode = node.first_child(); currentNode;
@@ -280,7 +319,7 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
         if (currentNode.type() == node_element)  // is element
         {
             Dsyslog("   Global Option %s\n", currentNode.name());
-
+            // <cecdebug>
             if (strcasecmp(currentNode.name(), XML_CECDEBUG) == 0) {
                 if (!currentNode.first_child()) {
                     string s = "No nodes allowed for cecdebug: ";
@@ -290,20 +329,37 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
                 mGlobalOptions.cec_debug = currentNode.text().as_int(-1);
                 Dsyslog("CECDebug = %d \n", mGlobalOptions.cec_debug);
             }
+            // <combokeytimeoutms>
             else if (strcasecmp(currentNode.name(), XML_COMBOKEYTIMEOUTMS) == 0) {
                 if (!currentNode.first_child()) {
                     string s = "No nodes allowed for cecdebug: ";
                     s += currentNode.first_child().name();
                     throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
                 }
-                mGlobalOptions.iComboKeyTimeoutMs = currentNode.text().as_int(1000);
-                Dsyslog("ComboKeyTimeoutMs = %d \n", mGlobalOptions.iComboKeyTimeoutMs);
+                mGlobalOptions.mComboKeyTimeoutMs = currentNode.text().as_int(1000);
+                Dsyslog("ComboKeyTimeoutMs = %d \n", mGlobalOptions.mComboKeyTimeoutMs);
             }
+            // <onStart>
             else if (strcasecmp(currentNode.name(), XML_ONSTART) == 0) {
-                parseList(currentNode, mGlobalOptions.onStart);
+                parseList(currentNode, mGlobalOptions.mOnStart);
             }
+            // <onStop>
             else if (strcasecmp(currentNode.name(), XML_ONSTOP) == 0) {
-                parseList(currentNode, mGlobalOptions.onStop);
+                parseList(currentNode, mGlobalOptions.mOnStop);
+            }
+            else if (strcasecmp(currentNode.name(), XML_CECDEVICETYPE) == 0) {
+                if (!currentNode.first_child()) {
+                    string s = "No nodes allowed for cecdebug: ";
+                    s += currentNode.first_child().name();
+                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                }
+                cec_device_type t = getDeviceType(currentNode.text().as_string(""));
+                if (t == CEC_DEVICE_TYPE_RESERVED) {
+                    string s = "Invalid device type: ";
+                    s += currentNode.text().as_string("");
+                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                }
+                mGlobalOptions.mDeviceTypes.push_back(t);
             }
             else {
                 string s = "Invalid Node ";
@@ -314,6 +370,9 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
     }
 }
 
+/*
+ * parse elements between <vdrkeymap>
+ */
 void cCECConfigFileParser::parseVDRKeymap(const xml_node node, cCECkeymaps &keymaps)
 {
     string id = node.attribute(XML_ID).as_string("");
@@ -376,6 +435,9 @@ void cCECConfigFileParser::parseVDRKeymap(const xml_node node, cCECkeymaps &keym
     }
 }
 
+/*
+ * parse elements between <ceckeymap>
+ */
 void cCECConfigFileParser::parseCECKeymap(const xml_node node, cCECkeymaps &keymaps)
 {
     string id = node.attribute(XML_ID).as_string("");
@@ -438,6 +500,10 @@ void cCECConfigFileParser::parseCECKeymap(const xml_node node, cCECkeymaps &keym
     }
 }
 
+/*
+ * Helper function to get the line number from the byte offset in the XML
+ * error.
+ */
 int cCECConfigFileParser::getLineNumber(long offset)
 {
     int line = 1;
@@ -455,6 +521,11 @@ int cCECConfigFileParser::getLineNumber(long offset)
     return line;
 }
 
+/*
+ * Parse the file, fill mGlobalOptions and mMenuList and return the
+ * parsed keymaps.
+ * Returns false when a syntax error occurred during parsing.
+ */
 bool cCECConfigFileParser::Parse(const string &filename, cCECkeymaps &keymaps) {
     bool ret = true;
     xml_document xmlDoc;

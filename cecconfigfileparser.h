@@ -27,17 +27,23 @@
 
 typedef std::set<eKeys> keySet;
 
+// Class for storing information on <global> tags.
+
+typedef std::list<cec_device_type> deviceTypeList;
+typedef deviceTypeList::const_iterator deviceTypeListIterator;
+
 class cCECGlobalOptions {
 public:
     int cec_debug;
-    uint32_t iComboKeyTimeoutMs;
-    cCmdQueue onStart;
-    cCmdQueue onStop;
+    uint32_t mComboKeyTimeoutMs;
+    cCmdQueue mOnStart;
+    cCmdQueue mOnStop;
+    deviceTypeList mDeviceTypes;
 
-public:
-    cCECGlobalOptions() : cec_debug(7), iComboKeyTimeoutMs(1000) {};
+    cCECGlobalOptions() : cec_debug(7), mComboKeyTimeoutMs(1000) {};
 };
 
+// Class for storing information on <menu> tags.
 class cCECMenu {
     friend class cCECConfigFileParser;
 public:
@@ -50,10 +56,10 @@ public:
     std::string mStillPic;
     keySet mStopKeys;
     cec_logical_address mAddress;
-    cCmdQueue onStart;
-    cCmdQueue onStop;
-    cCmdQueue onPowerOn;
-    cCmdQueue onPowerOff;
+    cCmdQueue mOnStart;
+    cCmdQueue mOnStop;
+    cCmdQueue mOnPowerOn;
+    cCmdQueue mOnPowerOff;
     std::string mCECKeymap;
     std::string mVDRKeymap;
 
@@ -71,6 +77,7 @@ private:
 typedef std::list<cCECMenu> cCECMenuList;
 typedef cCECMenuList::const_iterator cCECMenuListIterator;
 
+// Exception thrown when a systax error occurred.
 class cCECConfigException : public std::exception {
 private:
     int mLineNr;
@@ -82,6 +89,7 @@ public:
     }
     ~cCECConfigException() throw() {};
 
+    // Returns an error text.
     const char *what() const throw() {
         char buf[10];
         sprintf(buf,"%d\n", mLineNr);
@@ -91,17 +99,30 @@ public:
     }
 };
 
+// Configuration file parser
 class cCECConfigFileParser {
 private:
+    // Helper function to get the line number from the byte offset in the XML
+    // error.
     int getLineNumber(long offset);
+    // Helper function to convert string to cec_device_type.
+    cec_device_type getDeviceType(const std::string &s);
+    // Check if a tag contains child elements.
     bool hasElements(const pugi::xml_node node);
+
+    // parse elements between <vdrkeymap>
     void parseVDRKeymap(const pugi::xml_node node, cCECkeymaps &keymaps);
+    // parse elements between <ceckeymap>
     void parseCECKeymap(const pugi::xml_node node, cCECkeymaps &keymaps);
+    // parse elements between <global>
     void parseGlobal(const pugi::xml_node node);
+    // parse elements between <menu>
     void parseMenu(const pugi::xml_node node);
+    // parse <onstart> and <onstop>
     void parseList(const pugi::xml_node node, cCmdQueue &cmdlist);
     void parsePlayer(const pugi::xml_node node, cCECMenu &menu);
 
+    // Keywords used in the XML config file
     static const char *XML_GLOBAL;
     static const char *XML_MENU;
     static const char *XML_CECKEYMAP;
@@ -127,15 +148,22 @@ private:
     static const char *XML_TEXTVIEWON;
     static const char *XML_COMBOKEYTIMEOUTMS;
     static const char *XML_CECDEBUG;
+    static const char *XML_CECDEVICETYPE;
 
+    // Filename of the configuration file.
     const char* mXmlFile;
 
 public:
+    // Storage of the parsed global options.
     cCECGlobalOptions mGlobalOptions;
+    // List of the parsed menu items.
     cCECMenuList mMenuList;
 
     cCECConfigFileParser() : mXmlFile(NULL) {};
 
+    // Parse the file, fill mGlobalOptions and mMenuList and return the
+    // parsed keymaps.
+    // Returns false when a syntax error occurred during parsing.
     bool Parse(const std::string &filename, cCECkeymaps &keymaps);
 };
 

@@ -18,7 +18,9 @@
 using namespace std;
 #include <cecloader.h>
 
-// Callback for CEC KeyPress
+/*
+ * Callback when libCEC receives a key press
+ */
 static int CecKeyPressCallback(void *cbParam, const cec_keypress key)
 {
     static cec_user_control_code lastkey = CEC_USER_CONTROL_CODE_UNKNOWN;
@@ -37,7 +39,10 @@ static int CecKeyPressCallback(void *cbParam, const cec_keypress key)
     return 0;
 }
 
-// Callback for CEC Command
+/*
+ * Callback function for libCEC command messages.
+ * Currently only used for debugging.
+ */
 static int CecCommandCallback(void *cbParam, const cec_command command)
 {
     cCECRemote *rem = (cCECRemote *)cbParam;
@@ -47,7 +52,10 @@ static int CecCommandCallback(void *cbParam, const cec_command command)
 }
 
 
-// Callback for CEC Alert
+/*
+ * Callback function for libCEC alert messages.
+ * Currently only used for debugging.
+ */
 static int CecAlertCallback(void *cbParam, const libcec_alert type,
                             const libcec_parameter param)
 {
@@ -66,6 +74,9 @@ static int CecAlertCallback(void *cbParam, const libcec_alert type,
     return 0;
 }
 
+/*
+ * Callback function for libCEC to print out log messages.
+ */
 static int CecLogMessageCallback(void *cbParam, const cec_log_message message)
 {
     cCECRemote *rem = (cCECRemote *)cbParam;
@@ -108,14 +119,20 @@ static int CecLogMessageCallback(void *cbParam, const cec_log_message message)
     return 0;
 }
 
+/*
+ * Callback function for libCEC when a device gets activated.
+ * Currently only used for debugging.
+ */
 static void CECSourceActivatedCallback (void *cbParam,
                                         const cec_logical_address address,
                                         const uint8_t activated)
 {
     Dsyslog("CECSourceActivatedCallback adress %d activated %d", address, activated);
 }
+
 /*
- * CEC remote
+ * CEC remote constructor.
+ * Initializes libCEC and the connected CEC adaptor.
  */
 
 cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugin):
@@ -126,8 +143,8 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     mPlugin = plugin;
     mCECAdapter = NULL;
     mCECLogLevel = options.cec_debug;
-    mOnStart = options.onStart;
-    mOnStop = options.onStop;
+    mOnStart = options.mOnStart;
+    mOnStop = options.mOnStop;
     Dsyslog("cCECRemote::Initialize");
     // Initialize Callbacks
     mCECCallbacks.Clear();
@@ -142,10 +159,25 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     strncpy(mCECConfig.strDeviceName, "VDR", sizeof(mCECConfig.strDeviceName));
     mCECConfig.clientVersion       = CEC_CLIENT_VERSION_CURRENT;
     mCECConfig.bActivateSource     = CEC_TRUE;
-    mCECConfig.iComboKeyTimeoutMs = options.iComboKeyTimeoutMs;
+    mCECConfig.iComboKeyTimeoutMs = options.mComboKeyTimeoutMs;
 
-    mCECConfig.deviceTypes.Add(CEC_DEVICE_TYPE_RECORDING_DEVICE);
-    // TODO check mCECConfig.deviceTypes.Add(CEC_DEVICE_TYPE_TUNER);
+    // If no <cecdevicetype> is specified in the <global>, set default
+    if (options.mDeviceTypes.empty())
+    {
+        mCECConfig.deviceTypes.Add(CEC_DEVICE_TYPE_RECORDING_DEVICE);
+    }
+    else {
+        // Add all device types as specified in <cecdevicetype>
+        deviceTypeListIterator idev;
+        for (idev = options.mDeviceTypes.begin();
+             idev != options.mDeviceTypes.end(); ++idev) {
+            cec_device_type t = *idev;
+            mCECConfig.deviceTypes.Add(t);
+            Dsyslog ("   Add device %d", t);
+        }
+    }
+
+    // Setup callbacks
     mCECConfig.callbackParam = this;
     mCECConfig.callbacks = &mCECCallbacks;
     // Initialize libcec
@@ -159,13 +191,14 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     Dsyslog("LibCEC %s", mCECAdapter->GetLibInfo());
 
     mDevicesFound = mCECAdapter->DetectAdapters(mCECAdapterDescription,
-            MAX_CEC_ADAPTERS, NULL);
+                                                MAX_CEC_ADAPTERS, NULL);
     if (mDevicesFound <= 0)
     {
         Esyslog("No adapter found");
         UnloadLibCec(mCECAdapter);
         exit(-1);
     }
+
     for (int i = 0; i < mDevicesFound; i++)
     {
         Dsyslog("Device %d path: %s port: %s Firmware %04d", i,
@@ -191,9 +224,9 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
             uint16_t phaddr = mCECAdapter->GetDevicePhysicalAddress(logical_addres);
             cec_osd_name name = mCECAdapter->GetDeviceOSDName(logical_addres);
             cec_vendor_id vendor = (cec_vendor_id)mCECAdapter->GetDeviceVendorId(logical_addres);
-            Dsyslog("  %s@%04x %15.15s %15.15s",
+            Dsyslog("  %15.15s %d@%04x %15.15s %15.15s",
                     mCECAdapter->ToString(logical_addres),
-                    phaddr, name.name,
+                    logical_addres, phaddr, name.name,
                     mCECAdapter->ToString(vendor));
         }
     }
@@ -203,6 +236,9 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     Dsyslog("cCECRemote start");
 }
 
+/*
+ * Destructor stops the worker thread and unloads libCEC.
+ */
 cCECRemote::~cCECRemote()
 {
     Cancel(3);
@@ -213,6 +249,9 @@ cCECRemote::~cCECRemote()
     }
 }
 
+/*
+ * Function to list all active CEC devices.
+ */
 cString cCECRemote::ListDevices()
 {
     cString s = "Available CEC Devices:";
@@ -249,6 +288,9 @@ cString cCECRemote::ListDevices()
     return s;
 }
 
+/*
+ * TEXTVIEWON CEC command.
+ */
 bool cCECRemote::TextViewOn(cec_logical_address address)
 {
     cec_command data;
@@ -258,6 +300,10 @@ bool cCECRemote::TextViewOn(cec_logical_address address)
     return mCECAdapter->Transmit(data);
 }
 
+/*
+ * Worker thread which processes the command queue and executes the
+ * received commands.
+ */
 void cCECRemote::Action(void)
 {
     cCECCmd cmd;
@@ -286,7 +332,7 @@ void cCECRemote::Action(void)
                 }
             }
             break;
-        case CEC_POWERON: // TODO
+        case CEC_POWERON:
             Dsyslog("Power on");
             if (mCECAdapter->PowerOnDevices(cmd.mAddress) != 0) {
                 Esyslog("PowerOnDevice failed for %s",
@@ -352,33 +398,53 @@ void cCECRemote::Action(void)
     Dsyslog("cCECRemote stop worker thread");
 }
 
+/*
+ * Get the device power state and execute either the poweron or
+ * poweroff command queue.
+ */
 void cCECRemote::ExecToggle(cec_logical_address addr,
                             const cCmdQueue &poweron, const cCmdQueue &poweroff)
 {
+    bool repeat;
+    cec_power_status status;
+
     // Wait until queue is empty
     cCondWait w;
     bool full = true;
     while (full) {
-        mQueueMutex.Lock();
-        full = !mQueue.empty();
-        mQueueMutex.Unlock();
+        mWorkerQueueMutex.Lock();
+        full = !mWorkerQueue.empty();
+        mWorkerQueueMutex.Unlock();
         if (full) {
             w.Wait(100);
        }
     }
 
-    cec_power_status status = mCECAdapter->GetDevicePowerStatus(addr);
-    Dsyslog("ExecToggle: %s", mCECAdapter->ToString(status));
+    do {
+        repeat = false;
+        status = mCECAdapter->GetDevicePowerStatus(addr);
+        Dsyslog("ExecToggle: %s", mCECAdapter->ToString(status));
+        // If currently in any transition state, wait.
+        if ((status == CEC_POWER_STATUS_IN_TRANSITION_STANDBY_TO_ON) ||
+            (status == CEC_POWER_STATUS_IN_TRANSITION_ON_TO_STANDBY)) {
+            w.Wait(1000);
+            repeat = true;
+        }
+    } while (repeat);
+
 
     if (status == CEC_POWER_STATUS_ON) {
-        ExecCmd(poweroff);
+        PushCmdQueue(poweroff);
     }
     else {
-        ExecCmd(poweron);
+        PushCmdQueue(poweron);
     }
 }
 
-void cCECRemote::ExecCmd(const cCmdQueue &cmdList)
+/*
+ * Put a complete command queue into the worker command queue for execution.
+ */
+void cCECRemote::PushCmdQueue(const cCmdQueue &cmdList)
 {
     for (cCmdQueueIterator i = cmdList.begin();
            i != cmdList.end(); i++) {
@@ -386,32 +452,39 @@ void cCECRemote::ExecCmd(const cCmdQueue &cmdList)
     }
 }
 
+/*
+ * Put a command into the worker command queue for execution.
+ */
 void cCECRemote::PushCmd(const cCECCmd &cmd)
 {
-    Dsyslog("cCECRemote::PushCmd %d (size %d)", cmd.mCmd, mQueue.size());
-    cMutexLock lock(&mQueueMutex);
-    mQueueMutex.Lock();
-    mQueue.push_back(cmd);
-    mQueueMutex.Unlock();
-    mQueueWait.Signal();
+    Dsyslog("cCECRemote::PushCmd %d (size %d)", cmd.mCmd, mWorkerQueue.size());
+    cMutexLock lock(&mWorkerQueueMutex);
+    mWorkerQueueMutex.Lock();
+    mWorkerQueue.push_back(cmd);
+    mWorkerQueueMutex.Unlock();
+    mWorkerQueueWait.Signal();
 }
 
+/*
+ * Wait until a command is put into the worker command queue or a timeout occurs.
+ * If a command was received remove it and return the received command.
+ */
 cCECCmd cCECRemote::WaitCmd()
 {
     cCECCmd cmd;
-    mQueueMutex.Lock();
-    if (mQueue.empty()) {
-        mQueueMutex.Unlock();
-        mQueueWait.Wait(1000);
-        mQueueMutex.Lock();
+    mWorkerQueueMutex.Lock();
+    if (mWorkerQueue.empty()) {
+        mWorkerQueueMutex.Unlock();
+        mWorkerQueueWait.Wait(1000);
+        mWorkerQueueMutex.Lock();
     }
-    if (mQueue.empty()) {
+    if (mWorkerQueue.empty()) {
         cmd.mCmd = CEC_TIMEOUT;
     }
     else {
-        cmd = mQueue.front();
-        mQueue.pop_front();
+        cmd = mWorkerQueue.front();
+        mWorkerQueue.pop_front();
     }
-    mQueueMutex.Unlock();
+    mWorkerQueueMutex.Unlock();
     return cmd;
 }

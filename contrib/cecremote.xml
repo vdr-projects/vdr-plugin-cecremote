@@ -6,6 +6,26 @@
 	8 : DVD/Blueray player
 -->
 <config>
+	<global>
+		<cecdebug>7</cecdebug>
+		<combokeytimeoutms>1000</combokeytimeoutms>
+		<!--  On VDR start power on TV, make VDR device active -->
+		<onstart>
+			<poweron>0</poweron>
+			<makeactive />
+		</onstart>
+		<!--  On VDR stop power off TV and DVD/Blueray player -->
+		<onstop>
+			<poweroff>0</poweroff>
+			<poweroff>8</poweroff>
+		</onstop>
+		<cecdevicetype>RECORDING_DEVICE</cecdevicetype>
+		<cecdevicetype>TUNER</cecdevicetype>
+		<cecdevicetype>TV</cecdevicetype>
+		<cecdevicetype>PLAYBACK_DEVICE</cecdevicetype>
+		<cecdevicetype>AUDIO_SYSTEM</cecdevicetype>
+	</global>
+	
 	<!-- Key mapping CEC Key to VDR -->
 	<ceckeymap id="TV">
 		<key code="SELECT">
@@ -24,28 +44,26 @@
 		</key>
 	</vdrkeymap>
 
-	<global>
-		<cecdebug>7</cecdebug>
-		<combokeytimeoutms>1000</combokeytimeoutms>
-		<!--  On VDR start power on TV, make VDR device active -->
-		<onstart>
-			<poweron>0</poweron>
-			<makeactive />
-		</onstart>
-		<!--  On VDR stop power off TV and DVD/Blueray player -->
-		<onstop>
-			<poweroff>0</poweroff>
-			<poweroff>8</poweroff>
-		</onstop>
-	</global>
+	<!-- Define a device -->
+	<device id="blueray">
+		<physical>2000</physical>
+		<logical>PLAYBACKDEVICE1</logical>
+	</device>
+	
+	<!--  The following device is predefined: 
+	<device id="TV">
+		<physical>0000</physical>
+		<logical>TV</logical>
+	</device>
+	-->
 	
 	<!--  Menu for TV -->
-	<menu name="TV" address="0">
+	<menu name="TV" id="TV">
 		
 		<!--  When menu is selected, switch on and make TV active -->
 		<!--  TODO config option for selecting broadcast type -->
 		<onstart>
-			<poweron>0</poweron>
+			<poweron>TV</poweron>
 			<makeinactive />
 		</onstart>
 		
@@ -57,17 +75,17 @@
 		</player>
 		<!--  When returning to VDR poweroff TV and make VDR active -->
 		<onstop>
-			<poweroff>0</poweroff>
+			<poweroff>TV</poweroff>
 			<makeactive />
 		</onstop>
 	</menu>
 	
 	<!--  Menu for Blueray/DVD player -->
-	<menu name="Blueray" address="8">
+	<menu name="Blueray" id="blueray">
 		<!--  When menu is selected, switch on TV and player and make player active -->
 		<onstart>
-			<poweron>0</poweron>
-			<poweron>8</poweron>
+			<poweron>TV</poweron>
+			<poweron>blueray</poweron>
 		</onstart>
 		<player file="/video/conf/plugins/cecremote/blueray.mpg">
 		<!--  <keymaps cec="default" vdr="default" /> -->
@@ -76,7 +94,7 @@
 		</player>
 		<!--  When returning to VDR poweroff DVD Player and make VDR active -->
 		<onstop>
-			<poweroff>8</poweroff>
+			<poweroff>blueray</poweroff>
 			<makeactive />
 		</onstop>
 	</menu>
@@ -88,10 +106,10 @@
 		<!-- player tag, so that the TV displays the VDR output    -->
 		<!-- When player is not used, onstop is ignored            -->
 		<onstart>
-			<poweron>0</poweron>
+			<poweron>TV</poweron>
 		</onstart>
 	</menu>
-	<!--  Menu to power off TV -->
+	<!--  Menu to power off TV, using logical address -->
 	<menu name="TV OFF" address="0">
 		<!-- When menu is selected, switch off TV        -->
 		<onstart>
@@ -124,7 +142,7 @@
 	</menu>
 	
 	<!--  Menu for TV (using CEC TextViewOn) -->
-	<menu name="TV TextViewOn" address="0">
+	<menu name="TV TextViewOn" id="TV">
 		<onstart>
 			<textviewon>0</textviewon>
 		</onstart>

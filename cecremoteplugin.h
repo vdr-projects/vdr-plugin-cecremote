@@ -41,7 +41,7 @@ protected:
         return cf;
     }
     void ExecToggle(const cCECMenu menu) {
-        mCECRemote->ExecToggle(menu.mAddress, menu.onPowerOn, menu.onPowerOff);
+        mCECRemote->ExecToggle(menu.mAddress, menu.mOnPowerOn, menu.mOnPowerOff);
     }
 
 public:
@@ -68,7 +68,7 @@ public:
 
     void StartPlayer(const cCECMenu &menuitem);
     void PushCmd(const cCECCmd &cmd) {mCECRemote->PushCmd(cmd);}
-    void ExecCmd(const cCmdQueue &cmdList) {mCECRemote->ExecCmd(cmdList);}
+    void PushCmdQueue(const cCmdQueue &cmdList) {mCECRemote->PushCmdQueue(cmdList);}
     cCECMenuList *GetMenuList() {return &mConfigFileParser.mMenuList; }
     cCECkeymaps mKeyMaps;
 };

@@ -20,11 +20,11 @@ cCECControl::cCECControl(const cCECMenu &menuitem, cPluginCecremote *plugin) :
     mPlugin = plugin;
     mMenuItem = menuitem;
     mPlugin->mKeyMaps.SetActiveKeymaps(menuitem.mVDRKeymap, menuitem.mCECKeymap);
-    mPlugin->ExecCmd(mMenuItem.onStart);
+    mPlugin->PushCmdQueue(mMenuItem.mOnStart);
 }
 
 cCECControl::~cCECControl() {
-    mPlugin->ExecCmd(mMenuItem.onStop);
+    mPlugin->PushCmdQueue(mMenuItem.mOnStop);
     delete mCECPlayer;
 }
 
