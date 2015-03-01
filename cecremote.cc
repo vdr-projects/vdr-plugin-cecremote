@@ -18,6 +18,7 @@
 using namespace std;
 #include <cecloader.h>
 
+const char *cCECRemote::VDRNAME = "VDR";
 /*
  * Callback when libCEC receives a key press
  */
@@ -156,7 +157,7 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
 
     // Setup CEC configuration
     mCECConfig.Clear();
-    strncpy(mCECConfig.strDeviceName, "VDR", sizeof(mCECConfig.strDeviceName));
+    strncpy(mCECConfig.strDeviceName, VDRNAME, sizeof(mCECConfig.strDeviceName));
     mCECConfig.clientVersion       = CEC_CLIENT_VERSION_CURRENT;
     mCECConfig.bActivateSource     = CEC_TRUE;
     mCECConfig.iComboKeyTimeoutMs = options.mComboKeyTimeoutMs;
@@ -214,6 +215,7 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
         UnloadLibCec(mCECAdapter);
         exit(-1);
     }
+
     cec_logical_addresses devices = mCECAdapter->GetActiveDevices();
     for (int j = 0; j < 16; j++)
     {
@@ -224,7 +226,7 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
             uint16_t phaddr = mCECAdapter->GetDevicePhysicalAddress(logical_addres);
             cec_osd_name name = mCECAdapter->GetDeviceOSDName(logical_addres);
             cec_vendor_id vendor = (cec_vendor_id)mCECAdapter->GetDeviceVendorId(logical_addres);
-            Dsyslog("  %15.15s %d@%04x %15.15s %15.15s",
+            Dsyslog("   %15.15s %d@%04x %15.15s %15.15s",
                     mCECAdapter->ToString(logical_addres),
                     logical_addres, phaddr, name.name,
                     mCECAdapter->ToString(vendor));
@@ -267,6 +269,8 @@ cString cCECRemote::ListDevices()
 
     s = cString::sprintf("%s\n\nActive Devices:", *s);
     cec_logical_addresses devices = mCECAdapter->GetActiveDevices();
+    cec_logical_addresses own = mCECAdapter->GetLogicalAddresses();
+
     for (int j = 0; j < 16; j++)
     {
         if (devices[j])
@@ -276,13 +280,22 @@ cString cCECRemote::ListDevices()
             uint16_t phaddr = mCECAdapter->GetDevicePhysicalAddress(logical_addres);
             cec_osd_name name = mCECAdapter->GetDeviceOSDName(logical_addres);
             cec_vendor_id vendor = (cec_vendor_id)
-                                    mCECAdapter->GetDeviceVendorId(logical_addres);
-            s = cString::sprintf("%s\n  %d# %-15.15s@%04x %-15.15s %-14.14s %-15.15s", *s,
+                                            mCECAdapter->GetDeviceVendorId(logical_addres);
+            if (own[j]) {
+                s = cString::sprintf("%s\n   %d# %-15.15s@%04x %-15.15s %-14.14s %-15.15s", *s,
+                                     logical_addres,
+                                     mCECAdapter->ToString(logical_addres),
+                                     phaddr, name.name,
+                                     VDRNAME, VDRNAME);
+            }
+            else {
+                    s = cString::sprintf("%s\n   %d# %-15.15s@%04x %-15.15s %-14.14s %-15.15s", *s,
                                  logical_addres,
                                  mCECAdapter->ToString(logical_addres),
                                  phaddr, name.name,
                                  mCECAdapter->GetDeviceOSDName(logical_addres).name,
                                  mCECAdapter->ToString(vendor));
+            }
         }
     }
     return s;
@@ -301,6 +314,67 @@ bool cCECRemote::TextViewOn(cec_logical_address address)
 }
 
 /*
+ * Try to get the logical address for a device. If specified, try to use
+ * the physical address,
+ */
+cec_logical_address cCECRemote::getLogical(cCECDevice &dev)
+{
+    cec_logical_address found = CECDEVICE_UNKNOWN;
+    // Logical address already available
+    if (dev.mLogicalAddressUsed != CECDEVICE_UNKNOWN) {
+        return dev.mLogicalAddressUsed;
+    }
+    // Try to get logical address from physical address.
+    // It may be possible that more than one logical address is available
+    // at a physical address!
+    if (dev.mPhysicalAddress != 0) {
+        cec_logical_addresses devices = mCECAdapter->GetActiveDevices();
+        for (int j = 0; j < 16; j++)
+        {
+            if (devices[j])
+            {
+                cec_logical_address logical_addres = (cec_logical_address)j;
+                if (dev.mPhysicalAddress ==
+                        mCECAdapter->GetDevicePhysicalAddress(logical_addres)) {
+                    dev.mLogicalAddressUsed = logical_addres;
+                    Dsyslog ("Mapping Physical %04x->Logical %d",
+                            dev.mPhysicalAddress, logical_addres);
+                    found = logical_addres;
+                    // Exact match
+                    if (dev.mLogicalAddressDefined == logical_addres) {
+                        return logical_addres;
+                    }
+                }
+            }
+        }
+    }
+    if (found != CECDEVICE_UNKNOWN) {
+        return found;
+    }
+
+    // No mapping available, so try as last attempt the defined logical address,
+    // if available.
+    if (dev.mLogicalAddressDefined == CECDEVICE_UNKNOWN) {
+        Esyslog("No fallback logical address for %04x configured", dev.mPhysicalAddress);
+        return CECDEVICE_UNKNOWN;
+    }
+    // Ensure that we don't send accidentally to the own VDR address.
+
+    cec_logical_addresses own = mCECAdapter->GetLogicalAddresses();
+    if (own[dev.mLogicalAddressDefined]) {
+        Esyslog("Logical address of physical %04x is the VDR", dev.mPhysicalAddress);
+        return CECDEVICE_UNKNOWN;
+    }
+    // Check if device is available.
+    if (!mCECAdapter->PollDevice(dev.mLogicalAddressDefined)) {
+        Esyslog("Logical address not available", dev.mLogicalAddressDefined);
+        return CECDEVICE_UNKNOWN;
+    }
+
+    dev.mLogicalAddressUsed = dev.mLogicalAddressDefined;
+    return dev.mLogicalAddressDefined;
+}
+/*
  * Worker thread which processes the command queue and executes the
  * received commands.
  */
@@ -309,14 +383,17 @@ void cCECRemote::Action(void)
     cCECCmd cmd;
     cCECList ceckmap;
     cec_user_control_code ceckey;
+    cec_logical_address addr;
     eKeys k;
 
     Dsyslog("cCECRemote start worker thread");
     while (Running()) {
         cmd = WaitCmd();
         if (cmd.mCmd != CEC_TIMEOUT) {
-            Dsyslog ("Action %d Val %d Addr %d",
-                    cmd.mCmd, cmd.mVal, cmd.mAddress);
+            Dsyslog ("Action %d Val %d Phys Addr %d Logical %04x %04x",
+                     cmd.mCmd, cmd.mVal, cmd.mDevice.mPhysicalAddress,
+                     cmd.mDevice.mLogicalAddressDefined,
+                     cmd.mDevice.mLogicalAddressUsed);
         }
         switch (cmd.mCmd)
         {
@@ -334,23 +411,28 @@ void cCECRemote::Action(void)
             break;
         case CEC_POWERON:
             Dsyslog("Power on");
-            if (mCECAdapter->PowerOnDevices(cmd.mAddress) != 0) {
+            addr = getLogical(cmd.mDevice);
+            if ((addr != CECDEVICE_UNKNOWN) &&
+                (mCECAdapter->PowerOnDevices(addr) != 0)) {
                 Esyslog("PowerOnDevice failed for %s",
-                        mCECAdapter->ToString(cmd.mAddress));
+                        mCECAdapter->ToString(addr));
             }
             break;
         case CEC_POWEROFF:
-            Dsyslog("Power off");
-            if (mCECAdapter->StandbyDevices(cmd.mAddress) != 0) {
+            addr = getLogical(cmd.mDevice);
+            if ((addr != CECDEVICE_UNKNOWN) &&
+                (mCECAdapter->StandbyDevices(addr) != 0)) {
                 Esyslog("PowerOnDevice failed for %s",
-                        mCECAdapter->ToString(cmd.mAddress));
+                        mCECAdapter->ToString(addr));
             }
             break;
         case CEC_TEXTVIEWON:
             Dsyslog("Textviewon");
-            if (TextViewOn(cmd.mAddress) != 0) {
+            addr = getLogical(cmd.mDevice);
+            if ((addr != CECDEVICE_UNKNOWN) &&
+                (TextViewOn(addr) != 0)) {
                 Esyslog("TextViewOn failed for %s",
-                        mCECAdapter->ToString(cmd.mAddress));
+                        mCECAdapter->ToString(addr));
             }
             break;
         case CEC_MAKEACTIVE:
@@ -362,22 +444,25 @@ void cCECRemote::Action(void)
             mCECAdapter->SetInactiveView();
             break;
         case CEC_VDRKEYPRESS:
-            ceckmap = mPlugin->mKeyMaps.VDRtoCECKey((eKeys)cmd.mVal);
+            addr = getLogical(cmd.mDevice);
+            if (addr != CECDEVICE_UNKNOWN) {
+                ceckmap = mPlugin->mKeyMaps.VDRtoCECKey((eKeys)cmd.mVal);
 
-            for (cCECListIterator ci = ceckmap.begin(); ci != ceckmap.end();
-                 ++ci) {
-                ceckey = *ci;
-                Dsyslog ("Send Keypress VDR %d - > CEC 0x%02x", cmd.mVal, ceckey);
-                if (ceckey != CEC_USER_CONTROL_CODE_UNKNOWN) {
-                    if (!mCECAdapter->SendKeypress(cmd.mAddress, ceckey, true)) {
-                        Esyslog("Keypress to %d %s failed",
-                                cmd.mAddress, mCECAdapter->ToString(cmd.mAddress));
-                        return;
-                    }
-                    cCondWait::SleepMs(50);
-                    if (!mCECAdapter->SendKeyRelease(cmd.mAddress, true)) {
-                        Esyslog("SendKeyRelease to %d %s failed",
-                                cmd.mAddress, mCECAdapter->ToString(cmd.mAddress));
+                for (cCECListIterator ci = ceckmap.begin(); ci != ceckmap.end();
+                        ++ci) {
+                    ceckey = *ci;
+                    Dsyslog ("Send Keypress VDR %d - > CEC 0x%02x", cmd.mVal, ceckey);
+                    if (ceckey != CEC_USER_CONTROL_CODE_UNKNOWN) {
+                        if (!mCECAdapter->SendKeypress(addr, ceckey, true)) {
+                            Esyslog("Keypress to %d %s failed",
+                                    addr, mCECAdapter->ToString(addr));
+                            return;
+                        }
+                        cCondWait::SleepMs(50);
+                        if (!mCECAdapter->SendKeyRelease(addr, true)) {
+                            Esyslog("SendKeyRelease to %d %s failed",
+                                    addr, mCECAdapter->ToString(addr));
+                        }
                     }
                 }
             }
@@ -402,11 +487,12 @@ void cCECRemote::Action(void)
  * Get the device power state and execute either the poweron or
  * poweroff command queue.
  */
-void cCECRemote::ExecToggle(cec_logical_address addr,
+void cCECRemote::ExecToggle(cCECDevice dev,
                             const cCmdQueue &poweron, const cCmdQueue &poweroff)
 {
     bool repeat;
     cec_power_status status;
+    cec_logical_address addr;
 
     // Wait until queue is empty
     cCondWait w;
@@ -420,18 +506,24 @@ void cCECRemote::ExecToggle(cec_logical_address addr,
        }
     }
 
-    do {
-        repeat = false;
-        status = mCECAdapter->GetDevicePowerStatus(addr);
-        Dsyslog("ExecToggle: %s", mCECAdapter->ToString(status));
-        // If currently in any transition state, wait.
-        if ((status == CEC_POWER_STATUS_IN_TRANSITION_STANDBY_TO_ON) ||
-            (status == CEC_POWER_STATUS_IN_TRANSITION_ON_TO_STANDBY)) {
-            w.Wait(1000);
-            repeat = true;
-        }
-    } while (repeat);
-
+    addr = getLogical(dev);
+    if (addr == CECDEVICE_UNKNOWN) {
+        status = CEC_POWER_STATUS_UNKNOWN;
+    }
+    else
+    {
+        do {
+            repeat = false;
+            status = mCECAdapter->GetDevicePowerStatus(addr);
+            Dsyslog("ExecToggle: %s", mCECAdapter->ToString(status));
+            // If currently in any transition state, wait.
+            if ((status == CEC_POWER_STATUS_IN_TRANSITION_STANDBY_TO_ON) ||
+                    (status == CEC_POWER_STATUS_IN_TRANSITION_ON_TO_STANDBY)) {
+                w.Wait(1000);
+                repeat = true;
+            }
+        } while (repeat);
+    }
 
     if (status == CEC_POWER_STATUS_ON) {
         PushCmdQueue(poweroff);

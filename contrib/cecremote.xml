@@ -21,9 +21,9 @@
 		</onstop>
 		<cecdevicetype>RECORDING_DEVICE</cecdevicetype>
 		<cecdevicetype>TUNER</cecdevicetype>
-		<cecdevicetype>TV</cecdevicetype>
+	<!-- <cecdevicetype>TV</cecdevicetype>
 		<cecdevicetype>PLAYBACK_DEVICE</cecdevicetype>
-		<cecdevicetype>AUDIO_SYSTEM</cecdevicetype>
+		<cecdevicetype>AUDIO_SYSTEM</cecdevicetype> -->
 	</global>
 	
 	<!-- Key mapping CEC Key to VDR -->
@@ -47,18 +47,18 @@
 	<!-- Define a device -->
 	<device id="blueray">
 		<physical>2000</physical>
-		<logical>PLAYBACKDEVICE1</logical>
+		<logical>8</logical>
 	</device>
 	
 	<!--  The following device is predefined: 
 	<device id="TV">
 		<physical>0000</physical>
-		<logical>TV</logical>
+		<logical>0</logical>
 	</device>
 	-->
 	
 	<!--  Menu for TV -->
-	<menu name="TV" id="TV">
+	<menu name="TV" address="TV">
 		<!--  When menu is selected, switch on and make TV active -->
 		<!--  TODO config option for selecting broadcast type -->
 		<onstart>
@@ -80,7 +80,7 @@
 	</menu>
 	
 	<!--  Menu for Blueray/DVD player -->
-	<menu name="Blueray" id="blueray">
+	<menu name="Blueray" address="blueray">
 		<!--  When menu is selected, switch on TV and player and make player active -->
 		<onstart>
 			<poweron>TV</poweron>
@@ -141,7 +141,7 @@
 	</menu>
 	
 	<!--  Menu for TV (using CEC TextViewOn) -->
-	<menu name="TV TextViewOn" id="TV">
+	<menu name="TV TextViewOn" address="TV">
 		<onstart>
 			<textviewon>0</textviewon>
 		</onstart>

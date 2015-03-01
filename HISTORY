@@ -35,3 +35,14 @@ VDR Plugin 'cecremote' Revision History
 - New <combokeytimeoutms> in <global> config to set the libCEC combo key 
   timeout.
 - Add <textviewon> CEC command.
+
+2015-02-28: Version 0.3.0
+
+- Fix an out of bounds write of mCECKeyNames and correct the size of 
+  mDefaultKeyMap, as reported by sirwio.
+- Add <cecdevicetype>
+
+2015-03-01: Version 0.4.0
+
+- Add <device> section to specify CEC devices also by a physical address.
+

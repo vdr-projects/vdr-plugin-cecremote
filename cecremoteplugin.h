@@ -41,7 +41,7 @@ protected:
         return cf;
     }
     void ExecToggle(const cCECMenu menu) {
-        mCECRemote->ExecToggle(menu.mAddress, menu.mOnPowerOn, menu.mOnPowerOff);
+        mCECRemote->ExecToggle(menu.mDevice, menu.mOnPowerOn, menu.mOnPowerOff);
     }
 
 public:

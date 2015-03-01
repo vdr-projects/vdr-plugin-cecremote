@@ -31,6 +31,25 @@
 
 using namespace CEC;
 
+// Class for storing information of devices (<device> tag)
+class cCECDevice {
+public:
+    uint16_t mPhysicalAddress;
+    cec_logical_address mLogicalAddressDefined;
+    cec_logical_address mLogicalAddressUsed;
+
+    cCECDevice() : mPhysicalAddress(0),
+                   mLogicalAddressDefined(CECDEVICE_UNKNOWN),
+                   mLogicalAddressUsed(CECDEVICE_UNKNOWN) {};
+
+    cCECDevice &operator=(const cCECDevice &c) {
+        mPhysicalAddress = c.mPhysicalAddress;
+        mLogicalAddressDefined = c.mLogicalAddressDefined;
+        mLogicalAddressUsed = c.mLogicalAddressUsed;
+        return *this;
+    }
+};
+
 typedef enum {
     CEC_INVALID = -1,
     CEC_TIMEOUT = 0,
@@ -46,24 +65,26 @@ typedef enum {
 
 class cCECCmd {
 public:
-    cCECCmd() : mCmd(CEC_INVALID), mVal(0), mAddress(CECDEVICE_UNKNOWN) {};
+    cCECCmd() : mCmd(CEC_INVALID), mVal(0) {};
     cCECCmd(CECCommand cmd, int val = -1,
-            cec_logical_address adress = CECDEVICE_UNKNOWN, std::string exec="") {
+            cCECDevice *dev = NULL, std::string exec="") {
         mCmd = cmd;
         mVal = val;
-        mAddress = adress;
+        if (dev != NULL) {
+            mDevice = *dev;
+        }
         mExec = exec;
     }
 
     CECCommand mCmd;
     int mVal;
-    cec_logical_address mAddress;
+    cCECDevice mDevice;
     std::string mExec;
 
     cCECCmd &operator=(const cCECCmd &c) {
         mCmd = c.mCmd;
         mVal = c.mVal;
-        mAddress = c.mAddress;
+        mDevice = c.mDevice;
         mExec = c.mExec;
         return *this;
     }
@@ -82,13 +103,14 @@ public:
     virtual bool Initialize(void) {return false;};
     void PushCmd(const cCECCmd &cmd);
     void PushCmdQueue(const cCmdQueue &cmdList);
-    void ExecToggle(cec_logical_address addr, const cCmdQueue &poweron,
+    void ExecToggle(cCECDevice dev, const cCmdQueue &poweron,
                     const cCmdQueue &poweroff);
     int getCECLogLevel() {return mCECLogLevel;}
     cString ListDevices();
 
     ICECAdapter            *mCECAdapter;
 private:
+    static const char      *VDRNAME;
     int                    mCECLogLevel;
     uint8_t                mDevicesFound;
     libcec_configuration   mCECConfig;
@@ -102,6 +124,7 @@ private:
     void Action(void);
     cCECCmd WaitCmd();
     bool TextViewOn(cec_logical_address address);
+    cec_logical_address getLogical(cCECDevice &dev);
 
     cCmdQueue mOnStart;
     cCmdQueue mOnStop;

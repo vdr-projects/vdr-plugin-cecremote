@@ -120,6 +120,45 @@ bool cCECConfigFileParser::hasElements(const xml_node node)
     return false;
 }
 
+// Convert text to int, returns false if conversion fails.
+bool cCECConfigFileParser::textToInt(const char *text, int &val, int base)
+{
+    char *endptr = NULL;
+    long v = strtol(text, &endptr, base);
+    // Only spaces are allowed at the end
+    while (*endptr != '\0') {
+        if (!isspace(*endptr)) {
+            return false;
+        }
+        endptr++;
+    }
+    val = (int)v;
+    return true;
+}
+/*
+ * Helper function to get device address
+ */
+void cCECConfigFileParser::getDevice(const char *text, cCECDevice &device,
+                                     ptrdiff_t linenumber)
+{
+    int val;
+    // string starts with a digit, so interpret as logical address
+    if (isdigit(text[0])) {
+        if (!textToInt(text, val)) {
+            string s = "Invalid device specification, not a logical address";
+            throw cCECConfigException(linenumber, s);
+        }
+        if ((val <= CECDEVICE_UNKNOWN) || (val > CECDEVICE_BROADCAST)) {
+            string s = "Logical address out of range";
+            throw cCECConfigException(linenumber, s);
+        }
+        device.mPhysicalAddress = 0;
+        device.mLogicalAddressDefined = (cec_logical_address)val;
+    }
+    else {
+        device = mDeviceMap.at(text);
+    }
+}
 /*
  * parse <onstart> and <onstop>
  */
@@ -129,10 +168,10 @@ void cCECConfigFileParser::parseList(const xml_node node,
     cCECCmd cmd;
 
     for (xml_node currentNode = node.first_child(); currentNode;
-         currentNode = currentNode.next_sibling()) {
+            currentNode = currentNode.next_sibling()) {
 
-       if (currentNode.type() == node_element)  // is element
-       {
+        if (currentNode.type() == node_element)  // is element
+        {
             Dsyslog("     %s %s\n", node.name(), currentNode.name());
             if (hasElements(currentNode)) {
                 string s = "Too much arguments for ";
@@ -141,40 +180,38 @@ void cCECConfigFileParser::parseList(const xml_node node,
             }
             if (strcasecmp(currentNode.name(), XML_POWERON) == 0) {
                 cmd.mCmd = CEC_POWERON;
-                cmd.mAddress = (cec_logical_address)
-                                                currentNode.text().as_int(-1);
+                getDevice(currentNode.text().as_string(""), cmd.mDevice,
+                          currentNode.offset_debug());
                 cmd.mExec = "";
-                Dsyslog("         POWERON %d\n", cmd.mAddress);
+                Dsyslog("         POWERON %s\n", currentNode.text().as_string(""));
                 cmdlist.push_back(cmd);
             }
             else if (strcasecmp(currentNode.name(), XML_POWEROFF) == 0) {
                 cmd.mCmd = CEC_POWEROFF;
-                cmd.mAddress = (cec_logical_address)
-                                                currentNode.text().as_int(-1);
+                getDevice(currentNode.text().as_string(""), cmd.mDevice,
+                          currentNode.offset_debug());
                 cmd.mExec = "";
-                Dsyslog("         POWEROFF %d\n", cmd.mAddress);
+                Dsyslog("         POWEROFF %s\n", currentNode.text().as_string(""));
                 cmdlist.push_back(cmd);
             } else if (strcasecmp(currentNode.name(), XML_MAKEACTIVE) == 0) {
                 cmd.mCmd = CEC_MAKEACTIVE;
-                cmd.mAddress = CECDEVICE_UNKNOWN;
                 cmd.mExec = "";
-                Dsyslog("         MAKEACTIVE %d\n", cmd.mAddress);
+                Dsyslog("         MAKEACTIVE\n");
                 cmdlist.push_back(cmd);
             } else if (strcasecmp(currentNode.name(),XML_MAKEINACTIVE) == 0) {
                 cmd.mCmd = CEC_MAKEINACTIVE;
-                cmd.mAddress = CECDEVICE_UNKNOWN;
                 cmd.mExec = "";
-                Dsyslog("         MAKEINACTIVE %d\n", cmd.mAddress);
+                Dsyslog("         MAKEINACTIVE\n");
                 cmdlist.push_back(cmd);
             } else if (strcasecmp(currentNode.name(),XML_TEXTVIEWON) == 0) {
                 cmd.mCmd = CEC_TEXTVIEWON;
-                cmd.mAddress = (cec_logical_address)currentNode.text().as_int(-1);
+                getDevice(currentNode.text().as_string(""), cmd.mDevice,
+                          currentNode.offset_debug());
                 cmd.mExec = "";
-                Dsyslog("         CEC_TEXTVIEWON %d\n", cmd.mAddress);
+                Dsyslog("         CEC_TEXTVIEWON %s\n", currentNode.text().as_string(""));
                 cmdlist.push_back(cmd);
             } else if (strcasecmp(currentNode.name(), XML_EXEC) == 0) {
                 cmd.mCmd = CEC_EXECSHELL;
-                cmd.mAddress = CECDEVICE_UNKNOWN;
                 cmd.mExec = currentNode.text().as_string();
                 Dsyslog("         EXEC %s\n", cmd.mExec.c_str());
                 cmdlist.push_back(cmd);
@@ -189,7 +226,7 @@ void cCECConfigFileParser::parseList(const xml_node node,
 }
 
 /*
- * parse elements between <menu name="" [address="" id=""]>
+ * parse elements between <menu name="" address="">
  */
 void cCECConfigFileParser::parseMenu(const xml_node node)
 {
@@ -201,13 +238,11 @@ void cCECConfigFileParser::parseMenu(const xml_node node)
         Esyslog(s.c_str());
         throw cCECConfigException(getLineNumber(node.offset_debug()), s);
     }
-    menu.mAddress = (cec_logical_address)node.attribute("address").as_int(CECDEVICE_UNKNOWN);
-    if (menu.mAddress == CECDEVICE_UNKNOWN) {
-        string s = "Missing address";
-        Esyslog(s.c_str());
-        throw cCECConfigException(getLineNumber(node.offset_debug()), s);
-    }
-    Dsyslog ("  Menu %s (%d)\n", menu.mMenuTitle.c_str(), menu.mAddress);
+
+    getDevice(node.attribute("address").as_string(""), menu.mDevice,
+              node.offset_debug());
+    Dsyslog ("  Menu %s (%s)\n", menu.mMenuTitle.c_str(),
+            node.attribute("address").as_string(""));
 
     for (xml_node currentNode = node.first_child(); currentNode;
          currentNode = currentNode.next_sibling()) {
@@ -329,7 +364,11 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
                     s += currentNode.first_child().name();
                     throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
                 }
-                mGlobalOptions.cec_debug = currentNode.text().as_int(-1);
+                if (!textToInt(currentNode.text().as_string("7"),
+                               mGlobalOptions.cec_debug)) {
+                    string s = "Invalid numeric in cecdebug";
+                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                }
                 Dsyslog("CECDebug = %d \n", mGlobalOptions.cec_debug);
             }
             // <combokeytimeoutms>
@@ -339,7 +378,11 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
                     s += currentNode.first_child().name();
                     throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
                 }
-                mGlobalOptions.mComboKeyTimeoutMs = currentNode.text().as_int(1000);
+                if (!textToInt(currentNode.text().as_string("1000"),
+                               mGlobalOptions.mComboKeyTimeoutMs)) {
+                    string s = "Invalid numeric in combokeytimeoutms";
+                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                }
                 Dsyslog("ComboKeyTimeoutMs = %d \n", mGlobalOptions.mComboKeyTimeoutMs);
             }
             // <onStart>
@@ -525,8 +568,13 @@ void cCECConfigFileParser::parseDevice(const xml_node node)
         if (currentNode.type() == node_element)  // is element
         {
             if (strcasecmp(currentNode.name(), XML_PHYSICAL) == 0) {
-                device.mPhysicalAddress = strtol(currentNode.text().as_string(),
-                                                 NULL, 16);
+                if (!textToInt(currentNode.text().as_string("x"),
+                               device.mPhysicalAddress, 16)) {
+                    string s = "Invalid physical address ";
+                    s += currentNode.text().as_string();
+                    Esyslog(s.c_str());
+                    throw cCECConfigException(getLineNumber(node.offset_debug()), s);
+                }
                 if (device.mPhysicalAddress == -1) {
                     string s = "Invalid physical address ";
                     s += currentNode.text().as_string();
@@ -536,10 +584,16 @@ void cCECConfigFileParser::parseDevice(const xml_node node)
                 Dsyslog ("   Physical Address = %04x", device.mPhysicalAddress);
             }
             else if (strcasecmp(currentNode.name(), XML_LOGICAL) == 0) {
-                device.mLogicalAddressDefined = (cec_logical_address)
-                                currentNode.text().as_int(CECDEVICE_UNKNOWN);
+                if (!textToInt(currentNode.text().as_string("x"),
+                               device.mLogicalAddressDefined)) {
+                    string s = "Invalid logical address ";
+                    s += currentNode.text().as_string();
+                    Esyslog(s.c_str());
+                    throw cCECConfigException(getLineNumber(node.offset_debug()), s);
+                }
+
                 if ((device.mLogicalAddressDefined < 0) &&
-                    (device.mLogicalAddressDefined > CECDEVICE_BROADCAST)) {
+                        (device.mLogicalAddressDefined > CECDEVICE_BROADCAST)) {
                     string s = "Invalid logical address ";
                     s += currentNode.text().as_string();
                     Esyslog(s.c_str());

@@ -43,19 +43,6 @@ public:
     cCECGlobalOptions() : cec_debug(7), mComboKeyTimeoutMs(1000) {};
 };
 
-// Class for storing information of devices (<device> tag)
-class cCECDevice {
-public:
-    //std::string id;
-    uint16_t mPhysicalAddress;
-    cec_logical_address mLogicalAddressDefined;
-    cec_logical_address mLogicalAddressUsed;
-
-    cCECDevice() : mPhysicalAddress(-1),
-                   mLogicalAddressDefined(CECDEVICE_UNKNOWN),
-                   mLogicalAddressUsed(CECDEVICE_UNKNOWN) {};
-};
-
 typedef std::map<std::string, cCECDevice> mCECDeviceMap;
 
 // Class for storing information on <menu> tags.
@@ -70,7 +57,7 @@ public:
     std::string mMenuTitle;
     std::string mStillPic;
     keySet mStopKeys;
-    cec_logical_address mAddress;
+    cCECDevice mDevice;
     cCmdQueue mOnStart;
     cCmdQueue mOnStop;
     cCmdQueue mOnPowerOn;
@@ -78,8 +65,7 @@ public:
     std::string mCECKeymap;
     std::string mVDRKeymap;
 
-    cCECMenu() : mAddress(CECDEVICE_UNKNOWN),
-                 mCECKeymap(cCECkeymaps::DEFAULTKEYMAP),
+    cCECMenu() : mCECKeymap(cCECkeymaps::DEFAULTKEYMAP),
                  mVDRKeymap(cCECkeymaps::DEFAULTKEYMAP),
                  mPowerToggle(UNDEFINED) {};
 
@@ -124,7 +110,28 @@ private:
     cec_device_type getDeviceType(const std::string &s);
     // Check if a tag contains child elements.
     bool hasElements(const pugi::xml_node node);
-
+    // Helper function to get device address
+    void getDevice(const char *text, cCECDevice &device, ptrdiff_t linenr);
+    // Convert text to int, returns false if conversion fails.
+    bool textToInt(const char *text, int &val, int base = 10);
+    bool textToInt(const char *text, uint16_t &val, int base = 10) {
+        int v;
+        bool ret = textToInt(text, v, base);
+        val = v;
+        return ret;
+    };
+    bool textToInt(const char *text, uint32_t &val, int base = 10) {
+        int v;
+        bool ret = textToInt(text, v, base);
+        val = v;
+        return ret;
+    };
+    bool textToInt(const char *text, cec_logical_address &val, int base = 10) {
+        int v;
+        bool ret = textToInt(text, v, base);
+        val = (cec_logical_address)v;
+        return ret;
+    };
     // parse elements between <vdrkeymap>
     void parseVDRKeymap(const pugi::xml_node node, cCECkeymaps &keymaps);
     // parse elements between <ceckeymap>
