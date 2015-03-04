@@ -26,7 +26,8 @@ static const char *MAINMENUENTRY  = "CECremote";
 using namespace std;
 
 cPluginCecremote::cPluginCecremote(void) :
-        mCfgDir("cecremote"), mCfgFile("cecremote.xml")
+        mCfgDir("cecremote"), mCfgFile("cecremote.xml"), mStatusMonitor(NULL),
+        mStartManually(true)
 {
     mCECLogLevel = CEC_LOG_ERROR | CEC_LOG_WARNING | CEC_LOG_DEBUG;
     mCECRemote = NULL;
@@ -100,6 +101,20 @@ bool cPluginCecremote::Initialize(void)
 
 bool cPluginCecremote::Start(void)
 {
+    Dsyslog("Next Wakeup %d", Setup.NextWakeupTime);
+    if (Setup.NextWakeupTime > 0) {
+        // 600 comes from vdr's MANUALSTART constant in vdr.c
+        if ((abs(Setup.NextWakeupTime) - time(NULL)) > 600) {
+            mStartManually = false;
+        }
+    }
+
+    if (mStartManually) {
+        Dsyslog("manual start");
+    }
+    else {
+        Dsyslog("timed start");
+    }
     string file = GetConfigFile();
     if (!mConfigFileParser.Parse(file, mKeyMaps)) {
         Esyslog("Error on parsing config file file %s", file.c_str());
@@ -108,6 +123,8 @@ bool cPluginCecremote::Start(void)
     mCECLogLevel = mConfigFileParser.mGlobalOptions.cec_debug;
     mCECRemote = new cCECRemote(mConfigFileParser.mGlobalOptions,
                                 this);
+    mStatusMonitor = new cCECStatusMonitor;
+
     return true;
 }
 

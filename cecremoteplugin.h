@@ -18,11 +18,11 @@
 #include "cecremote.h"
 #include "cecconfigmenu.h"
 #include "cecconfigfileparser.h"
+#include "cecstatusmonitor.h"
 
 class cCECOsd;
 
 class cPluginCecremote : public cPlugin {
-
 protected:
     int mCECLogLevel;
 
@@ -31,6 +31,8 @@ protected:
 
     cCECConfigFileParser mConfigFileParser;
     cCECRemote *mCECRemote;
+    cCECStatusMonitor *mStatusMonitor;
+    bool mStartManually;
 
     const std::string GetConfigDir(void) {
         const std::string cfdir = ConfigDirectory();
