@@ -38,6 +38,7 @@ public:
     uint32_t mComboKeyTimeoutMs;
     cCmdQueue mOnStart;
     cCmdQueue mOnStop;
+    cCmdQueue mOnManualStart;
     deviceTypeList mDeviceTypes;
 
     cCECGlobalOptions() : cec_debug(7), mComboKeyTimeoutMs(1000) {};
@@ -176,6 +177,10 @@ private:
     static const char *XML_DEVICE;
     static const char *XML_PHYSICAL;
     static const char *XML_LOGICAL;
+    static const char *XML_ONMANUALSTART;
+    static const char *XML_ONSWITCHTOTV;
+    static const char *XML_ONSWITCHTORADIO;
+    static const char *XML_ONSWITCHTOREPLAY;
 
     // Filename of the configuration file.
     const char* mXmlFile;

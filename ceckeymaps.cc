@@ -9,6 +9,7 @@
  * ceckeymaps.cc: Class for handling the keymaps.
  */
 
+#include <stdexcept>
 #include "ceckeymaps.h"
 #include "ceclog.h"
 
@@ -227,9 +228,16 @@ cString cCECkeymaps::ListKeycodes()
 
 cString cCECkeymaps::ListCECKeyMap(const string &id)
 {
+    cCECKeyMap m;
     cString s = "CEC KEYMAP ";
     s = cString::sprintf("%s %s", *s, id.c_str());
-    cCECKeyMap m = mCECKeyMap.at(id);
+    try {
+        m = mCECKeyMap.at(id);
+    }
+    catch (const std::out_of_range& oor) {
+        s = cString::sprintf("%s\n   Keymap not found", *s);
+        return s;
+    }
     for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX; i++) {
         if (mCECKeyNames[i] != NULL) {
             s = cString::sprintf("%s\n<key code=\"%s\">", *s, mCECKeyNames[i]);
@@ -274,18 +282,20 @@ cec_user_control_code cCECkeymaps::StringToCEC(const string &s)
 
 cKeyList cCECkeymaps::CECtoVDRKey(cec_user_control_code code)
 {
-    if ((code >= 0) && (code <= CEC_USER_CONTROL_CODE_MAX)) {
+    try {
         return mActiveCecKeyMap.at(code);
     }
+    catch (const std::out_of_range& oor) { }
     cKeyList empty;
     return empty; // Empty list
 }
 
 cCECList cCECkeymaps::VDRtoCECKey(eKeys key)
 {
-    if ((key >= 0) && (key <= kNone)) {
+    try {
          return mActiveVdrKeyMap.at(key);
     }
+    catch (const std::out_of_range& oor) { }
     cCECList empty;
     return empty;
 }

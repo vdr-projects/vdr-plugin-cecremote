@@ -11,6 +11,7 @@
 
 #include <vdr/plugin.h>
 #include <stdio.h>
+#include <stdexcept>
 #include "ceclog.h"
 #include "cecconfigfileparser.h"
 #include "stringtools.h"
@@ -48,7 +49,10 @@ const char *cCECConfigFileParser::XML_CECDEVICETYPE = "cecdevicetype";
 const char *cCECConfigFileParser::XML_DEVICE = "device";
 const char *cCECConfigFileParser::XML_PHYSICAL = "physical";
 const char *cCECConfigFileParser::XML_LOGICAL = "logical";
-
+const char *cCECConfigFileParser::XML_ONMANUALSTART = "onmanualstart";
+const char *cCECConfigFileParser::XML_ONSWITCHTOTV = "onswitchtotv";
+const char *cCECConfigFileParser::XML_ONSWITCHTORADIO = "onswitchtoradio";
+const char *cCECConfigFileParser::XML_ONSWITCHTOREPLAY = "onswitchtoreplay";
 /*
  * Parse <player file="">
  */
@@ -156,7 +160,15 @@ void cCECConfigFileParser::getDevice(const char *text, cCECDevice &device,
         device.mLogicalAddressDefined = (cec_logical_address)val;
     }
     else {
-        device = mDeviceMap.at(text);
+        try {
+            device = mDeviceMap.at(text);
+        }
+        catch (const std::out_of_range& oor) {
+            string s = "Device ";
+            s += text;
+            s += " not found";
+            throw cCECConfigException(linenumber, s);
+        }
     }
 }
 /*
@@ -392,6 +404,10 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
             // <onStop>
             else if (strcasecmp(currentNode.name(), XML_ONSTOP) == 0) {
                 parseList(currentNode, mGlobalOptions.mOnStop);
+            }
+            // <onManualStart>
+            else if (strcasecmp(currentNode.name(), XML_ONMANUALSTART) == 0) {
+                parseList(currentNode, mGlobalOptions.mOnManualStart);
             }
             else if (strcasecmp(currentNode.name(), XML_CECDEVICETYPE) == 0) {
                 if (!currentNode.first_child()) {
@@ -697,10 +713,6 @@ bool cCECConfigFileParser::Parse(const string &filename, cCECkeymaps &keymaps) {
     string id = "TV";
     mDeviceMap.insert(std::pair<string, cCECDevice>(id, device));
     try {
-        // First parse global node
-        currentNode = elementRoot.child(XML_GLOBAL);
-        parseGlobal(currentNode);
-
         currentNode = currentNode.next_sibling(XML_GLOBAL);
         if (currentNode) {
             Esyslog("Only one global node is allowed");
@@ -722,6 +734,11 @@ bool cCECConfigFileParser::Parse(const string &filename, cCECkeymaps &keymaps) {
                 currentNode = currentNode.next_sibling(XML_DEVICE)) {
             parseDevice(currentNode);
         }
+
+        // parse global node
+        currentNode = elementRoot.child(XML_GLOBAL);
+        parseGlobal(currentNode);
+
         // Parse all menus
         for (currentNode = elementRoot.child(XML_MENU); currentNode;
                 currentNode = currentNode.next_sibling(XML_MENU)) {

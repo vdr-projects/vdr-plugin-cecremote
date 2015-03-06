@@ -128,6 +128,7 @@ private:
 
     cCmdQueue mOnStart;
     cCmdQueue mOnStop;
+    cCmdQueue mOnManualStart;
 };
 
 #endif /* CECREMOTE_H_ */

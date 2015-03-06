@@ -146,6 +146,8 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     mCECLogLevel = options.cec_debug;
     mOnStart = options.mOnStart;
     mOnStop = options.mOnStop;
+    mOnManualStart = options.mOnManualStart;
+
     Dsyslog("cCECRemote::Initialize");
     // Initialize Callbacks
     mCECCallbacks.Clear();
@@ -236,6 +238,11 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     Dsyslog("END cCECRemote::Initialize");
     Start();
     Dsyslog("cCECRemote start");
+
+    if (mPlugin->GetStartManually()) {
+        PushCmdQueue(mOnManualStart);
+    }
+    PushCmdQueue(mOnStart);
 }
 
 /*
@@ -243,6 +250,13 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
  */
 cCECRemote::~cCECRemote()
 {
+    int cnt = 0;
+    cCondWait w;
+    PushCmdQueue(mOnStop);
+    // Wait until the worker queue is empty (but longest 5 seconds
+    while (!mWorkerQueue.empty() && (cnt < 10)) {
+        w.Wait(500);
+    }
     Cancel(3);
     if (mCECAdapter != NULL) {
         mCECAdapter->SetInactiveView();
@@ -538,10 +552,13 @@ void cCECRemote::ExecToggle(cCECDevice dev,
  */
 void cCECRemote::PushCmdQueue(const cCmdQueue &cmdList)
 {
+    mWorkerQueueMutex.Lock();
     for (cCmdQueueIterator i = cmdList.begin();
            i != cmdList.end(); i++) {
-        PushCmd(*i);
+        mWorkerQueue.push_back(*i);
     }
+    mWorkerQueueMutex.Unlock();
+    mWorkerQueueWait.Signal();
 }
 
 /*

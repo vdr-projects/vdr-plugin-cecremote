@@ -47,6 +47,8 @@ protected:
     }
 
 public:
+    cCECkeymaps mKeyMaps;
+
     cPluginCecremote(void);
     virtual ~cPluginCecremote();
     virtual const char *Version(void);
@@ -71,8 +73,8 @@ public:
     void StartPlayer(const cCECMenu &menuitem);
     void PushCmd(const cCECCmd &cmd) {mCECRemote->PushCmd(cmd);}
     void PushCmdQueue(const cCmdQueue &cmdList) {mCECRemote->PushCmdQueue(cmdList);}
-    cCECMenuList *GetMenuList() {return &mConfigFileParser.mMenuList; }
-    cCECkeymaps mKeyMaps;
+    cCECMenuList *GetMenuList() {return &mConfigFileParser.mMenuList;}
+    bool GetStartManually() {return mStartManually;}
 };
 
 #endif

@@ -10,8 +10,12 @@
 		<cecdebug>7</cecdebug>
 		<combokeytimeoutms>1000</combokeytimeoutms>
 		<!--  On VDR start power on TV, make VDR device active -->
+		<onmanualstart>
+			<poweron>blueray</poweron>
+			<makeactive />
+		</onmanualstart>
 		<onstart>
-			<poweron>0</poweron>
+			<poweron>TV</poweron>
 			<makeactive />
 		</onstart>
 		<!--  On VDR stop power off TV and DVD/Blueray player -->

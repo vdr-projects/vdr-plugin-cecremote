@@ -11,13 +11,12 @@
 
 #include "cecstatusmonitor.h"
 
-cCECStatusMonitor::cCECStatusMonitor() {
-    // TODO Auto-generated constructor stub
+cCECStatusMonitor::cCECStatusMonitor() : mMonitorStatus(UNKNOWN) {
 
 }
 
 cCECStatusMonitor::~cCECStatusMonitor() {
-    // TODO Auto-generated destructor stub
+
 }
 
 void cCECStatusMonitor::ChannelSwitch(const cDevice *Device, int ChannelNumber,
@@ -28,19 +27,36 @@ void cCECStatusMonitor::ChannelSwitch(const cDevice *Device, int ChannelNumber,
         l = 't';
     }
     if (Device->IsPrimaryDevice()) {
-        Dsyslog("Primary device Channel Switch %d %c", ChannelNumber,l);
+        Dsyslog("Primary device, Channel Switch %d %c", ChannelNumber,l);
         const cChannel* channel = Channels.GetByNumber(ChannelNumber);
         if (channel != NULL) {
             if (channel->Vpid() == 0) {
                 Dsyslog("  Radio : %s", channel->Name());
+                if (mMonitorStatus != RADIO) {
+                    mMonitorStatus = RADIO;
+
+                }
             }
             else {
                 Dsyslog("  TV    : %s", channel->Name());
+                if (mMonitorStatus != TV) {
+                    mMonitorStatus = TV;
+
+                }
             }
         }
     }
     else {
-        Dsyslog("Not primary device Channel Switch %d %c", ChannelNumber,l);
+        Dsyslog("Not primary device, Channel Switch %d %c", ChannelNumber, l);
     }
 }
 
+void cCECStatusMonitor::Replaying(const cControl *Control, const char *Name,
+                                  const char *FileName, bool On)
+{
+    Dsyslog("Replaying");
+    if (mMonitorStatus != REPLAYING) {
+        mMonitorStatus = REPLAYING;
+
+    }
+}

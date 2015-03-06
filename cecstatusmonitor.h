@@ -20,11 +20,19 @@
 
 class cCECStatusMonitor : public cStatus {
 protected:
+    typedef enum {
+        UNKNOWN,
+        RADIO,
+        TV,
+        REPLAYING
+    } MonitorStatus;
+
     virtual void TimerChange(const cTimer *Timer, eTimerChange Change) {};
     virtual void ChannelSwitch(const cDevice *Device, int ChannelNumber, bool LiveView);
 
     virtual void Recording(const cDevice *Device, const char *Name, const char *FileName, bool On) {};
-    virtual void Replaying(const cControl *Control, const char *Name, const char *FileName, bool On) {};
+    virtual void Replaying(const cControl *Control, const char *Name,
+                           const char *FileName, bool On);
     virtual void SetVolume(int Volume, bool Absolute) {};
     virtual void SetAudioTrack(int Index, const char * const *Tracks) {};
     virtual void SetAudioChannel(int AudioChannel) {};
@@ -41,6 +49,8 @@ protected:
     virtual void OsdProgramme(time_t PresentTime, const char *PresentTitle,
                               const char *PresentSubtitle, time_t FollowingTime,
                               const char *FollowingTitle, const char *FollowingSubtitle) {};
+
+    MonitorStatus mMonitorStatus;
 public:
     cCECStatusMonitor();
     virtual ~cCECStatusMonitor();
