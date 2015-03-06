@@ -10,9 +10,10 @@
  */
 
 #include "cecstatusmonitor.h"
+#include "ceclog.h"
 
-cCECStatusMonitor::cCECStatusMonitor() : mMonitorStatus(UNKNOWN) {
-
+cCECStatusMonitor::cCECStatusMonitor(cPluginCecremote *plugin) : mMonitorStatus(UNKNOWN) {
+    mPlugin = plugin;
 }
 
 cCECStatusMonitor::~cCECStatusMonitor() {
@@ -34,14 +35,14 @@ void cCECStatusMonitor::ChannelSwitch(const cDevice *Device, int ChannelNumber,
                 Dsyslog("  Radio : %s", channel->Name());
                 if (mMonitorStatus != RADIO) {
                     mMonitorStatus = RADIO;
-
+                    mPlugin->PushCmdQueue(mPlugin->mConfigFileParser.mGlobalOptions.mOnSwitchToRadio);
                 }
             }
             else {
                 Dsyslog("  TV    : %s", channel->Name());
                 if (mMonitorStatus != TV) {
                     mMonitorStatus = TV;
-
+                    mPlugin->PushCmdQueue(mPlugin->mConfigFileParser.mGlobalOptions.mOnSwitchToTV);
                 }
             }
         }
@@ -55,8 +56,10 @@ void cCECStatusMonitor::Replaying(const cControl *Control, const char *Name,
                                   const char *FileName, bool On)
 {
     Dsyslog("Replaying");
-    if (mMonitorStatus != REPLAYING) {
-        mMonitorStatus = REPLAYING;
-
+    if (On) {
+        if (mMonitorStatus != REPLAYING) {
+            mMonitorStatus = REPLAYING;
+            mPlugin->PushCmdQueue(mPlugin->mConfigFileParser.mGlobalOptions.mOnSwitchToReplay);
+        }
     }
 }

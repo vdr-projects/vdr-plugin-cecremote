@@ -23,6 +23,17 @@
 			<poweroff>0</poweroff>
 			<poweroff>8</poweroff>
 		</onstop>
+		
+		<onswitchtotv>
+			<poweron>TV</poweron>
+			<makeactive />
+		</onswitchtotv>
+		<onswitchtoradio> 
+			<poweroff>TV</poweroff>
+		</onswitchtoradio>
+		<onswitchtoreplay>
+			<poweron>TV</poweron>
+		</onswitchtoreplay>
 		<cecdevicetype>RECORDING_DEVICE</cecdevicetype>
 		<cecdevicetype>TUNER</cecdevicetype>
 	<!-- <cecdevicetype>TV</cecdevicetype>
@@ -89,6 +100,7 @@
 		<onstart>
 			<poweron>TV</poweron>
 			<poweron>blueray</poweron>
+			<makeinactive />
 		</onstart>
 		<player file="/video/conf/plugins/cecremote/blueray.mpg">
 		<!--  <keymaps cec="default" vdr="default" /> -->

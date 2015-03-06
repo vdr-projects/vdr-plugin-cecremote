@@ -21,8 +21,10 @@
 #include "cecstatusmonitor.h"
 
 class cCECOsd;
+class cCECStatusMonitor;
 
 class cPluginCecremote : public cPlugin {
+    friend class cCECStatusMonitor;
 protected:
     int mCECLogLevel;
 

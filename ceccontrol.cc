@@ -46,6 +46,7 @@ eOSState cCECControl::ProcessKey(eKeys key)
         return osContinue;
     }
 
+    key = (eKeys)((int)key & ~k_Repeat);
     cCECCmd cmd(CEC_VDRKEYPRESS, (int)key, &mMenuItem.mDevice);
     mPlugin->PushCmd(cmd);
 

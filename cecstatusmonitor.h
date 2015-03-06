@@ -16,7 +16,7 @@
 #include <vdr/plugin.h>
 #include <vdr/status.h>
 
-#include "ceclog.h" // TODO
+#include "cecremoteplugin.h"
 
 class cCECStatusMonitor : public cStatus {
 protected:
@@ -51,8 +51,9 @@ protected:
                               const char *FollowingTitle, const char *FollowingSubtitle) {};
 
     MonitorStatus mMonitorStatus;
+    cPluginCecremote *mPlugin;
 public:
-    cCECStatusMonitor();
+    cCECStatusMonitor(cPluginCecremote *plugin);
     virtual ~cCECStatusMonitor();
 };
 

@@ -39,6 +39,9 @@ public:
     cCmdQueue mOnStart;
     cCmdQueue mOnStop;
     cCmdQueue mOnManualStart;
+    cCmdQueue mOnSwitchToTV;
+    cCmdQueue mOnSwitchToRadio;
+    cCmdQueue mOnSwitchToReplay;
     deviceTypeList mDeviceTypes;
 
     cCECGlobalOptions() : cec_debug(7), mComboKeyTimeoutMs(1000) {};

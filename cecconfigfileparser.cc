@@ -409,6 +409,18 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
             else if (strcasecmp(currentNode.name(), XML_ONMANUALSTART) == 0) {
                 parseList(currentNode, mGlobalOptions.mOnManualStart);
             }
+            // <onSwitchToTV>
+            else if (strcasecmp(currentNode.name(), XML_ONSWITCHTOTV) == 0) {
+                parseList(currentNode, mGlobalOptions.mOnSwitchToTV);
+            }
+            // <onSwitchToRadio>
+            else if (strcasecmp(currentNode.name(), XML_ONSWITCHTORADIO) == 0) {
+                parseList(currentNode, mGlobalOptions.mOnSwitchToRadio);
+            }
+            // <onSwitchToRadio>
+            else if (strcasecmp(currentNode.name(), XML_ONSWITCHTOREPLAY) == 0) {
+                parseList(currentNode, mGlobalOptions.mOnSwitchToReplay);
+            }
             else if (strcasecmp(currentNode.name(), XML_CECDEVICETYPE) == 0) {
                 if (!currentNode.first_child()) {
                     string s = "No nodes allowed for cecdebug: ";

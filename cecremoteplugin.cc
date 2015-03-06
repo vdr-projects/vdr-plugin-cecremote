@@ -123,7 +123,7 @@ bool cPluginCecremote::Start(void)
     mCECLogLevel = mConfigFileParser.mGlobalOptions.cec_debug;
     mCECRemote = new cCECRemote(mConfigFileParser.mGlobalOptions,
                                 this);
-    mStatusMonitor = new cCECStatusMonitor;
+    mStatusMonitor = new cCECStatusMonitor(this);
 
     return true;
 }
