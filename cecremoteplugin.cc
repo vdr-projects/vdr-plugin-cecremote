@@ -37,6 +37,7 @@ cPluginCecremote::~cPluginCecremote()
 {
     if (mCECRemote != NULL) {
         delete mCECRemote;
+        mCECRemote = NULL;
     }
 }
 

@@ -100,7 +100,7 @@ class cCECRemote : public cRemote, private cThread {
 public:
     cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugin);
     ~cCECRemote();
-    virtual bool Initialize(void) {return false;};
+    bool Initialize(void) {return false;};
     void PushCmd(const cCECCmd &cmd);
     void PushCmdQueue(const cCmdQueue &cmdList);
     void ExecToggle(cCECDevice dev, const cCmdQueue &poweron,

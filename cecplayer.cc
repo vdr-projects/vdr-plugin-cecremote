@@ -23,6 +23,7 @@ cCECPlayer::cCECPlayer(const cCECMenu &config) :
 cCECPlayer::~cCECPlayer() {
     if (pStillBuf != NULL) {
         free (pStillBuf);
+        pStillBuf = NULL;
     }
 }
 
@@ -55,7 +56,7 @@ void cCECPlayer::LoadStillPicture (const string &FileName)
         return;
     }
 
-    pStillBuf = (uchar *)malloc (CDMAXFRAMESIZE);
+    pStillBuf = (uchar *)malloc (CDMAXFRAMESIZE * 2);
     if (pStillBuf == NULL) {
         Esyslog("%s %d Out of memory", __FILE__, __LINE__);
         close(fd);
@@ -75,7 +76,7 @@ void cCECPlayer::LoadStillPicture (const string &FileName)
             mStillBufLen += len;
             if (mStillBufLen >= size) {
                 size += CDMAXFRAMESIZE;
-                pStillBuf = (uchar *) realloc(pStillBuf, size);
+                pStillBuf = (uchar *) realloc(pStillBuf, size + CDMAXFRAMESIZE);
                 if (pStillBuf == NULL) {
                     close(fd);
                     mStillBufLen = 0;
