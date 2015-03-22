@@ -19,7 +19,7 @@
 #include "stringtools.h"
 #include "ceckeymaps.h"
 
-static const char *VERSION        = "0.4.0";
+static const char *VERSION        = "0.5.0";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
 static const char *MAINMENUENTRY  = "CECremote";
 

@@ -20,6 +20,8 @@ PKGCFG = $(if $(VDRDIR),$(shell pkg-config --variable=$(1) $(VDRDIR)/vdr.pc),$(s
 LIBDIR = $(call PKGCFG,libdir)
 LOCDIR = $(call PKGCFG,locdir)
 PLGCFG = $(call PKGCFG,plgcfg)
+CONFDEST = $(call PKGCFG,configdir)/plugins/$(PLUGIN)
+CONFFILE = $(CONFDEST)/cecremote.xml
 #
 TMPDIR ?= /tmp
 
@@ -126,7 +128,12 @@ $(SOFILE): $(OBJS)
 install-lib: $(SOFILE)
 	install -D $^ $(DESTDIR)$(LIBDIR)/$^.$(APIVERSION)
 
-install: install-lib install-i18n
+install-config:
+	if ! test -f $(DESTDIR)$(CONFFILE); then \
+		install --mode=644 -D ./contrib/cecremote.xml $(DESTDIR)$(CONFFILE); \
+	fi
+
+install: install-lib install-i18n install-config
 
 dist: $(I18Npo) clean
 	@-rm -rf $(TMPDIR)/$(ARCHIVE)

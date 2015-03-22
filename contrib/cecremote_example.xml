@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Example configuration wich shows all available options,
+	but the examples may not be very useful in practice.
+
+	Normally the following cec logical addresses are used:
+	0 : TV
+	4 : Own libCEC address
+	8 : DVD/Blueray player
+-->
+<config>
+	<global>
+		<cecdebug>7</cecdebug>
+		<combokeytimeoutms>1000</combokeytimeoutms>
+		<!--  On VDR start power on TV, make VDR device active -->
+		<onmanualstart>
+			<poweron>blueray</poweron>
+			<makeactive />
+		</onmanualstart>
+		<onstart>
+			<poweron>TV</poweron>
+			<makeactive />
+		</onstart>
+		<!--  On VDR stop power off TV and DVD/Blueray player -->
+		<onstop>
+			<poweroff>0</poweroff>
+			<poweroff>8</poweroff>
+		</onstop>
+
+		<onswitchtotv>
+			<poweron>TV</poweron>
+			<makeactive />
+		</onswitchtotv>
+		<onswitchtoradio> 
+			<poweroff>TV</poweroff>
+		</onswitchtoradio>
+		<onswitchtoreplay>
+			<poweron>TV</poweron>
+		</onswitchtoreplay>
+		<cecdevicetype>RECORDING_DEVICE</cecdevicetype>
+		<cecdevicetype>TUNER</cecdevicetype>
+	<!-- <cecdevicetype>TV</cecdevicetype>
+		<cecdevicetype>PLAYBACK_DEVICE</cecdevicetype>
+		<cecdevicetype>AUDIO_SYSTEM</cecdevicetype> -->
+	</global>
+
+	<!-- Key mapping CEC Key to VDR -->
+	<ceckeymap id="TV">
+		<key code="SELECT">
+			<value>Menu</value>
+		</key>
+		<key code="RIGHT_UP">
+			<value>Right</value>
+			<value>Right</value>
+		</key>
+	</ceckeymap>
+
+	<!-- Key mapping VDR Key to CEC -->
+	<vdrkeymap id="TV">
+		<key code="OK">
+			<value>ROOT_MENU</value>
+		</key>
+	</vdrkeymap>
+
+	<!-- Define a device -->
+	<device id="blueray">
+		<physical>2000</physical>
+		<logical>8</logical>
+	</device>
+	
+	<!--  The following device is predefined: 
+	<device id="TV">
+		<physical>0000</physical>
+		<logical>0</logical>
+	</device>
+	-->
+	
+	<!--  Menu for TV -->
+	<menu name="TV" address="TV">
+		<!--  When menu is selected, switch on and make TV active -->
+		<!--  TODO config option for selecting broadcast type -->
+		<onstart>
+			<poweron>TV</poweron>
+			<makeinactive />
+		</onstart>
+		
+		<!-- player starts a VDR-Player -->
+		<player file="/video/conf/plugins/cecremote/blueray.mpg">
+			<keymaps cec="TV" vdr="TV" />
+			<stop>Stop</stop>
+			<stop>Back</stop>
+		</player>
+		<!--  When returning to VDR poweroff TV and make VDR active -->
+		<onstop>
+			<poweroff>TV</poweroff>
+			<makeactive />
+		</onstop>
+	</menu>
+	
+	<!--  Menu for Blueray/DVD player -->
+	<menu name="Blueray" address="blueray">
+		<!--  When menu is selected, switch on TV and player and make player active -->
+		<onstart>
+			<poweron>TV</poweron>
+			<poweron>blueray</poweron>
+			<makeinactive />
+		</onstart>
+		<player file="/video/conf/plugins/cecremote/blueray.mpg">
+		<!--  <keymaps cec="default" vdr="default" /> -->
+			<stop>Back</stop>
+			<stop>Menu</stop>
+		</player>
+		<!--  When returning to VDR poweroff DVD Player and make VDR active -->
+		<onstop>
+			<poweroff>blueray</poweroff>
+			<makeactive />
+		</onstop>
+	</menu>
+	
+	<!--  Menu to just power on TV -->
+	<menu name="TV ON" address="0">
+		<!-- When menu is selected, switch on TV,                    -->
+		<!-- leaving VDR the active device. Start no player, no      -->
+		<!-- player tag, so that the TV displays the VDR output    -->
+		<!-- When player is not used, onstop is ignored            -->
+		<onstart>
+			<poweron>TV</poweron>
+		</onstart>
+	</menu>
+	<!--  Menu to power off TV, using logical address -->
+	<menu name="TV OFF" address="0">
+		<!-- When menu is selected, switch off TV        -->
+		<onstart>
+			<poweroff>0</poweroff>
+			<makeactive />
+		</onstart>
+	</menu>
+	
+	<!--  Menu to togle power of TV -->
+	<menu name="TV TOGGLE" address="0">
+		<!-- When menu is selected, toggle TV power state -->
+		<onpoweron>
+			<!--  Switch on the programmable power outlet for the TV -->
+			<exec>sispmctl -o 3</exec>
+			<!--  Wait until TV settles -->
+			<exec>sleep 10</exec>
+			<!--  Send CEC commands to power on TV -->
+			<poweron>0</poweron>
+			<makeactive />
+		</onpoweron>
+		<onpoweroff>
+		<!--  Send CEC commands to power off TV -->
+			<poweroff>0</poweroff>
+			<makeactive />
+			<!--  Wait until TV finishes switching off -->
+			<exec>sleep 10</exec>
+			<!--  Switch off the programmable power outlet for the TV -->
+			<exec>sispmctl -f 3</exec>
+		</onpoweroff>
+	</menu>
+	
+	<!--  Menu for TV (using CEC TextViewOn) -->
+	<menu name="TV TextViewOn" address="TV">
+		<onstart>
+			<textviewon>0</textviewon>
+		</onstart>
+	</menu>
+</config>
