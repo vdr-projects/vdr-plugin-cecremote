@@ -211,6 +211,8 @@ const char **cPluginCecremote::SVDRPHelpPages(void)
             "KEYM\nList available key map\n",
             "VDRK [id]\nDisplay VDR->CEC key map with id\n",
             "CECK [id]\nDisplay CEC->VDR key map with id\n",
+            "DISC\nDisconnect CEC",
+            "CONN\nConnect CEC",
             NULL
     };
     return HelpPages;
@@ -235,6 +237,14 @@ cString cPluginCecremote::SVDRPCommand(const char *Command, const char *Option, 
     else if (strcasecmp(Command, "CECK") == 0) {
         string s = Option;
         return mKeyMaps.ListCECKeyMap(s);
+    }
+    else if (strcasecmp(Command, "DISC") == 0) {
+        mCECRemote->Disconnect();
+        return "Disconnected";
+    }
+    else if (strcasecmp(Command, "CONN") == 0) {
+        mCECRemote->Connect();
+        return "Connected";
     }
 
     ReplyCode = 901;

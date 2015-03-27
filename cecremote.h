@@ -107,6 +107,8 @@ public:
                     const cCmdQueue &poweroff);
     int getCECLogLevel() {return mCECLogLevel;}
     cString ListDevices();
+    void Connect();
+    void Disconnect();
 
     ICECAdapter            *mCECAdapter;
 private:

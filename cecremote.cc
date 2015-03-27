@@ -147,8 +147,6 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     mOnStart = options.mOnStart;
     mOnStop = options.mOnStop;
     mOnManualStart = options.mOnManualStart;
-
-    Dsyslog("cCECRemote::Initialize");
     // Initialize Callbacks
     mCECCallbacks.Clear();
     mCECCallbacks.CBCecLogMessage  = &::CecLogMessageCallback;
@@ -173,7 +171,7 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
         // Add all device types as specified in <cecdevicetype>
         deviceTypeListIterator idev;
         for (idev = options.mDeviceTypes.begin();
-             idev != options.mDeviceTypes.end(); ++idev) {
+                idev != options.mDeviceTypes.end(); ++idev) {
             cec_device_type t = *idev;
             mCECConfig.deviceTypes.Add(t);
             Dsyslog ("   Add device %d", t);
@@ -183,11 +181,32 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     // Setup callbacks
     mCECConfig.callbackParam = this;
     mCECConfig.callbacks = &mCECCallbacks;
+    Connect();
+    if (mCECAdapter == NULL) {
+        Esyslog("Can not initialize libcec");
+        exit(-1);
+    }
+    Start();
+    Dsyslog("cCECRemote start");
+
+    if (mPlugin->GetStartManually()) {
+        PushCmdQueue(mOnManualStart);
+    }
+    PushCmdQueue(mOnStart);
+}
+
+void cCECRemote::Connect()
+{
+    Dsyslog("cCECRemote::Connect");
+    if (mCECAdapter != NULL) {
+        return;
+    }
+
     // Initialize libcec
     mCECAdapter = LibCecInitialise(&mCECConfig);
     if (mCECAdapter == NULL) {
         Esyslog("Can not initialize libcec");
-        exit(-1);
+        return;
     }
     // init video on targets that need this
     mCECAdapter->InitVideoStandalone();
@@ -199,7 +218,8 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     {
         Esyslog("No adapter found");
         UnloadLibCec(mCECAdapter);
-        exit(-1);
+        mCECAdapter = NULL;
+        return;
     }
 
     for (int i = 0; i < mDevicesFound; i++)
@@ -215,7 +235,8 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
         Esyslog("unable to open the device on port %s",
                 mCECAdapterDescription[0].strComName);
         UnloadLibCec(mCECAdapter);
-        exit(-1);
+        mCECAdapter = NULL;
+        return;
     }
 
     cec_logical_addresses devices = mCECAdapter->GetActiveDevices();
@@ -236,13 +257,16 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     }
 
     Dsyslog("END cCECRemote::Initialize");
-    Start();
-    Dsyslog("cCECRemote start");
+}
 
-    if (mPlugin->GetStartManually()) {
-        PushCmdQueue(mOnManualStart);
+void cCECRemote::Disconnect()
+{
+    if (mCECAdapter != NULL) {
+        mCECAdapter->SetInactiveView();
+        mCECAdapter->Close();
+        UnloadLibCec(mCECAdapter);
     }
-    PushCmdQueue(mOnStart);
+    mCECAdapter = NULL;
 }
 
 /*
@@ -258,11 +282,7 @@ cCECRemote::~cCECRemote()
         w.Wait(500);
     }
     Cancel(3);
-    if (mCECAdapter != NULL) {
-        mCECAdapter->SetInactiveView();
-        mCECAdapter->Close();
-        UnloadLibCec(mCECAdapter);
-    }
+    Disconnect();
 }
 
 /*
@@ -271,6 +291,11 @@ cCECRemote::~cCECRemote()
 cString cCECRemote::ListDevices()
 {
     cString s = "Available CEC Devices:";
+    if (mCECAdapter == NULL) {
+        Esyslog ("ListDevices CEC Adapter disconnected");
+        s = "CEC Adapter disconnected";
+        return s;
+    }
 
     for (int i = 0; i < mDevicesFound; i++)
     {
@@ -321,6 +346,10 @@ cString cCECRemote::ListDevices()
 bool cCECRemote::TextViewOn(cec_logical_address address)
 {
     cec_command data;
+    if (mCECAdapter == NULL) {
+        Esyslog ("TextViewOn CEC Adapter disconnected");
+        return false;
+    }
 
     cec_command::Format(data, mCECConfig.baseDevice, address, CEC_OPCODE_TEXT_VIEW_ON);
     Dsyslog("Text View on : %02x %02x %02x", data.initiator, data.destination, data.opcode);
@@ -333,6 +362,10 @@ bool cCECRemote::TextViewOn(cec_logical_address address)
  */
 cec_logical_address cCECRemote::getLogical(cCECDevice &dev)
 {
+    if (mCECAdapter == NULL) {
+        Esyslog ("getLogical CEC Adapter disconnected");
+        return CECDEVICE_UNKNOWN;
+    }
     cec_logical_address found = CECDEVICE_UNKNOWN;
     // Logical address already available
     if (dev.mLogicalAddressUsed != CECDEVICE_UNKNOWN) {
@@ -507,7 +540,10 @@ void cCECRemote::ExecToggle(cCECDevice dev,
     bool repeat;
     cec_power_status status;
     cec_logical_address addr;
-
+    if (mCECAdapter == NULL) {
+        Esyslog ("ExecToggle CEC Adapter disconnected");
+        return;
+    }
     // Wait until queue is empty
     cCondWait w;
     bool full = true;
@@ -552,6 +588,10 @@ void cCECRemote::ExecToggle(cCECDevice dev,
  */
 void cCECRemote::PushCmdQueue(const cCmdQueue &cmdList)
 {
+    if (mCECAdapter == NULL) {
+        Esyslog ("PushCmdQueue CEC Adapter disconnected");
+        return;
+    }
     mWorkerQueueMutex.Lock();
     for (cCmdQueueIterator i = cmdList.begin();
            i != cmdList.end(); i++) {
