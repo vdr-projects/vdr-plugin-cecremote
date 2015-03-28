@@ -19,7 +19,7 @@
 #include "stringtools.h"
 #include "ceckeymaps.h"
 
-static const char *VERSION        = "0.5.0";
+static const char *VERSION        = "0.6.0";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
 static const char *MAINMENUENTRY  = "CECremote";
 
@@ -125,7 +125,7 @@ bool cPluginCecremote::Start(void)
     mCECRemote = new cCECRemote(mConfigFileParser.mGlobalOptions,
                                 this);
     mStatusMonitor = new cCECStatusMonitor(this);
-
+    SetDefaultKeymaps();
     return true;
 }
 
@@ -249,6 +249,15 @@ cString cPluginCecremote::SVDRPCommand(const char *Command, const char *Option, 
 
     ReplyCode = 901;
     return "Error: Unexpected option";
+}
+
+/*
+ * Set the default keymaps to use.
+ */
+void cPluginCecremote::SetDefaultKeymaps()
+{
+    mKeyMaps.SetActiveKeymaps(mConfigFileParser.mGlobalOptions.mVDRKeymap,
+                              mConfigFileParser.mGlobalOptions.mCECKeymap);
 }
 
 VDRPLUGINCREATOR(cPluginCecremote); // Don't touch this!

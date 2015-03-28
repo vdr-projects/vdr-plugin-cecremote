@@ -46,3 +46,21 @@ VDR Plugin 'cecremote' Revision History
 
 - Add <device> section to specify CEC devices also by a physical address.
 
+2015-03-15: Version 0.5.0
+
+- New tag <onmanualstart> in global section which contains a command list which
+  is executed if the VDR is started manually (not by timer).
+- New command lists <onswitchtotv> <onswitchtoradio> <onswitchtoreplay>
+  in <global> section.
+- Fix some valgrind errors.
+
+2015-03-28: Version 0.6.0
+
+- Install a minimal default konfiguration.
+- Add connect/disconnect of the CEC Adapter via svdrpsend CONN/DISC
+  commands.
+- Add <keymaps> to <global> section to overwrite the default keymap used
+  for the mapping from CEC to VDR-Keys.
+  
+  
+

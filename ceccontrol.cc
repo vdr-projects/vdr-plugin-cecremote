@@ -25,6 +25,7 @@ cCECControl::cCECControl(const cCECMenu &menuitem, cPluginCecremote *plugin) :
 
 cCECControl::~cCECControl() {
     mPlugin->PushCmdQueue(mMenuItem.mOnStop);
+    mPlugin->SetDefaultKeymaps();
     delete mCECPlayer;
 }
 
@@ -33,6 +34,9 @@ void cCECControl::Hide(void)
     Dsyslog("Hide cCECControl");
 }
 
+/*
+ * Get VDR keys and queue them to send to the active CEC device.
+ */
 eOSState cCECControl::ProcessKey(eKeys key)
 {
     cKey k;

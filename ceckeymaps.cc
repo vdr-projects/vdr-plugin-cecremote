@@ -197,7 +197,9 @@ cCECkeymaps::cCECkeymaps() {
     SetActiveKeymaps(DEFAULTKEYMAP, DEFAULTKEYMAP);
 }
 
-// List known keymaps. Output is suitable for using with SVDRP
+/*
+ * List known keymaps. Output is suitable for using with SVDRP
+ */
 cString cCECkeymaps::ListKeymaps()
 {
     cString s = "Keymaps CEC->VDR";
@@ -213,7 +215,9 @@ cString cCECkeymaps::ListKeymaps()
     return s;
 }
 
-// List known CEC keycodes. Output is suitable for using with SVDRP
+/*
+ * List known CEC keycodes. Output is suitable for using with SVDRP
+ */
 cString cCECkeymaps::ListKeycodes()
 {
     cString s = "CEC Keycodes";
@@ -224,8 +228,10 @@ cString cCECkeymaps::ListKeycodes()
     }
     return s;
 }
-// List CEC Keymap
 
+/*
+ * List CEC Keymap. Output is suitable for using with SVDRP
+ */
 cString cCECkeymaps::ListCECKeyMap(const string &id)
 {
     cCECKeyMap m;
@@ -251,6 +257,9 @@ cString cCECkeymaps::ListCECKeyMap(const string &id)
     return s;
 }
 
+/*
+ * List VDR Keymap. Output is suitable for using with SVDRP
+ */
 cString cCECkeymaps::ListVDRKeyMap(const string &id)
 {
     cString s = "VDR KEYMAP ";
@@ -267,6 +276,9 @@ cString cCECkeymaps::ListVDRKeyMap(const string &id)
     return s;
 }
 
+/*
+ * Convert a String containing a CEC key name to a cec_user_control_code
+ */
 cec_user_control_code cCECkeymaps::StringToCEC(const string &s)
 {
     const char *str = s.c_str();
@@ -280,6 +292,9 @@ cec_user_control_code cCECkeymaps::StringToCEC(const string &s)
     return CEC_USER_CONTROL_CODE_UNKNOWN;
 }
 
+/*
+ * Convert a CEC Key to a key list of VDR keys.
+ */
 cKeyList cCECkeymaps::CECtoVDRKey(cec_user_control_code code)
 {
     try {
@@ -290,6 +305,9 @@ cKeyList cCECkeymaps::CECtoVDRKey(cec_user_control_code code)
     return empty; // Empty list
 }
 
+/*
+ * Convert a VDR Key to a list of CEC keys.
+ */
 cCECList cCECkeymaps::VDRtoCECKey(eKeys key)
 {
     try {
@@ -300,6 +318,10 @@ cCECList cCECkeymaps::VDRtoCECKey(eKeys key)
     return empty;
 }
 
+/*
+ * Helper function which retrieves the CEC key which
+ * exactly matches the vdr key.
+ */
 cec_user_control_code cCECkeymaps::getFirstCEC(eKeys key)
 {
     for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX; i++) {
@@ -311,6 +333,9 @@ cec_user_control_code cCECkeymaps::getFirstCEC(eKeys key)
     return CEC_USER_CONTROL_CODE_UNKNOWN;
 }
 
+/*
+ * Initialize the default CEC Keymap.
+ */
 void cCECkeymaps::InitCECKeyFromDefault(string id)
 {
     cCECKeyMap map;
@@ -339,6 +364,9 @@ void cCECkeymaps::AddCECKey(string id, cec_user_control_code k, eKeys c)
     mCECKeyMap.at(id).at(k).push_back(c);
 }
 
+/*
+ * Initialize the default VDR Keymap.
+ */
 void cCECkeymaps::InitVDRKeyFromDefault(string id)
 {
     cVDRKeyMap map;
@@ -353,6 +381,7 @@ void cCECkeymaps::InitVDRKeyFromDefault(string id)
     }
     mVDRKeyMap.insert(std::pair<string, cVDRKeyMap>(id, map));
 }
+
 void cCECkeymaps::ClearVDRKey(string id, eKeys k)
 {
     mVDRKeyMap.at(id).at(k).clear();

@@ -436,6 +436,15 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
                 mGlobalOptions.mDeviceTypes.push_back(t);
                 Dsyslog("CECDevicetype = %d \n", t);
             }
+            else if (strcasecmp(currentNode.name(), XML_KEYMAPS) == 0) {
+                mGlobalOptions.mVDRKeymap = currentNode.attribute(XML_VDR).
+                                        as_string(cCECkeymaps::DEFAULTKEYMAP);
+                mGlobalOptions.mCECKeymap = currentNode.attribute(XML_CEC).
+                                        as_string(cCECkeymaps::DEFAULTKEYMAP);
+                Dsyslog("Keymap VDR %s CEC %s",
+                        mGlobalOptions.mVDRKeymap.c_str(),
+                        mGlobalOptions.mCECKeymap.c_str());
+            }
             else {
                 string s = "Invalid Node ";
                 s += currentNode.name();

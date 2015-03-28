@@ -12,6 +12,9 @@
 	<global>
 		<cecdebug>7</cecdebug>
 		<combokeytimeoutms>1000</combokeytimeoutms>
+		<!--  Use the keymap to translate from CEC Keymap to VDR keys -->
+		<!--  if not overwritten by a keymap in a player section -->
+		<keymaps cec="myTV" />
 		<!--  On VDR start power on TV, make VDR device active -->
 		<onmanualstart>
 			<poweron>blueray</poweron>
@@ -45,7 +48,7 @@
 	</global>
 
 	<!-- Key mapping CEC Key to VDR -->
-	<ceckeymap id="TV">
+	<ceckeymap id="myTV">
 		<key code="SELECT">
 			<value>Menu</value>
 		</key>
@@ -56,7 +59,7 @@
 	</ceckeymap>
 
 	<!-- Key mapping VDR Key to CEC -->
-	<vdrkeymap id="TV">
+	<vdrkeymap id="myVDR">
 		<key code="OK">
 			<value>ROOT_MENU</value>
 		</key>
@@ -86,7 +89,7 @@
 		
 		<!-- player starts a VDR-Player -->
 		<player file="/video/conf/plugins/cecremote/blueray.mpg">
-			<keymaps cec="TV" vdr="TV" />
+			<keymaps cec="myTV" vdr="myVDR" />
 			<stop>Stop</stop>
 			<stop>Back</stop>
 		</player>

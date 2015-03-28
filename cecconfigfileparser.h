@@ -43,8 +43,12 @@ public:
     cCmdQueue mOnSwitchToRadio;
     cCmdQueue mOnSwitchToReplay;
     deviceTypeList mDeviceTypes;
+    std::string mCECKeymap;
+    std::string mVDRKeymap;
 
-    cCECGlobalOptions() : cec_debug(7), mComboKeyTimeoutMs(1000) {};
+    cCECGlobalOptions() : cec_debug(7), mComboKeyTimeoutMs(1000),
+            mCECKeymap(cCECkeymaps::DEFAULTKEYMAP),
+            mVDRKeymap(cCECkeymaps::DEFAULTKEYMAP){};
 };
 
 typedef std::map<std::string, cCECDevice> mCECDeviceMap;

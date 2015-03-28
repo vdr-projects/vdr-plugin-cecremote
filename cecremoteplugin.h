@@ -72,6 +72,7 @@ public:
     virtual const char **SVDRPHelpPages(void);
     virtual cString SVDRPCommand(const char *Command, const char *Option, int &ReplyCode);
 
+    void SetDefaultKeymaps();
     void StartPlayer(const cCECMenu &menuitem);
     void PushCmd(const cCECCmd &cmd) {mCECRemote->PushCmd(cmd);}
     void PushCmdQueue(const cCmdQueue &cmdList) {mCECRemote->PushCmdQueue(cmdList);}
