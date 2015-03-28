@@ -56,11 +56,10 @@ VDR Plugin 'cecremote' Revision History
 
 2015-03-28: Version 0.6.0
 
-- Install a minimal default konfiguration.
+- Install a minimal default configuration.
 - Add connect/disconnect of the CEC Adapter via svdrpsend CONN/DISC
   commands.
 - Add <keymaps> to <global> section to overwrite the default keymap used
   for the mapping from CEC to VDR-Keys.
-  
-  
+
 
