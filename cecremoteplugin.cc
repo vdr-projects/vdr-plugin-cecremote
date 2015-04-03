@@ -19,7 +19,7 @@
 #include "stringtools.h"
 #include "ceckeymaps.h"
 
-static const char *VERSION        = "0.6.0";
+static const char *VERSION        = "0.7.0";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
 static const char *MAINMENUENTRY  = "CECremote";
 
@@ -38,6 +38,10 @@ cPluginCecremote::~cPluginCecremote()
     if (mCECRemote != NULL) {
         delete mCECRemote;
         mCECRemote = NULL;
+    }
+    if (mStatusMonitor != NULL) {
+        delete mStatusMonitor;
+        mStatusMonitor = NULL;
     }
 }
 
@@ -131,7 +135,12 @@ bool cPluginCecremote::Start(void)
 
 void cPluginCecremote::Stop(void)
 {
-    // Stop any background activities the plugin is performing.
+    Dsyslog("Stop Plugin");
+    mCECRemote->Stop();
+    delete mCECRemote;
+    mCECRemote = NULL;
+    delete mStatusMonitor;
+    mStatusMonitor = NULL;
 }
 
 void cPluginCecremote::Housekeeping(void)

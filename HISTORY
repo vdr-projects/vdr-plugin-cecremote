@@ -62,4 +62,6 @@ VDR Plugin 'cecremote' Revision History
 - Add <keymaps> to <global> section to overwrite the default keymap used
   for the mapping from CEC to VDR-Keys.
 
+2015-04-03: Version 0.7.0
 
+- Improve plugin shutdown.

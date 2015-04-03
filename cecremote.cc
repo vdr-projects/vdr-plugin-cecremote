@@ -269,6 +269,18 @@ void cCECRemote::Disconnect()
     mCECAdapter = NULL;
 }
 
+void cCECRemote::Stop()
+{
+    int cnt = 0;
+    cCondWait w;
+    Dsyslog("Executing onStop");
+    PushCmdQueue(mOnStop);
+    // Wait until the worker queue is empty (but longest 10 seconds)
+    while (!mWorkerQueue.empty() && (cnt < 20)) {
+       w.Wait(500);
+    }
+    Dsyslog("onStop OK");
+}
 /*
  * Destructor stops the worker thread and unloads libCEC.
  */
@@ -276,8 +288,9 @@ cCECRemote::~cCECRemote()
 {
     int cnt = 0;
     cCondWait w;
-    PushCmdQueue(mOnStop);
-    // Wait until the worker queue is empty (but longest 5 seconds
+    cCECCmd cmd(CEC_EXIT);
+    PushCmd(cmd);
+    // Wait until the worker queue is empty (but longest 5 seconds)
     while (!mWorkerQueue.empty() && (cnt < 10)) {
         w.Wait(500);
     }
@@ -436,12 +449,10 @@ void cCECRemote::Action(void)
     Dsyslog("cCECRemote start worker thread");
     while (Running()) {
         cmd = WaitCmd();
-        if (cmd.mCmd != CEC_TIMEOUT) {
-            Dsyslog ("Action %d Val %d Phys Addr %d Logical %04x %04x",
-                     cmd.mCmd, cmd.mVal, cmd.mDevice.mPhysicalAddress,
-                     cmd.mDevice.mLogicalAddressDefined,
-                     cmd.mDevice.mLogicalAddressUsed);
-        }
+        Dsyslog ("Action %d Val %d Phys Addr %d Logical %04x %04x",
+                 cmd.mCmd, cmd.mVal, cmd.mDevice.mPhysicalAddress,
+                 cmd.mDevice.mLogicalAddressDefined,
+                 cmd.mDevice.mLogicalAddressUsed);
         switch (cmd.mCmd)
         {
         case CEC_KEYRPRESS:
@@ -519,8 +530,13 @@ void cCECRemote::Action(void)
             if (system(cmd.mExec.c_str()) < 0) {
                 Esyslog("Exec failed");
             }
+            else {
+                Dsyslog("Exec OK");
+            }
             break;
-        case CEC_TIMEOUT:
+        case CEC_EXIT:
+            Dsyslog("cCECRemote exit worker thread");
+            return;
             break;
         default:
             Esyslog("Unknown action %d Val %d", cmd.mCmd, cmd.mVal);
@@ -615,25 +631,22 @@ void cCECRemote::PushCmd(const cCECCmd &cmd)
 }
 
 /*
- * Wait until a command is put into the worker command queue or a timeout occurs.
+ * Wait until a command is put into the worker command queue.
  * If a command was received remove it and return the received command.
  */
 cCECCmd cCECRemote::WaitCmd()
 {
     cCECCmd cmd;
     mWorkerQueueMutex.Lock();
-    if (mWorkerQueue.empty()) {
+    while (mWorkerQueue.empty()) {
         mWorkerQueueMutex.Unlock();
-        mWorkerQueueWait.Wait(1000);
+        mWorkerQueueWait.Wait(10000);
         mWorkerQueueMutex.Lock();
     }
-    if (mWorkerQueue.empty()) {
-        cmd.mCmd = CEC_TIMEOUT;
-    }
-    else {
-        cmd = mWorkerQueue.front();
-        mWorkerQueue.pop_front();
-    }
+
+    cmd = mWorkerQueue.front();
+    mWorkerQueue.pop_front();
     mWorkerQueueMutex.Unlock();
+
     return cmd;
 }

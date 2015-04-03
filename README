@@ -19,7 +19,10 @@ Requirements
   
   PugiXML V1.5, XML parser for C++
   http://pugixml.org/
-  
+
+  For PugiXML on Raspberry Pi see:
+  http://distribution-us.hexxeh.net/raspbian/archive/raspbian/pool/main/p/pugixml/
+
 Description:
 ==============
 

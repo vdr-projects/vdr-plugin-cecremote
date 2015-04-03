@@ -52,7 +52,7 @@ public:
 
 typedef enum {
     CEC_INVALID = -1,
-    CEC_TIMEOUT = 0,
+    CEC_EXIT = 0,
     CEC_KEYRPRESS,
     CEC_MAKEACTIVE,
     CEC_MAKEINACTIVE,
@@ -109,7 +109,7 @@ public:
     cString ListDevices();
     void Connect();
     void Disconnect();
-
+    void Stop();
     ICECAdapter            *mCECAdapter;
 private:
     static const char      *VDRNAME;
