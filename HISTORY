@@ -32,13 +32,13 @@ VDR Plugin 'cecremote' Revision History
 - Switched XML Parser to pugixml (http://pugixml.org/).
 - Make keymaps konfigurable.
 - SVDRP Command to debug and list keymaps and CEC devices.
-- New <combokeytimeoutms> in <global> config to set the libCEC combo key 
+- New <combokeytimeoutms> in <global> config to set the libCEC combo key
   timeout.
 - Add <textviewon> CEC command.
 
 2015-02-28: Version 0.3.0
 
-- Fix an out of bounds write of mCECKeyNames and correct the size of 
+- Fix an out of bounds write of mCECKeyNames and correct the size of
   mDefaultKeyMap, as reported by sirwio.
 - Add <cecdevicetype>
 
@@ -65,3 +65,10 @@ VDR Plugin 'cecremote' Revision History
 2015-04-03: Version 0.7.0
 
 - Improve plugin shutdown.
+
+2015-04-06: Version 1.0.0
+
+- Improve -c commandline option. If started with a slash the config
+  directory is an absolute path, otherwise it is relative to the
+  VDRs plugin configuration directory.
+

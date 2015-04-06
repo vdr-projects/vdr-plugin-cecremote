@@ -188,21 +188,30 @@ case Playback 2) is used.
 * Global
 ====================================
 
-The child elements of <global> are <cecdebug>, <onstart> and <onstop>.
+The child elements of <global> are <cecdebug>, <onstart>, <onmanualstart>, 
+<onstop> <onswitchtotv>, <onswitchtoradio>, <onswitchtoreplay> and <keymaps>.
 
-<cecdebug> : Debug level for CEC debugging (see cec_log_level in cectypes.h)
-<onstart>  : A command list which is executed upon plugin start.
-<onstop>   : A command list which is executed upon plugin shutdown.
-<cecdevicetype> : The device types to register with libCEC. The following
-                  device types are available:
-                      RECORDING_DEVICE
-                      TUNER
-                      TV
-                      PLAYBACK_DEVICE
-                      AUDIO_SYSTEM
-               NOTE: There seems to be a bug in the libCEC implementation for
-                     the Raspberry PI which causes a crash when registering
-                     more than one device type.
+<cecdebug>          Debug level for CEC debugging (see cec_log_level in cectypes.h)
+<onstart>           A command list which is executed upon plugin start.
+<onmanualstart>     A command list which is executed upon manual plugin start, but 
+                    not if the VDR was started due to a timer.
+<onstop>            A command list which is executed upon plugin shutdown.
+<onswitchtotv>      A command list which is executed if switched to a TV program.
+<onswitchtoradio>   A command list which is executed if switched to a radio program.
+<onswitchtoreplay>  A command list which is executed if the VDR replays a recording.
+<keymaps>           The <keymaps> tag has the attribute cec, which addresses the 
+                    id specified within a <ceckeymap>. This keymap is used to 
+                    convert a CEC-Keycode to a VDR-Key.
+<cecdevicetype>     The device types to register with libCEC. The following 
+                    device types are available:
+                    * RECORDING_DEVICE
+                    * TUNER
+                    * TV
+                    * PLAYBACK_DEVICE
+                    * AUDIO_SYSTEM
+
+NOTE: There seems to be a bug in the libCEC implementation for the Raspberry PI 
+      which causes a crash when registering more than one device type.
 
 For the description of a command list see below.
 
@@ -212,8 +221,8 @@ For the description of a command list see below.
 Defines a menu for executing CEC and shell commands.
 
 The <menu> tag must have the following attributes:
-  name    : The name of the menu (displayed in the OSD)
-  address : CEC device address.
+  * name    : The name of the menu (displayed in the OSD)
+  * address : CEC device address.
   
 The child elements of <menu> are <onstart>, <onstop>, <player>,
 <onpoweron>, <onpoweroff>. <onstart>, <onstop> and <onpoweron>, <onpoweroff> 
@@ -235,7 +244,7 @@ Starts a stillpic player and waits until the player is stopped. This tag can
 not be used with <onpoweron> and <onpoweroff>.
 
 The <player> tag must have the following attribute:
-  file : Filename of the still-picture in mpeg format.
+  * file : Filename of the still-picture in mpeg format.
   
 The child elements of <player> are <stop>.and <keymaps> 
 
@@ -269,4 +278,14 @@ LSTD     : List active CEC devices
 KEYM     : List available key maps
 VDRK [id]: Display the VDR->CEC key map with the given id
 CECK [id]: Display the CEC->VDR key map with the given id
+CONN     : Connect the CEC adapter.
+DISC     : Disconnect the CEC adapter. This can be used for example,
+           if an other program requires access to the CEC adapter.
 
+* Commandline arguments
+=====================================
+-c  --configdir <dir>   : Directory for the configuration file. If the directory
+                          does not start with a slash, the directory is relative
+                          to the vdr config directory, otherwise it specifies an
+                          absolute path. Default is cecremote.
+-x  --configfile <file> : Name of the configuartion file. Default is cecremote.xml

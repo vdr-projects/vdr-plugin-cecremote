@@ -38,6 +38,9 @@ protected:
 
     const std::string GetConfigDir(void) {
         const std::string cfdir = ConfigDirectory();
+        if (mCfgDir[0] == '/') {
+            return mCfgDir  + "/";
+        }
         return cfdir + "/" + mCfgDir + "/";
     }
     const std::string GetConfigFile(void) {
