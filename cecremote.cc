@@ -158,7 +158,14 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     // Setup CEC configuration
     mCECConfig.Clear();
     strncpy(mCECConfig.strDeviceName, VDRNAME, sizeof(mCECConfig.strDeviceName));
+
+    // LibCEC before 3.0.0
+#ifdef CEC_CLIENT_VERSION_CURRENT
     mCECConfig.clientVersion       = CEC_CLIENT_VERSION_CURRENT;
+#else
+    // LibCEC 3.0.0
+    mCECConfig.clientVersion       = LIBCEC_VERSION_CURRENT;
+#endif
     mCECConfig.bActivateSource     = CEC_TRUE;
     mCECConfig.iComboKeyTimeoutMs = options.mComboKeyTimeoutMs;
 
