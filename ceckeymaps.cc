@@ -18,7 +18,7 @@ using namespace std;
 const char *cCECkeymaps::DEFAULTKEYMAP = "default";
 
 cCECkeymaps::cCECkeymaps() {
-    for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX+1; i++) {
+    for (int i = 0; i <= CEC_USER_CONTROL_CODE_MAX; i++) {
         mDefaultKeyMap[i][0] = kNone;
         mDefaultKeyMap[i][1] = kNone;
     }
@@ -77,38 +77,6 @@ cCECkeymaps::cCECkeymaps() {
     mDefaultKeyMap[CEC_USER_CONTROL_CODE_F4_YELLOW          ][0] = kYellow;
     mDefaultKeyMap[CEC_USER_CONTROL_CODE_AN_RETURN          ][0] = kBack;
     mDefaultKeyMap[CEC_USER_CONTROL_CODE_EXIT               ][0] = kBack;
-
-   /*   mDefaultKeyMap[CEC_USER_CONTROL_CODE_VIDEO_ON_DEMAND             ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_ELECTRONIC_PROGRAM_GUIDE    ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_TIMER_PROGRAMMING           ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_INITIAL_CONFIGURATION       ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_PLAY_FUNCTION               ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAUSE_PLAY_FUNCTION         ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_RECORD_FUNCTION             ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAUSE_RECORD_FUNCTION       ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_STOP_FUNCTION               ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_MUTE_FUNCTION               ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_RESTORE_VOLUME_FUNCTION     ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_TUNE_FUNCTION               ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_SELECT_MEDIA_FUNCTION       ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_SELECT_AV_INPUT_FUNCTION    ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_SELECT_AUDIO_INPUT_FUNCTION ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_POWER_TOGGLE_FUNCTION       ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_POWER_OFF_FUNCTION          ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_POWER_ON_FUNCTION           ] = { }
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_F5                          ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_DATA                        ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_STOP_RECORD                 ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_PAUSE_RECORD                ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_ANGLE                       ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_EJECT                       ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_FAVORITE_MENU               ] = { };
-
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_DOT                         ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_NEXT_FAVORITE               ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_INPUT_SELECT                ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_HELP                        ] = { };
-     mDefaultKeyMap[CEC_USER_CONTROL_CODE_AN_CHANNELS_LIST            ] = { };*/
 
     memset(mCECKeyNames, 0, sizeof(mCECKeyNames));
     mCECKeyNames[CEC_USER_CONTROL_CODE_SELECT             ] = "SELECT";
@@ -221,7 +189,7 @@ cString cCECkeymaps::ListKeymaps()
 cString cCECkeymaps::ListKeycodes()
 {
     cString s = "CEC Keycodes";
-    for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX; i++) {
+    for (int i = 0; i <= CEC_USER_CONTROL_CODE_MAX; i++) {
         if (mCECKeyNames[i] != NULL) {
             s = cString::sprintf("%s\n%02x %s", *s, i, mCECKeyNames[i]);
         }
@@ -244,7 +212,7 @@ cString cCECkeymaps::ListCECKeyMap(const string &id)
         s = cString::sprintf("%s\n   Keymap not found", *s);
         return s;
     }
-    for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX; i++) {
+    for (int i = 0; i <= CEC_USER_CONTROL_CODE_MAX; i++) {
         if (mCECKeyNames[i] != NULL) {
             s = cString::sprintf("%s\n<key code=\"%s\">", *s, mCECKeyNames[i]);
             cKeyList l = m.at(i);
@@ -262,9 +230,16 @@ cString cCECkeymaps::ListCECKeyMap(const string &id)
  */
 cString cCECkeymaps::ListVDRKeyMap(const string &id)
 {
+    cVDRKeyMap m;
     cString s = "VDR KEYMAP ";
     s = cString::sprintf("%s %s", *s, id.c_str());
-    cVDRKeyMap m = mVDRKeyMap.at(id);
+    try {
+        m = mVDRKeyMap.at(id);
+    }
+    catch (const std::out_of_range& oor) {
+        s = cString::sprintf("%s\n   Keymap not found", *s);
+        return s;
+    }
     for (int i = 0; i < kNone; i++) {
         s = cString::sprintf("%s\n<key code=\"%s\">", *s, cKey::ToString((eKeys)i));
         cCECList  l = m.at((eKeys)i);
@@ -282,7 +257,7 @@ cString cCECkeymaps::ListVDRKeyMap(const string &id)
 cec_user_control_code cCECkeymaps::StringToCEC(const string &s)
 {
     const char *str = s.c_str();
-    for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX; i++) {
+    for (int i = 0; i <= CEC_USER_CONTROL_CODE_MAX; i++) {
         if (mCECKeyNames[i] != NULL) {
             if (strcasecmp(str, mCECKeyNames[i]) == 0) {
                 return (cec_user_control_code)i;
@@ -324,7 +299,7 @@ cCECList cCECkeymaps::VDRtoCECKey(eKeys key)
  */
 cec_user_control_code cCECkeymaps::getFirstCEC(eKeys key)
 {
-    for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX; i++) {
+    for (int i = 0; i <= CEC_USER_CONTROL_CODE_MAX; i++) {
         if ((mDefaultKeyMap[i][0] == key) &&
             (mDefaultKeyMap[i][1] == kNone)) {
             return (cec_user_control_code)i;
@@ -340,7 +315,7 @@ void cCECkeymaps::InitCECKeyFromDefault(string id)
 {
     cCECKeyMap map;
     map.resize(CEC_USER_CONTROL_CODE_MAX + 2);
-    for (int i = 0; i < CEC_USER_CONTROL_CODE_MAX+1; i++) {
+    for (int i = 0; i <= CEC_USER_CONTROL_CODE_MAX; i++) {
         map[i].clear();
         if (mDefaultKeyMap[i][0] != kNone) {
             map[i].push_back(mDefaultKeyMap[i][0]);

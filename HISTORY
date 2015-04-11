@@ -72,3 +72,9 @@ VDR Plugin 'cecremote' Revision History
   directory is an absolute path, otherwise it is relative to the
   VDRs plugin configuration directory.
 
+2015-04-11: Version 1.1.0
+
+- Compile with libCEC 3.0.0
+- Incorporate patch from sirwio, to get AN_CHANNELS_LIST key functional.
+- Fix crashes on svdrp commands VDRK/CECK if no keymap id is used as option.
+- Add setup option to hide cecremote menu from vdr main menu.

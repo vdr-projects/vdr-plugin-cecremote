@@ -27,7 +27,7 @@ static int CecKeyPressCallback(void *cbParam, const cec_keypress key)
     static cec_user_control_code lastkey = CEC_USER_CONTROL_CODE_UNKNOWN;
     cCECRemote *rem = (cCECRemote *)cbParam;
 
-    Dsyslog("key pressed %d (%d)", key.keycode, key.duration);
+    Dsyslog("key pressed %02x (%d)", key.keycode, key.duration);
     if (
         ((key.keycode >= 0) && (key.keycode <= CEC_USER_CONTROL_CODE_MAX)) &&
         ((key.duration == 0) || (key.keycode != lastkey))

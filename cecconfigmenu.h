@@ -20,12 +20,11 @@ private:
     static int mShowMainMenu;
     static const char *ENABLEMAINMENU;
 
-    cCECConfigMenu(void) {};
-
 protected:
     virtual void Store(void);
 
 public:
+    cCECConfigMenu(void);
     static const bool GetShowMainMenu(void) { return mShowMainMenu; }
     static const bool SetupParse(const char *Name, const char *Value);
 };

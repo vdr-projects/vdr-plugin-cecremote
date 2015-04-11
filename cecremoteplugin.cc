@@ -18,8 +18,9 @@
 #include "cecosd.h"
 #include "stringtools.h"
 #include "ceckeymaps.h"
+#include "cecconfigmenu.h"
 
-static const char *VERSION        = "1.0.0";
+static const char *VERSION        = "1.1.0";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
 static const char *MAINMENUENTRY  = "CECremote";
 
@@ -197,7 +198,7 @@ cOsdObject *cPluginCecremote::MainMenuAction(void)
 
 cMenuSetupPage *cPluginCecremote::SetupMenu(void)
 {
-    return NULL;
+    return new cCECConfigMenu();
 }
 
 bool cPluginCecremote::SetupParse(const char *Name, const char *Value)
@@ -240,10 +241,18 @@ cString cPluginCecremote::SVDRPCommand(const char *Command, const char *Option, 
         return mKeyMaps.ListKeycodes();
     }
     else if (strcasecmp(Command, "VDRK") == 0) {
+        if (Option == NULL) {
+            ReplyCode = 901;
+            return "Error: Keymap ID required";
+        }
         string s = Option;
         return mKeyMaps.ListVDRKeyMap(s);
     }
     else if (strcasecmp(Command, "CECK") == 0) {
+        if (Option == NULL) {
+            ReplyCode = 901;
+            return "Error: Keymap ID required";
+        }
         string s = Option;
         return mKeyMaps.ListCECKeyMap(s);
     }

@@ -15,6 +15,11 @@
 const char *cCECConfigMenu::ENABLEMAINMENU = "EnableMainMenu";
 int cCECConfigMenu::mShowMainMenu = true;
 
+cCECConfigMenu::cCECConfigMenu() : cMenuSetupPage()
+{
+    Add(new cMenuEditBoolItem(tr("Show in main menu"), &mShowMainMenu));
+}
+
 const bool cCECConfigMenu::SetupParse(const char *Name, const char *Value)
 {
     if (strcasecmp(Name, ENABLEMAINMENU) == 0) {
