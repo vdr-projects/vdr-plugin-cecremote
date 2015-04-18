@@ -36,6 +36,7 @@ class cCECGlobalOptions {
 public:
     int cec_debug;
     uint32_t mComboKeyTimeoutMs;
+    int mHDMIPort;
     cCmdQueue mOnStart;
     cCmdQueue mOnStop;
     cCmdQueue mOnManualStart;
@@ -47,6 +48,7 @@ public:
     std::string mVDRKeymap;
 
     cCECGlobalOptions() : cec_debug(7), mComboKeyTimeoutMs(1000),
+            mHDMIPort(CEC_DEFAULT_HDMI_PORT),
             mCECKeymap(cCECkeymaps::DEFAULTKEYMAP),
             mVDRKeymap(cCECkeymaps::DEFAULTKEYMAP){};
 };
@@ -188,7 +190,7 @@ private:
     static const char *XML_ONSWITCHTOTV;
     static const char *XML_ONSWITCHTORADIO;
     static const char *XML_ONSWITCHTOREPLAY;
-
+    static const char *XML_HDMIPORT;
     // Filename of the configuration file.
     const char* mXmlFile;
 

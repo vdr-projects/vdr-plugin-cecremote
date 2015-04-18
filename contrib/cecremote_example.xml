@@ -11,6 +11,7 @@
 <config>
 	<global>
 		<cecdebug>7</cecdebug>
+		<hdmiport>2</hdmiport>
 		<combokeytimeoutms>1000</combokeytimeoutms>
 		<!--  Use the keymap to translate from CEC Keymap to VDR keys -->
 		<!--  if not overwritten by a keymap in a player section -->
@@ -20,10 +21,10 @@
 			<poweron>blueray</poweron>
 			<makeactive />
 		</onmanualstart>
-		<onstart>
+		<!-- <onstart>
 			<poweron>TV</poweron>
 			<makeactive />
-		</onstart>
+		</onstart> -->
 		<!--  On VDR stop power off TV and DVD/Blueray player -->
 		<onstop>
 			<poweroff>0</poweroff>

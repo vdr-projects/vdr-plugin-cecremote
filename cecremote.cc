@@ -161,14 +161,16 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
 
     // LibCEC before 3.0.0
 #ifdef CEC_CLIENT_VERSION_CURRENT
-    mCECConfig.clientVersion       = CEC_CLIENT_VERSION_CURRENT;
+    mCECConfig.clientVersion      = CEC_CLIENT_VERSION_CURRENT;
 #else
     // LibCEC 3.0.0
-    mCECConfig.clientVersion       = LIBCEC_VERSION_CURRENT;
+    mCECConfig.clientVersion      = LIBCEC_VERSION_CURRENT;
 #endif
-    mCECConfig.bActivateSource     = CEC_TRUE;
+    mCECConfig.bActivateSource    = CEC_FALSE;
     mCECConfig.iComboKeyTimeoutMs = options.mComboKeyTimeoutMs;
-
+    mCECConfig.iHDMIPort = options.mHDMIPort;
+    mCECConfig.wakeDevices.Clear();
+    mCECConfig.powerOffDevices.Clear();
     // If no <cecdevicetype> is specified in the <global>, set default
     if (options.mDeviceTypes.empty())
     {
