@@ -60,14 +60,29 @@ static int CecCommandCallback(void *cbParam, const cec_command command)
 static int CecAlertCallback(void *cbParam, const libcec_alert type,
                             const libcec_parameter param)
 {
-    Dsyslog("CecAlert %d)", type);
+    cCECRemote *rem = (cCECRemote *)cbParam;
+    Dsyslog("CecAlert %d", type);
     switch (type)
     {
     case CEC_ALERT_CONNECTION_LOST:
         Esyslog("Connection lost");
+        rem->Disconnect();
+        rem->Connect();
         break;
     case CEC_ALERT_TV_POLL_FAILED:
         Isyslog("TV Poll failed");
+        break;
+    case CEC_ALERT_SERVICE_DEVICE:
+        Isyslog("CEC_ALERT_SERVICE_DEVICE");
+        break;
+    case CEC_ALERT_PERMISSION_ERROR:
+        Isyslog("CEC_ALERT_PERMISSION_ERROR");
+        break;
+    case CEC_ALERT_PORT_BUSY:
+        Isyslog("CEC_ALERT_PORT_BUSY");
+        break;
+    case CEC_ALERT_PHYSICAL_ADDRESS_ERROR:
+        Isyslog("CEC_ALERT_PHYSICAL_ADDRESS_ERROR");
         break;
     default:
         break;
@@ -132,6 +147,17 @@ static void CECSourceActivatedCallback (void *cbParam,
 }
 
 /*
+ * Callback function for libCEC when configuration changes.
+ * Currently only used for debugging.
+ */
+static int CECConfigurationCallback (void *cbParam,
+                                     const libcec_configuration config)
+{
+    Dsyslog("CECConfiguration");
+    return CEC_TRUE;
+}
+
+/*
  * CEC remote constructor.
  * Initializes libCEC and the connected CEC adaptor.
  */
@@ -143,59 +169,21 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
 {
     mPlugin = plugin;
     mCECAdapter = NULL;
+    mHDMIPort = options.mHDMIPort;
     mCECLogLevel = options.cec_debug;
     mOnStart = options.mOnStart;
     mOnStop = options.mOnStop;
     mOnManualStart = options.mOnManualStart;
-    // Initialize Callbacks
-    mCECCallbacks.Clear();
-    mCECCallbacks.CBCecLogMessage  = &::CecLogMessageCallback;
-    mCECCallbacks.CBCecKeyPress    = &::CecKeyPressCallback;
-    mCECCallbacks.CBCecCommand     = &::CecCommandCallback;
-    mCECCallbacks.CBCecAlert       = &::CecAlertCallback;
-    mCECCallbacks.CBCecSourceActivated = &::CECSourceActivatedCallback;
+    mComboKeyTimeoutMs = options.mComboKeyTimeoutMs;
+    mDeviceTypes = options.mDeviceTypes;
 
-    // Setup CEC configuration
-    mCECConfig.Clear();
-    strncpy(mCECConfig.strDeviceName, VDRNAME, sizeof(mCECConfig.strDeviceName));
-
-    // LibCEC before 3.0.0
-#ifdef CEC_CLIENT_VERSION_CURRENT
-    mCECConfig.clientVersion      = CEC_CLIENT_VERSION_CURRENT;
-#else
-    // LibCEC 3.0.0
-    mCECConfig.clientVersion      = LIBCEC_VERSION_CURRENT;
-#endif
-    mCECConfig.bActivateSource    = CEC_FALSE;
-    mCECConfig.iComboKeyTimeoutMs = options.mComboKeyTimeoutMs;
-    mCECConfig.iHDMIPort = options.mHDMIPort;
-    mCECConfig.wakeDevices.Clear();
-    mCECConfig.powerOffDevices.Clear();
-    // If no <cecdevicetype> is specified in the <global>, set default
-    if (options.mDeviceTypes.empty())
-    {
-        mCECConfig.deviceTypes.Add(CEC_DEVICE_TYPE_RECORDING_DEVICE);
-    }
-    else {
-        // Add all device types as specified in <cecdevicetype>
-        deviceTypeListIterator idev;
-        for (idev = options.mDeviceTypes.begin();
-                idev != options.mDeviceTypes.end(); ++idev) {
-            cec_device_type t = *idev;
-            mCECConfig.deviceTypes.Add(t);
-            Dsyslog ("   Add device %d", t);
-        }
-    }
-
-    // Setup callbacks
-    mCECConfig.callbackParam = this;
-    mCECConfig.callbacks = &mCECCallbacks;
     Connect();
-    if (mCECAdapter == NULL) {
-        Esyslog("Can not initialize libcec");
-        exit(-1);
-    }
     Start();
+    if (mCECAdapter == NULL) {
+        Esyslog("Can not initialize/connect to libcec");
+        return;
+    }
+
     Dsyslog("cCECRemote start");
 
     if (mPlugin->GetStartManually()) {
@@ -210,7 +198,50 @@ void cCECRemote::Connect()
     if (mCECAdapter != NULL) {
         return;
     }
+    // Initialize Callbacks
+    mCECCallbacks.Clear();
+    mCECCallbacks.CBCecLogMessage  = &::CecLogMessageCallback;
+    mCECCallbacks.CBCecKeyPress    = &::CecKeyPressCallback;
+    mCECCallbacks.CBCecCommand     = &::CecCommandCallback;
+    mCECCallbacks.CBCecAlert       = &::CecAlertCallback;
+    mCECCallbacks.CBCecSourceActivated = &::CECSourceActivatedCallback;
+    mCECCallbacks.CBCecConfigurationChanged = &::CECConfigurationCallback;
 
+    // Setup CEC configuration
+    mCECConfig.Clear();
+    strncpy(mCECConfig.strDeviceName, VDRNAME, sizeof(mCECConfig.strDeviceName));
+
+    // LibCEC before 3.0.0
+#ifdef CEC_CLIENT_VERSION_CURRENT
+    mCECConfig.clientVersion      = CEC_CLIENT_VERSION_CURRENT;
+#else
+    // LibCEC 3.0.0
+    mCECConfig.clientVersion      = LIBCEC_VERSION_CURRENT;
+#endif
+    mCECConfig.bActivateSource    = CEC_FALSE;
+    mCECConfig.iComboKeyTimeoutMs = mComboKeyTimeoutMs;
+    mCECConfig.iHDMIPort = mHDMIPort;
+    mCECConfig.wakeDevices.Clear();
+    mCECConfig.powerOffDevices.Clear();
+    // If no <cecdevicetype> is specified in the <global>, set default
+    if (mDeviceTypes.empty())
+    {
+        mCECConfig.deviceTypes.Add(CEC_DEVICE_TYPE_RECORDING_DEVICE);
+    }
+    else {
+        // Add all device types as specified in <cecdevicetype>
+        deviceTypeListIterator idev;
+        for (idev = mDeviceTypes.begin();
+                idev != mDeviceTypes.end(); ++idev) {
+            cec_device_type t = *idev;
+            mCECConfig.deviceTypes.Add(t);
+            Dsyslog ("   Add device %d", t);
+        }
+    }
+
+    // Setup callbacks
+    mCECConfig.callbackParam = this;
+    mCECConfig.callbacks = &mCECCallbacks;
     // Initialize libcec
     mCECAdapter = LibCecInitialise(&mCECConfig);
     if (mCECAdapter == NULL) {
@@ -239,6 +270,7 @@ void cCECRemote::Connect()
                 mCECAdapterDescription[0].iFirmwareVersion);
     }
 
+
     if (!mCECAdapter->Open(mCECAdapterDescription[0].strComName))
     {
         Esyslog("unable to open the device on port %s",
@@ -265,6 +297,9 @@ void cCECRemote::Connect()
         }
     }
 
+    if (mHDMIPort != CEC_DEFAULT_HDMI_PORT) {
+        mCECAdapter->SetHDMIPort(CECDEVICE_TV, mHDMIPort);
+    }
     Dsyslog("END cCECRemote::Initialize");
 }
 
@@ -313,6 +348,11 @@ cCECRemote::~cCECRemote()
 cString cCECRemote::ListDevices()
 {
     cString s = "Available CEC Devices:";
+    uint16_t phaddr;
+    cec_osd_name name;
+    cec_vendor_id vendor;
+    cec_power_status powerstatus;
+
     if (mCECAdapter == NULL) {
         Esyslog ("ListDevices CEC Adapter disconnected");
         s = "CEC Adapter disconnected";
@@ -338,24 +378,26 @@ cString cCECRemote::ListDevices()
         {
             cec_logical_address logical_addres = (cec_logical_address)j;
 
-            uint16_t phaddr = mCECAdapter->GetDevicePhysicalAddress(logical_addres);
-            cec_osd_name name = mCECAdapter->GetDeviceOSDName(logical_addres);
-            cec_vendor_id vendor = (cec_vendor_id)
-                                            mCECAdapter->GetDeviceVendorId(logical_addres);
+            phaddr = mCECAdapter->GetDevicePhysicalAddress(logical_addres);
+            name = mCECAdapter->GetDeviceOSDName(logical_addres);
+            vendor = (cec_vendor_id)mCECAdapter->GetDeviceVendorId(logical_addres);
+
             if (own[j]) {
                 s = cString::sprintf("%s\n   %d# %-15.15s@%04x %-15.15s %-14.14s %-15.15s", *s,
-                                     logical_addres,
-                                     mCECAdapter->ToString(logical_addres),
-                                     phaddr, name.name,
-                                     VDRNAME, VDRNAME);
+                        logical_addres,
+                        mCECAdapter->ToString(logical_addres),
+                        phaddr, name.name,
+                        VDRNAME, VDRNAME);
             }
             else {
-                    s = cString::sprintf("%s\n   %d# %-15.15s@%04x %-15.15s %-14.14s %-15.15s", *s,
-                                 logical_addres,
-                                 mCECAdapter->ToString(logical_addres),
-                                 phaddr, name.name,
-                                 mCECAdapter->GetDeviceOSDName(logical_addres).name,
-                                 mCECAdapter->ToString(vendor));
+                powerstatus = mCECAdapter->GetDevicePowerStatus(logical_addres);
+                s = cString::sprintf("%s\n   %d# %-15.15s@%04x %-15.15s %-14.14s %-15.15s %-15.15s", *s,
+                        logical_addres,
+                        mCECAdapter->ToString(logical_addres),
+                        phaddr, name.name,
+                        mCECAdapter->GetDeviceOSDName(logical_addres).name,
+                        mCECAdapter->ToString(vendor),
+                        mCECAdapter->ToString(powerstatus));
             }
         }
     }
@@ -443,6 +485,49 @@ cec_logical_address cCECRemote::getLogical(cCECDevice &dev)
     dev.mLogicalAddressUsed = dev.mLogicalAddressDefined;
     return dev.mLogicalAddressDefined;
 }
+
+void cCECRemote::ActionKeyPress(cCECCmd &cmd)
+{
+    cec_logical_address addr;
+    cCECList ceckmap;
+    cec_user_control_code ceckey;
+
+    addr = getLogical(cmd.mDevice);
+    if (addr != CECDEVICE_UNKNOWN) {
+        ceckmap = mPlugin->mKeyMaps.VDRtoCECKey((eKeys)cmd.mVal);
+
+        for (cCECListIterator ci = ceckmap.begin(); ci != ceckmap.end();
+                ++ci) {
+            ceckey = *ci;
+            Dsyslog ("Send Keypress VDR %d - > CEC 0x%02x", cmd.mVal, ceckey);
+            if (ceckey != CEC_USER_CONTROL_CODE_UNKNOWN) {
+                if (!mCECAdapter->SendKeypress(addr, ceckey, true)) {
+                    Esyslog("Keypress to %d %s failed",
+                            addr, mCECAdapter->ToString(addr));
+                    return;
+                }
+                cCondWait::SleepMs(50);
+                if (!mCECAdapter->SendKeyRelease(addr, true)) {
+                    Esyslog("SendKeyRelease to %d %s failed",
+                            addr, mCECAdapter->ToString(addr));
+                }
+            }
+        }
+    }
+}
+
+void cCECRemote::WaitForPowerStatus(cec_logical_address addr, cec_power_status newstatus)
+{
+    cec_power_status status;
+    int cnt = 0;
+    cCondWait w;
+
+    do {
+        w.Wait(100);
+        status = mCECAdapter->GetDevicePowerStatus(addr);
+        cnt++;
+    } while ((status != newstatus) && (cnt < 50));
+}
 /*
  * Worker thread which processes the command queue and executes the
  * received commands.
@@ -451,7 +536,6 @@ void cCECRemote::Action(void)
 {
     cCECCmd cmd;
     cCECList ceckmap;
-    cec_user_control_code ceckey;
     cec_logical_address addr;
     eKeys k;
 
@@ -477,61 +561,80 @@ void cCECRemote::Action(void)
             }
             break;
         case CEC_POWERON:
-            Dsyslog("Power on");
-            addr = getLogical(cmd.mDevice);
-            if ((addr != CECDEVICE_UNKNOWN) &&
-                (mCECAdapter->PowerOnDevices(addr) != 0)) {
-                Esyslog("PowerOnDevice failed for %s",
-                        mCECAdapter->ToString(addr));
+            if (mCECAdapter != NULL) {
+                Dsyslog("Power on");
+                addr = getLogical(cmd.mDevice);
+                if ((addr != CECDEVICE_UNKNOWN) &&
+                    (!mCECAdapter->PowerOnDevices(addr))) {
+                    Esyslog("PowerOnDevice failed for %s",
+                            mCECAdapter->ToString(addr));
+                }
+                else {
+                    WaitForPowerStatus(addr, CEC_POWER_STATUS_ON);
+                }
+            }
+            else {
+                Esyslog("PowerOnDevice ignored");
             }
             break;
         case CEC_POWEROFF:
-            addr = getLogical(cmd.mDevice);
-            if ((addr != CECDEVICE_UNKNOWN) &&
-                (mCECAdapter->StandbyDevices(addr) != 0)) {
-                Esyslog("PowerOnDevice failed for %s",
-                        mCECAdapter->ToString(addr));
+            if (mCECAdapter != NULL) {
+                addr = getLogical(cmd.mDevice);
+                if ((addr != CECDEVICE_UNKNOWN) &&
+                    (!mCECAdapter->StandbyDevices(addr))) {
+                    Esyslog("StandbyDevices failed for %s",
+                            mCECAdapter->ToString(addr));
+                }
+                else {
+                    WaitForPowerStatus(addr, CEC_POWER_STATUS_STANDBY);
+                }
+            }
+            else {
+                Esyslog("StandbyDevices ignored");
             }
             break;
         case CEC_TEXTVIEWON:
-            Dsyslog("Textviewon");
-            addr = getLogical(cmd.mDevice);
-            if ((addr != CECDEVICE_UNKNOWN) &&
-                (TextViewOn(addr) != 0)) {
-                Esyslog("TextViewOn failed for %s",
-                        mCECAdapter->ToString(addr));
+            if (mCECAdapter != NULL) {
+                Dsyslog("Textviewon");
+                addr = getLogical(cmd.mDevice);
+                if ((addr != CECDEVICE_UNKNOWN) &&
+                    (TextViewOn(addr) != 0)) {
+                    Esyslog("TextViewOn failed for %s",
+                            mCECAdapter->ToString(addr));
+                }
+            }
+            else {
+                Esyslog("Textviewon ignored");
             }
             break;
         case CEC_MAKEACTIVE:
-            Dsyslog ("Make active");
-            mCECAdapter->SetActiveSource();
+            if (mCECAdapter != NULL) {
+                Dsyslog ("Make active");
+                if (!mCECAdapter->SetActiveSource()) {
+                    Esyslog("SetActiveSource failed");
+                }
+            }
+            else {
+                Esyslog("SetActiveSource ignored");
+            }
             break;
         case CEC_MAKEINACTIVE:
-            Dsyslog ("Make inactive");
-            mCECAdapter->SetInactiveView();
+            if (mCECAdapter != NULL) {
+                Dsyslog ("Make inactive");
+                if (!mCECAdapter->SetInactiveView()) {
+                    Esyslog("SetInactiveView failed");
+                }
+            }
+            else {
+                Esyslog("SetInactiveView ignored");
+            }
             break;
         case CEC_VDRKEYPRESS:
-            addr = getLogical(cmd.mDevice);
-            if (addr != CECDEVICE_UNKNOWN) {
-                ceckmap = mPlugin->mKeyMaps.VDRtoCECKey((eKeys)cmd.mVal);
-
-                for (cCECListIterator ci = ceckmap.begin(); ci != ceckmap.end();
-                        ++ci) {
-                    ceckey = *ci;
-                    Dsyslog ("Send Keypress VDR %d - > CEC 0x%02x", cmd.mVal, ceckey);
-                    if (ceckey != CEC_USER_CONTROL_CODE_UNKNOWN) {
-                        if (!mCECAdapter->SendKeypress(addr, ceckey, true)) {
-                            Esyslog("Keypress to %d %s failed",
-                                    addr, mCECAdapter->ToString(addr));
-                            return;
-                        }
-                        cCondWait::SleepMs(50);
-                        if (!mCECAdapter->SendKeyRelease(addr, true)) {
-                            Esyslog("SendKeyRelease to %d %s failed",
-                                    addr, mCECAdapter->ToString(addr));
-                        }
-                    }
-                }
+            if (mCECAdapter != NULL) {
+                ActionKeyPress(cmd);
+            }
+            else {
+                Esyslog("Keypress ignored");
             }
             break;
         case CEC_EXECSHELL:

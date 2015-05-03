@@ -29,9 +29,6 @@ typedef std::set<eKeys> keySet;
 
 // Class for storing information on <global> tags.
 
-typedef std::list<cec_device_type> deviceTypeList;
-typedef deviceTypeList::const_iterator deviceTypeListIterator;
-
 class cCECGlobalOptions {
 public:
     int cec_debug;

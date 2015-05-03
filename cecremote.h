@@ -50,6 +50,9 @@ public:
     }
 };
 
+typedef std::list<cec_device_type> deviceTypeList;
+typedef deviceTypeList::const_iterator deviceTypeListIterator;
+
 typedef enum {
     CEC_INVALID = -1,
     CEC_EXIT = 0,
@@ -115,16 +118,21 @@ private:
     static const char      *VDRNAME;
     int                    mCECLogLevel;
     uint8_t                mDevicesFound;
+    uint8_t                mHDMIPort;
+    uint32_t               mComboKeyTimeoutMs;
     libcec_configuration   mCECConfig;
     ICECCallbacks          mCECCallbacks;
     cec_adapter_descriptor mCECAdapterDescription[MAX_CEC_ADAPTERS];
     cMutex                 mWorkerQueueMutex;
     cCondWait              mWorkerQueueWait;
     cCmdQueue              mWorkerQueue;
+    deviceTypeList         mDeviceTypes;
     cPluginCecremote       *mPlugin;
 
+    void ActionKeyPress(cCECCmd &cmd);
     void Action(void);
     cCECCmd WaitCmd();
+    void WaitForPowerStatus(cec_logical_address addr, cec_power_status newstatus);
     bool TextViewOn(cec_logical_address address);
     cec_logical_address getLogical(cCECDevice &dev);
 

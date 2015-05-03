@@ -24,13 +24,13 @@ VDR Plugin 'cecremote' Revision History
 2015-02-18: Version 0.1.1
 
 - Bugfix in initialization.
-- Modify keymap.
+- Modify key map.
 - Add svdrp command LIST to list active CEC devices.
 
 2015-02-21: Version 0.2.0
 
 - Switched XML Parser to pugixml (http://pugixml.org/).
-- Make keymaps konfigurable.
+- Make key maps configurable.
 - SVDRP Command to debug and list keymaps and CEC devices.
 - New <combokeytimeoutms> in <global> config to set the libCEC combo key
   timeout.
@@ -68,7 +68,7 @@ VDR Plugin 'cecremote' Revision History
 
 2015-04-06: Version 1.0.0
 
-- Improve -c commandline option. If started with a slash the config
+- Improve -c command line option. If started with a slash the config
   directory is an absolute path, otherwise it is relative to the
   VDRs plugin configuration directory.
 
@@ -76,5 +76,10 @@ VDR Plugin 'cecremote' Revision History
 
 - Compile with libCEC 3.0.0
 - Incorporate patch from sirwio, to get AN_CHANNELS_LIST key functional.
-- Fix crashes on svdrp commands VDRK/CECK if no keymap id is used as option.
+- Fix crashes on svdrp commands VDRK/CECK if no key map id is used as option.
 - Add setup option to hide cecremote menu from vdr main menu.
+
+2015-xx-xx: Version 1.2.0
+
+- Fix incorrect automatic power on of TV.
+- Improve configuration of HDMI-Port.

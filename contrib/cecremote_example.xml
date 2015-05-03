@@ -31,7 +31,7 @@
 			<poweroff>8</poweroff>
 		</onstop>
 
-		<onswitchtotv>
+		 <onswitchtotv>
 			<poweron>TV</poweron>
 			<makeactive />
 		</onswitchtotv>
@@ -40,7 +40,7 @@
 		</onswitchtoradio>
 		<onswitchtoreplay>
 			<poweron>TV</poweron>
-		</onswitchtoreplay>
+		</onswitchtoreplay> 
 		<cecdevicetype>RECORDING_DEVICE</cecdevicetype>
 		<cecdevicetype>TUNER</cecdevicetype>
 	<!-- <cecdevicetype>TV</cecdevicetype>

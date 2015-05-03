@@ -34,15 +34,23 @@ void cCECStatusMonitor::ChannelSwitch(const cDevice *Device, int ChannelNumber,
             if (channel->Vpid() == 0) {
                 Dsyslog("  Radio : %s", channel->Name());
                 if (mMonitorStatus != RADIO) {
+                    // Ignore first switch, this is covered by <onstart>
+                    if (mMonitorStatus != UNKNOWN) {
+                        mPlugin->PushCmdQueue(mPlugin->mConfigFileParser.
+                                                mGlobalOptions.mOnSwitchToRadio);
+                    }
                     mMonitorStatus = RADIO;
-                    mPlugin->PushCmdQueue(mPlugin->mConfigFileParser.mGlobalOptions.mOnSwitchToRadio);
                 }
             }
             else {
                 Dsyslog("  TV    : %s", channel->Name());
                 if (mMonitorStatus != TV) {
+                    // Ignore first switch, this is covered by <onstart>
+                    if (mMonitorStatus != UNKNOWN) {
+                        mPlugin->PushCmdQueue(mPlugin->mConfigFileParser.
+                                                mGlobalOptions.mOnSwitchToTV);
+                    }
                     mMonitorStatus = TV;
-                    mPlugin->PushCmdQueue(mPlugin->mConfigFileParser.mGlobalOptions.mOnSwitchToTV);
                 }
             }
         }
