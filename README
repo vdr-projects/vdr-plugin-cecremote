@@ -209,6 +209,7 @@ The child elements of <global> are <cecdebug>, <onstart>, <onmanualstart>,
                     * TV
                     * PLAYBACK_DEVICE
                     * AUDIO_SYSTEM
+<hdmiport>          Specify the HDMI-Port where the adapter is connected to.
 
 NOTE: There seems to be a bug in the libCEC implementation for the Raspberry PI 
       which causes a crash when registering more than one device type.

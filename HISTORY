@@ -79,7 +79,8 @@ VDR Plugin 'cecremote' Revision History
 - Fix crashes on svdrp commands VDRK/CECK if no key map id is used as option.
 - Add setup option to hide cecremote menu from vdr main menu.
 
-2015-xx-xx: Version 1.2.0
+2015-05-17: Version 1.2.0
 
 - Fix incorrect automatic power on of TV.
 - Improve configuration of HDMI-Port.
+

@@ -20,7 +20,7 @@
 #include "ceckeymaps.h"
 #include "cecconfigmenu.h"
 
-static const char *VERSION        = "1.1.0";
+static const char *VERSION        = "1.2.0";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
 static const char *MAINMENUENTRY  = "CECremote";
 
