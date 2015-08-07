@@ -66,8 +66,7 @@ static int CecAlertCallback(void *cbParam, const libcec_alert type,
     {
     case CEC_ALERT_CONNECTION_LOST:
         Esyslog("Connection lost");
-        rem->Disconnect();
-        rem->Connect();
+        rem->Reconnect();
         break;
     case CEC_ALERT_TV_POLL_FAILED:
         Isyslog("TV Poll failed");
@@ -223,6 +222,8 @@ void cCECRemote::Connect()
     mCECConfig.iHDMIPort = mHDMIPort;
     mCECConfig.wakeDevices.Clear();
     mCECConfig.powerOffDevices.Clear();
+    mCECConfig.bShutdownOnStandby = false;
+    mCECConfig.bPowerOffOnStandby = false;
     // If no <cecdevicetype> is specified in the <global>, set default
     if (mDeviceTypes.empty())
     {
@@ -311,6 +312,7 @@ void cCECRemote::Disconnect()
         UnloadLibCec(mCECAdapter);
     }
     mCECAdapter = NULL;
+    Dsyslog("cCECRemote::Disconnect");
 }
 
 void cCECRemote::Stop()
@@ -526,7 +528,7 @@ void cCECRemote::WaitForPowerStatus(cec_logical_address addr, cec_power_status n
         w.Wait(100);
         status = mCECAdapter->GetDevicePowerStatus(addr);
         cnt++;
-    } while ((status != newstatus) && (cnt < 50));
+    } while ((status != newstatus) && (cnt < 50) && (status != CEC_POWER_STATUS_UNKNOWN));
 }
 /*
  * Worker thread which processes the command queue and executes the
@@ -650,6 +652,12 @@ void cCECRemote::Action(void)
             Dsyslog("cCECRemote exit worker thread");
             return;
             break;
+        case CEC_RECONNECT:
+            Dsyslog("cCECRemote reconnect");
+            Disconnect();
+            sleep(1);
+            Connect();
+            break;
         default:
             Esyslog("Unknown action %d Val %d", cmd.mCmd, cmd.mVal);
             break;
@@ -761,4 +769,14 @@ cCECCmd cCECRemote::WaitCmd()
     mWorkerQueueMutex.Unlock();
 
     return cmd;
+}
+
+void cCECRemote::Reconnect()
+{
+    Dsyslog("cCECRemote::Reconnect");
+    cCECCmd cmd(CEC_RECONNECT);
+    mWorkerQueueMutex.Lock();
+    mWorkerQueue.push_front(cmd); // Ensure that command is executed ASAP.
+    mWorkerQueueMutex.Unlock();
+    mWorkerQueueWait.Signal();
 }

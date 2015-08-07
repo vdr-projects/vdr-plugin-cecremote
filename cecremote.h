@@ -63,7 +63,8 @@ typedef enum {
     CEC_POWEROFF,
     CEC_VDRKEYPRESS,
     CEC_EXECSHELL,
-    CEC_TEXTVIEWON
+    CEC_TEXTVIEWON,
+    CEC_RECONNECT
 } CECCommand;
 
 class cCECCmd {
@@ -113,6 +114,7 @@ public:
     void Connect();
     void Disconnect();
     void Stop();
+    void Reconnect();
     ICECAdapter            *mCECAdapter;
 private:
     static const char      *VDRNAME;
