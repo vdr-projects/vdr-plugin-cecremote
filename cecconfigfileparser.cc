@@ -54,6 +54,8 @@ const char *cCECConfigFileParser::XML_ONSWITCHTOTV = "onswitchtotv";
 const char *cCECConfigFileParser::XML_ONSWITCHTORADIO = "onswitchtoradio";
 const char *cCECConfigFileParser::XML_ONSWITCHTOREPLAY = "onswitchtoreplay";
 const char *cCECConfigFileParser::XML_HDMIPORT = "hdmiport";
+const char *cCECConfigFileParser::XML_SHUTDOWNONSTANDBY = "shutdownonstandby";
+const char *cCECConfigFileParser::XML_POWEROFFONSTANDBY = "poweroffonstandby";
 /*
  * Parse <player file="">
  */
@@ -140,6 +142,22 @@ bool cCECConfigFileParser::textToInt(const char *text, int &val, int base)
     val = (int)v;
     return true;
 }
+
+// Convert text to bool, returns false if conversion fails.
+bool cCECConfigFileParser::textToBool(const char *text, bool &val)
+{
+    if (strcasecmp(text, "true") == 0) {
+        val = true;
+    }
+    else if (strcasecmp(text, "false") == 0) {
+        val = false;
+    }
+    else {
+        return false;
+    }
+    return true;
+}
+
 /*
  * Helper function to get device address
  */
@@ -455,6 +473,20 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
                 if ((mGlobalOptions.mHDMIPort < CEC_HDMI_PORTNUMBER_NONE) ||
                     (mGlobalOptions.mHDMIPort) > CEC_MAX_HDMI_PORTNUMBER) {
                     string s = "Allowed value for hdmiport 0-15";
+                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                }
+            }
+            else if (strcasecmp(currentNode.name(), XML_SHUTDOWNONSTANDBY) == 0) {
+                if (!textToBool(currentNode.text().as_string(""),
+                     mGlobalOptions.mShutdownOnStandby)) {
+                    string s = "Only true or false allowed";
+                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                }
+            }
+            else if (strcasecmp(currentNode.name(), XML_POWEROFFONSTANDBY) == 0) {
+                if (!textToBool(currentNode.text().as_string(""),
+                     mGlobalOptions.mPowerOffOnStandby)) {
+                    string s = "Only true or false allowed";
                     throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
                 }
             }

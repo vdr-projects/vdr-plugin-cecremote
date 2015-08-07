@@ -175,6 +175,8 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     mOnManualStart = options.mOnManualStart;
     mComboKeyTimeoutMs = options.mComboKeyTimeoutMs;
     mDeviceTypes = options.mDeviceTypes;
+    mShutdownOnStandby = options.mShutdownOnStandby;
+    mPowerOffOnStandby = options.mPowerOffOnStandby;
 
     Connect();
     Start();
@@ -222,8 +224,8 @@ void cCECRemote::Connect()
     mCECConfig.iHDMIPort = mHDMIPort;
     mCECConfig.wakeDevices.Clear();
     mCECConfig.powerOffDevices.Clear();
-    mCECConfig.bShutdownOnStandby = false;
-    mCECConfig.bPowerOffOnStandby = false;
+    mCECConfig.bShutdownOnStandby = mShutdownOnStandby;
+    mCECConfig.bPowerOffOnStandby = mPowerOffOnStandby;
     // If no <cecdevicetype> is specified in the <global>, set default
     if (mDeviceTypes.empty())
     {

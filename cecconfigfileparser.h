@@ -43,11 +43,15 @@ public:
     deviceTypeList mDeviceTypes;
     std::string mCECKeymap;
     std::string mVDRKeymap;
+    bool mShutdownOnStandby;
+    bool mPowerOffOnStandby;
 
     cCECGlobalOptions() : cec_debug(7), mComboKeyTimeoutMs(1000),
             mHDMIPort(CEC_DEFAULT_HDMI_PORT),
             mCECKeymap(cCECkeymaps::DEFAULTKEYMAP),
-            mVDRKeymap(cCECkeymaps::DEFAULTKEYMAP){};
+            mVDRKeymap(cCECkeymaps::DEFAULTKEYMAP),
+            mShutdownOnStandby(false),
+            mPowerOffOnStandby(false) {};
 };
 
 typedef std::map<std::string, cCECDevice> mCECDeviceMap;
@@ -119,6 +123,8 @@ private:
     bool hasElements(const pugi::xml_node node);
     // Helper function to get device address
     void getDevice(const char *text, cCECDevice &device, ptrdiff_t linenr);
+    // Convert text (true or false) to bool, returns false if conversion fails.
+    bool textToBool(const char *text, bool &val);
     // Convert text to int, returns false if conversion fails.
     bool textToInt(const char *text, int &val, int base = 10);
     bool textToInt(const char *text, uint16_t &val, int base = 10) {
@@ -188,6 +194,12 @@ private:
     static const char *XML_ONSWITCHTORADIO;
     static const char *XML_ONSWITCHTOREPLAY;
     static const char *XML_HDMIPORT;
+    static const char *XML_SHUTDOWNONSTANDBY;
+    static const char *XML_POWEROFFONSTANDBY;
+
+    /*bShutdownOnStandby = false;
+    +    mCECConfig.bPowerOffOnStandby*/
+
     // Filename of the configuration file.
     const char* mXmlFile;
 

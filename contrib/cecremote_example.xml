@@ -12,6 +12,8 @@
 	<global>
 		<cecdebug>7</cecdebug>
 		<hdmiport>2</hdmiport>
+		<shutdownonstandby>false</shutdownonstandby>
+		<poweroffonstandby>false</poweroffonstandby>
 		<combokeytimeoutms>1000</combokeytimeoutms>
 		<!--  Use the keymap to translate from CEC Keymap to VDR keys -->
 		<!--  if not overwritten by a keymap in a player section -->

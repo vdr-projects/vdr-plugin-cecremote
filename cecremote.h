@@ -129,6 +129,8 @@ private:
     cCondWait              mWorkerQueueWait;
     cCmdQueue              mWorkerQueue;
     deviceTypeList         mDeviceTypes;
+    bool                   mShutdownOnStandby;
+    bool                   mPowerOffOnStandby;
     cPluginCecremote       *mPlugin;
 
     void ActionKeyPress(cCECCmd &cmd);

@@ -74,8 +74,8 @@ VDR Plugin 'cecremote' Revision History
 
 2015-04-11: Version 1.1.0
 
-- Compile with libCEC 3.0.0
-- Incorporate patch from sirwio, to get AN_CHANNELS_LIST key functional.
+- Compiles with libCEC 3.0.0
+- Incorporate a patch from sirwio, to get AN_CHANNELS_LIST key functional.
 - Fix crashes on svdrp commands VDRK/CECK if no key map id is used as option.
 - Add setup option to hide cecremote menu from vdr main menu.
 
@@ -84,3 +84,10 @@ VDR Plugin 'cecremote' Revision History
 - Fix incorrect automatic power on of TV.
 - Improve configuration of HDMI-Port.
 
+2015-08-07: Version 1.3.0
+
+- Fix incorrect handling of CEC disconnect, which may cause a crash when the
+  TV is not physically connected to power.
+- Add two new setup options "ShutdownOnStandby" and "PowerOffOnStandby"
+  to configure the behavior of libCEC in case of power off and standby.
+ 
