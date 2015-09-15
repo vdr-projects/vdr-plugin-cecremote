@@ -29,7 +29,12 @@ void cCECStatusMonitor::ChannelSwitch(const cDevice *Device, int ChannelNumber,
     }
     if (Device->IsPrimaryDevice()) {
         Dsyslog("Primary device, Channel Switch %d %c", ChannelNumber,l);
+#if (APIVERSNUM >= 20301)
+        LOCK_CHANNELS_READ;
+        const cChannel* channel = Channels->GetByNumber(ChannelNumber);
+#else
         const cChannel* channel = Channels.GetByNumber(ChannelNumber);
+#endif
         if (channel != NULL) {
             if (channel->Vpid() == 0) {
                 Dsyslog("  Radio : %s", channel->Name());
