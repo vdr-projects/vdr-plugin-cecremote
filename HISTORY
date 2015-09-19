@@ -90,4 +90,7 @@ VDR Plugin 'cecremote' Revision History
   TV is not physically connected to power.
 - Add two new setup options "ShutdownOnStandby" and "PowerOffOnStandby"
   to configure the behavior of libCEC in case of power off and standby.
- 
+
+2015-09-19: Version 1.3.1
+
+- Compiles with VDR 2.3.1
