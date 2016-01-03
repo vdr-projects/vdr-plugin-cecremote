@@ -47,8 +47,20 @@ static int CecKeyPressCallback(void *cbParam, const cec_keypress key)
 static int CecCommandCallback(void *cbParam, const cec_command command)
 {
     cCECRemote *rem = (cCECRemote *)cbParam;
-    Dsyslog("CEC Command %d : %s", command.opcode,
-                                   rem->mCECAdapter->ToString(command.opcode));
+    Dsyslog("CEC Command %d : %s Init %d Dest %d", command.opcode,
+                                   rem->mCECAdapter->ToString(command.opcode),
+                                   command.initiator, command.destination);
+    switch (command.opcode)
+    {
+    case CEC_OPCODE_ACTIVE_SOURCE:
+        {
+            cCECCmd cmd(CEC_ACTIVE_SOURCE, (int)command.initiator);
+            rem->PushCmd(cmd);
+        }
+        break;
+    default:
+        break;
+    }
     return 0;
 }
 
@@ -169,6 +181,7 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     mPlugin = plugin;
     mCECAdapter = NULL;
     mHDMIPort = options.mHDMIPort;
+    mBaseDevice = options.mBaseDevice;
     mCECLogLevel = options.cec_debug;
     mOnStart = options.mOnStart;
     mOnStop = options.mOnStop;
@@ -226,6 +239,7 @@ void cCECRemote::Connect()
     mCECConfig.powerOffDevices.Clear();
     mCECConfig.bShutdownOnStandby = mShutdownOnStandby;
     mCECConfig.bPowerOffOnStandby = mPowerOffOnStandby;
+    mCECConfig.baseDevice = mBaseDevice;
     // If no <cecdevicetype> is specified in the <global>, set default
     if (mDeviceTypes.empty())
     {
@@ -659,6 +673,9 @@ void cCECRemote::Action(void)
             Disconnect();
             sleep(1);
             Connect();
+            break;
+        case CEC_ACTIVE_SOURCE:
+            Dsyslog("cCECRemote active source %d", cmd.mVal);
             break;
         default:
             Esyslog("Unknown action %d Val %d", cmd.mCmd, cmd.mVal);

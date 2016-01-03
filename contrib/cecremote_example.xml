@@ -12,6 +12,7 @@
 	<global>
 		<cecdebug>7</cecdebug>
 		<hdmiport>2</hdmiport>
+		<basedevice>2</basedevice>
 		<shutdownonstandby>false</shutdownonstandby>
 		<poweroffonstandby>false</poweroffonstandby>
 		<combokeytimeoutms>1000</combokeytimeoutms>

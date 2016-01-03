@@ -64,7 +64,8 @@ typedef enum {
     CEC_VDRKEYPRESS,
     CEC_EXECSHELL,
     CEC_TEXTVIEWON,
-    CEC_RECONNECT
+    CEC_RECONNECT,
+    CEC_ACTIVE_SOURCE
 } CECCommand;
 
 class cCECCmd {
@@ -121,6 +122,7 @@ private:
     int                    mCECLogLevel;
     uint8_t                mDevicesFound;
     uint8_t                mHDMIPort;
+    cec_logical_address    mBaseDevice;
     uint32_t               mComboKeyTimeoutMs;
     libcec_configuration   mCECConfig;
     ICECCallbacks          mCECCallbacks;

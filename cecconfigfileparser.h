@@ -34,6 +34,7 @@ public:
     int cec_debug;
     uint32_t mComboKeyTimeoutMs;
     int mHDMIPort;
+    cec_logical_address mBaseDevice;
     cCmdQueue mOnStart;
     cCmdQueue mOnStop;
     cCmdQueue mOnManualStart;
@@ -48,6 +49,7 @@ public:
 
     cCECGlobalOptions() : cec_debug(7), mComboKeyTimeoutMs(1000),
             mHDMIPort(CEC_DEFAULT_HDMI_PORT),
+            mBaseDevice(CECDEVICE_UNKNOWN),
             mCECKeymap(cCECkeymaps::DEFAULTKEYMAP),
             mVDRKeymap(cCECkeymaps::DEFAULTKEYMAP),
             mShutdownOnStandby(false),
@@ -193,12 +195,11 @@ private:
     static const char *XML_ONSWITCHTOTV;
     static const char *XML_ONSWITCHTORADIO;
     static const char *XML_ONSWITCHTOREPLAY;
+    static const char *XML_ONACTIVESOURCE;
     static const char *XML_HDMIPORT;
     static const char *XML_SHUTDOWNONSTANDBY;
     static const char *XML_POWEROFFONSTANDBY;
-
-    /*bShutdownOnStandby = false;
-    +    mCECConfig.bPowerOffOnStandby*/
+    static const char *XML_BASEDEVICE;
 
     // Filename of the configuration file.
     const char* mXmlFile;

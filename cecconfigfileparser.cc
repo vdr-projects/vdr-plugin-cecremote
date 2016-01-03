@@ -53,7 +53,9 @@ const char *cCECConfigFileParser::XML_ONMANUALSTART = "onmanualstart";
 const char *cCECConfigFileParser::XML_ONSWITCHTOTV = "onswitchtotv";
 const char *cCECConfigFileParser::XML_ONSWITCHTORADIO = "onswitchtoradio";
 const char *cCECConfigFileParser::XML_ONSWITCHTOREPLAY = "onswitchtoreplay";
+const char *cCECConfigFileParser::XML_ONACTIVESOURCE = "onactivesource";
 const char *cCECConfigFileParser::XML_HDMIPORT = "hdmiport";
+const char *cCECConfigFileParser::XML_BASEDEVICE = "basedevice";
 const char *cCECConfigFileParser::XML_SHUTDOWNONSTANDBY = "shutdownonstandby";
 const char *cCECConfigFileParser::XML_POWEROFFONSTANDBY = "poweroffonstandby";
 /*
@@ -473,6 +475,18 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
                 if ((mGlobalOptions.mHDMIPort < CEC_HDMI_PORTNUMBER_NONE) ||
                     (mGlobalOptions.mHDMIPort) > CEC_MAX_HDMI_PORTNUMBER) {
                     string s = "Allowed value for hdmiport 0-15";
+                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                }
+            }
+            else if (strcasecmp(currentNode.name(), XML_BASEDEVICE) == 0) {
+                if (!textToInt(currentNode.text().as_string("0"),
+                    mGlobalOptions.mBaseDevice)) {
+                    string s = "Invalid numeric in basedevice";
+                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                }
+                if ((mGlobalOptions.mBaseDevice < CEC_HDMI_PORTNUMBER_NONE) ||
+                    (mGlobalOptions.mBaseDevice) > CECDEVICE_BROADCAST) {
+                    string s = "Allowed value for basedevice 0-15";
                     throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
                 }
             }
