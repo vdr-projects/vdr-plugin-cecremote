@@ -313,10 +313,6 @@ void cCECRemote::Connect()
                     mCECAdapter->ToString(vendor));
         }
     }
-
-    if (mHDMIPort != CEC_DEFAULT_HDMI_PORT) {
-        mCECAdapter->SetHDMIPort(CECDEVICE_TV, mHDMIPort);
-    }
     Dsyslog("END cCECRemote::Initialize");
 }
 
