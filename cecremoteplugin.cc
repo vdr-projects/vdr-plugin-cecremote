@@ -257,11 +257,13 @@ cString cPluginCecremote::SVDRPCommand(const char *Command, const char *Option, 
         return mKeyMaps.ListCECKeyMap(s);
     }
     else if (strcasecmp(Command, "DISC") == 0) {
-        mCECRemote->Disconnect();
+        cCECCmd cmd(CEC_DISCONNECT);
+        mCECRemote->PushWaitCmd(cmd);
         return "Disconnected";
     }
     else if (strcasecmp(Command, "CONN") == 0) {
-        mCECRemote->Connect();
+        cCECCmd cmd(CEC_CONNECT);
+        mCECRemote->PushWaitCmd(cmd);
         return "Connected";
     }
 

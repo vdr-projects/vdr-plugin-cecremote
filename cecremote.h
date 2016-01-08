@@ -26,77 +26,9 @@
 #include <string>
 
 #include "ceckeymaps.h"
+#include "ceccmd.h"
 
 #define MAX_CEC_ADAPTERS 10
-
-using namespace CEC;
-
-// Class for storing information of devices (<device> tag)
-class cCECDevice {
-public:
-    uint16_t mPhysicalAddress;
-    cec_logical_address mLogicalAddressDefined;
-    cec_logical_address mLogicalAddressUsed;
-
-    cCECDevice() : mPhysicalAddress(0),
-                   mLogicalAddressDefined(CECDEVICE_UNKNOWN),
-                   mLogicalAddressUsed(CECDEVICE_UNKNOWN) {};
-
-    cCECDevice &operator=(const cCECDevice &c) {
-        mPhysicalAddress = c.mPhysicalAddress;
-        mLogicalAddressDefined = c.mLogicalAddressDefined;
-        mLogicalAddressUsed = c.mLogicalAddressUsed;
-        return *this;
-    }
-};
-
-typedef std::list<cec_device_type> deviceTypeList;
-typedef deviceTypeList::const_iterator deviceTypeListIterator;
-
-typedef enum {
-    CEC_INVALID = -1,
-    CEC_EXIT = 0,
-    CEC_KEYRPRESS,
-    CEC_MAKEACTIVE,
-    CEC_MAKEINACTIVE,
-    CEC_POWERON,
-    CEC_POWEROFF,
-    CEC_VDRKEYPRESS,
-    CEC_EXECSHELL,
-    CEC_TEXTVIEWON,
-    CEC_RECONNECT,
-    CEC_ACTIVE_SOURCE
-} CECCommand;
-
-class cCECCmd {
-public:
-    cCECCmd() : mCmd(CEC_INVALID), mVal(0) {};
-    cCECCmd(CECCommand cmd, int val = -1,
-            cCECDevice *dev = NULL, std::string exec="") {
-        mCmd = cmd;
-        mVal = val;
-        if (dev != NULL) {
-            mDevice = *dev;
-        }
-        mExec = exec;
-    }
-
-    CECCommand mCmd;
-    int mVal;
-    cCECDevice mDevice;
-    std::string mExec;
-
-    cCECCmd &operator=(const cCECCmd &c) {
-        mCmd = c.mCmd;
-        mVal = c.mVal;
-        mDevice = c.mDevice;
-        mExec = c.mExec;
-        return *this;
-    }
-};
-
-typedef std::list<cCECCmd> cCmdQueue;
-typedef cCmdQueue::const_iterator cCmdQueueIterator;
 
 class cPluginCecremote;
 class cCECGlobalOptions;
@@ -108,18 +40,19 @@ public:
     bool Initialize(void) {return false;};
     void PushCmd(const cCECCmd &cmd);
     void PushCmdQueue(const cCmdQueue &cmdList);
+    void PushWaitCmd(cCECCmd &cmd);
     void ExecToggle(cCECDevice dev, const cCmdQueue &poweron,
                     const cCmdQueue &poweroff);
     int getCECLogLevel() {return mCECLogLevel;}
     cString ListDevices();
-    void Connect();
-    void Disconnect();
-    void Stop();
     void Reconnect();
+    void Stop();
+
     ICECAdapter            *mCECAdapter;
 private:
     static const char      *VDRNAME;
     int                    mCECLogLevel;
+    int                    mProcessedSerial;
     uint8_t                mDevicesFound;
     uint8_t                mHDMIPort;
     cec_logical_address    mBaseDevice;
@@ -130,11 +63,14 @@ private:
     cMutex                 mWorkerQueueMutex;
     cCondWait              mWorkerQueueWait;
     cCmdQueue              mWorkerQueue;
+    cCondWait               mCmdReady;
     deviceTypeList         mDeviceTypes;
     bool                   mShutdownOnStandby;
     bool                   mPowerOffOnStandby;
     cPluginCecremote       *mPlugin;
 
+    void Connect();
+    void Disconnect();
     void ActionKeyPress(cCECCmd &cmd);
     void Action(void);
     cCECCmd WaitCmd();

@@ -142,7 +142,6 @@ static int CecLogMessageCallback(void *cbParam, const cec_log_message message)
             Dsyslog(strFullLog);
         }
     }
-
     return 0;
 }
 
@@ -176,6 +175,7 @@ static int CECConfigurationCallback (void *cbParam,
 cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugin):
         cRemote("CEC"),
         cThread("CEC receiver"),
+        mProcessedSerial(-1),
         mDevicesFound(0)
 {
     mPlugin = plugin;
@@ -191,6 +191,7 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     mShutdownOnStandby = options.mShutdownOnStandby;
     mPowerOffOnStandby = options.mPowerOffOnStandby;
 
+    SetDescription("CEC Action Thread");
     Connect();
     Start();
     if (mCECAdapter == NULL) {
@@ -287,7 +288,6 @@ void cCECRemote::Connect()
                 mCECAdapterDescription[0].iFirmwareVersion);
     }
 
-
     if (!mCECAdapter->Open(mCECAdapterDescription[0].strComName))
     {
         Esyslog("unable to open the device on port %s",
@@ -332,7 +332,7 @@ void cCECRemote::Stop()
     int cnt = 0;
     cCondWait w;
     Dsyslog("Executing onStop");
-    PushCmdQueue(mOnStop);
+    PushCmdQueue(mOnStop); // TODO wait
     // Wait until the worker queue is empty (but longest 10 seconds)
     while (!mWorkerQueue.empty() && (cnt < 20)) {
        w.Wait(500);
@@ -556,7 +556,8 @@ void cCECRemote::Action(void)
     Dsyslog("cCECRemote start worker thread");
     while (Running()) {
         cmd = WaitCmd();
-        Dsyslog ("Action %d Val %d Phys Addr %d Logical %04x %04x",
+        Dsyslog ("(%d) Action %d Val %d Phys Addr %d Logical %04x %04x",
+                 cmd.mSerial,
                  cmd.mCmd, cmd.mVal, cmd.mDevice.mPhysicalAddress,
                  cmd.mDevice.mLogicalAddressDefined,
                  cmd.mDevice.mLogicalAddressUsed);
@@ -670,6 +671,14 @@ void cCECRemote::Action(void)
             sleep(1);
             Connect();
             break;
+        case CEC_CONNECT:
+            Dsyslog("cCECRemote connect");
+            Connect();
+            break;
+        case CEC_DISCONNECT:
+            Dsyslog("cCECRemote disconnect");
+            Disconnect();
+            break;
         case CEC_ACTIVE_SOURCE:
             Dsyslog("cCECRemote active source %d", cmd.mVal);
             break;
@@ -677,6 +686,9 @@ void cCECRemote::Action(void)
             Esyslog("Unknown action %d Val %d", cmd.mCmd, cmd.mVal);
             break;
         }
+        Dsyslog ("(%d) Action finished", cmd.mSerial);
+        mProcessedSerial = cmd.mSerial;
+        mCmdReady.Signal();
     }
     Dsyslog("cCECRemote stop worker thread");
 }
@@ -758,11 +770,38 @@ void cCECRemote::PushCmdQueue(const cCmdQueue &cmdList)
 void cCECRemote::PushCmd(const cCECCmd &cmd)
 {
     Dsyslog("cCECRemote::PushCmd %d (size %d)", cmd.mCmd, mWorkerQueue.size());
-    cMutexLock lock(&mWorkerQueueMutex);
+
     mWorkerQueueMutex.Lock();
     mWorkerQueue.push_back(cmd);
     mWorkerQueueMutex.Unlock();
     mWorkerQueueWait.Signal();
+}
+
+/*
+ * Put a command into the worker command queue and wait for execution.
+ */
+void cCECRemote::PushWaitCmd(cCECCmd &cmd)
+{
+    int serial = cmd.mSerial;
+    bool signaled = false;
+    Dsyslog("cCECRemote::PushWaitCmd %d (size %d)", cmd.mCmd, mWorkerQueue.size());
+
+    mWorkerQueueMutex.Lock();
+    mWorkerQueue.push_back(cmd);
+    mWorkerQueueMutex.Unlock();
+Dsyslog("PushWaitCmd send signal");
+    mWorkerQueueWait.Signal();
+
+    // Wait until this command is processed.
+    do {
+        signaled = mCmdReady.Wait(10000);
+    } while ((mProcessedSerial != serial) && (signaled));
+    if (!signaled) {
+        Esyslog("cCECRemote::PushWaitCmd timeout");
+    }
+    else {
+        Dsyslog("cCECRemote %d %d", mProcessedSerial, serial);
+    }
 }
 
 /*
@@ -771,15 +810,22 @@ void cCECRemote::PushCmd(const cCECCmd &cmd)
  */
 cCECCmd cCECRemote::WaitCmd()
 {
-    cCECCmd cmd;
+    Dsyslog("Wait");
     mWorkerQueueMutex.Lock();
     while (mWorkerQueue.empty()) {
         mWorkerQueueMutex.Unlock();
-        mWorkerQueueWait.Wait(10000);
+        if (mWorkerQueueWait.Wait(10000)) {
+            Dsyslog("  Signal");
+        }
+        else {
+            Dsyslog("  Timeout");
+        }
+        Dsyslog("  Wait Lock ok");
         mWorkerQueueMutex.Lock();
+        Dsyslog("  Lock ok");
     }
 
-    cmd = mWorkerQueue.front();
+    cCECCmd cmd = mWorkerQueue.front();
     mWorkerQueue.pop_front();
     mWorkerQueueMutex.Unlock();
 
