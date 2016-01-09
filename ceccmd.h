@@ -42,6 +42,7 @@ typedef enum {
     CEC_POWEROFF,
     CEC_VDRKEYPRESS,
     CEC_EXECSHELL,
+    CEC_EXECTOGGLE,
     CEC_TEXTVIEWON,
     CEC_RECONNECT,
     CEC_CONNECT,
@@ -49,12 +50,17 @@ typedef enum {
     CEC_ACTIVE_SOURCE
 } CECCommand;
 
+class cCECCmd;
+
+typedef std::list<cCECCmd> cCmdQueue;
+typedef cCmdQueue::const_iterator cCmdQueueIterator;
+
 class cCECCmd {
 private:
-   static int serial;
-   static cMutex mSerialMutex;
+    static int serial;
+    static cMutex mSerialMutex;
 
-   int getSerial(void);
+    int getSerial(void);
 
 public:
     CECCommand mCmd;
@@ -62,6 +68,8 @@ public:
     cCECDevice mDevice;
     std::string mExec;
     int mSerial;
+    cCmdQueue mPoweron;
+    cCmdQueue mPoweroff;
 
     cCECCmd() : mCmd(CEC_INVALID), mVal(0), mSerial(getSerial()) {};
     cCECCmd(CECCommand cmd, int val = -1,
@@ -74,18 +82,26 @@ public:
         mExec = exec;
         mSerial = getSerial();
     }
+    cCECCmd(CECCommand cmd, const cCECDevice dev,
+            const cCmdQueue poweron, const cCmdQueue poweroff) {
+        mCmd = cmd;
+        mVal = -1;
+        mDevice = dev;
+        mSerial = getSerial();
+        mPoweron = poweron;
+        mPoweroff = poweroff;
+    }
 
-    cCECCmd operator=(const cCECCmd &c) {
+    cCECCmd& operator=(const cCECCmd &c) {
         mCmd = c.mCmd;
         mVal = c.mVal;
         mDevice = c.mDevice;
         mExec = c.mExec;
         mSerial = c.mSerial;
+        mPoweron = c.mPoweron;
+        mPoweroff = c.mPoweroff;
         return *this;
     }
 };
-
-typedef std::list<cCECCmd> cCmdQueue;
-typedef cCmdQueue::const_iterator cCmdQueueIterator;
 
 #endif /* PLUGINS_SRC_VDR_PLUGIN_CECREMOTE_CCECCMD_H_ */

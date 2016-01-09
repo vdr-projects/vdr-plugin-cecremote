@@ -41,8 +41,6 @@ public:
     void PushCmd(const cCECCmd &cmd);
     void PushCmdQueue(const cCmdQueue &cmdList);
     void PushWaitCmd(cCECCmd &cmd);
-    void ExecToggle(cCECDevice dev, const cCmdQueue &poweron,
-                    const cCmdQueue &poweroff);
     int getCECLogLevel() {return mCECLogLevel;}
     cString ListDevices();
     void Reconnect();
@@ -63,7 +61,7 @@ private:
     cMutex                 mWorkerQueueMutex;
     cCondWait              mWorkerQueueWait;
     cCmdQueue              mWorkerQueue;
-    cCondWait               mCmdReady;
+    cCondWait              mCmdReady;
     deviceTypeList         mDeviceTypes;
     bool                   mShutdownOnStandby;
     bool                   mPowerOffOnStandby;
@@ -74,6 +72,8 @@ private:
     void ActionKeyPress(cCECCmd &cmd);
     void Action(void);
     cCECCmd WaitCmd();
+    void ExecToggle(cCECDevice dev, const cCmdQueue &poweron,
+                    const cCmdQueue &poweroff);
     void WaitForPowerStatus(cec_logical_address addr, cec_power_status newstatus);
     bool TextViewOn(cec_logical_address address);
     cec_logical_address getLogical(cCECDevice &dev);

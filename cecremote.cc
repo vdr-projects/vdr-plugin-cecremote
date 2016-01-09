@@ -682,6 +682,10 @@ void cCECRemote::Action(void)
         case CEC_ACTIVE_SOURCE:
             Dsyslog("cCECRemote active source %d", cmd.mVal);
             break;
+        case CEC_EXECTOGGLE:
+            Dsyslog("cCECRemote exec_toggle");
+            ExecToggle(cmd.mDevice, cmd.mPoweron, cmd.mPoweroff);
+            break;
         default:
             Esyslog("Unknown action %d Val %d", cmd.mCmd, cmd.mVal);
             break;
@@ -703,20 +707,11 @@ void cCECRemote::ExecToggle(cCECDevice dev,
     bool repeat;
     cec_power_status status;
     cec_logical_address addr;
+    cCondWait w;
+
     if (mCECAdapter == NULL) {
         Esyslog ("ExecToggle CEC Adapter disconnected");
         return;
-    }
-    // Wait until queue is empty
-    cCondWait w;
-    bool full = true;
-    while (full) {
-        mWorkerQueueMutex.Lock();
-        full = !mWorkerQueue.empty();
-        mWorkerQueueMutex.Unlock();
-        if (full) {
-            w.Wait(100);
-       }
     }
 
     addr = getLogical(dev);
@@ -789,7 +784,6 @@ void cCECRemote::PushWaitCmd(cCECCmd &cmd)
     mWorkerQueueMutex.Lock();
     mWorkerQueue.push_back(cmd);
     mWorkerQueueMutex.Unlock();
-Dsyslog("PushWaitCmd send signal");
     mWorkerQueueWait.Signal();
 
     // Wait until this command is processed.

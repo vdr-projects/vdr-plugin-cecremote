@@ -47,8 +47,9 @@ protected:
         const std::string cf = GetConfigDir() + mCfgFile;
         return cf;
     }
-    void ExecToggle(const cCECMenu menu) {
-        mCECRemote->ExecToggle(menu.mDevice, menu.mOnPowerOn, menu.mOnPowerOff);
+    void ExecToggle(cCECMenu menu) {
+        cCECCmd cmd(CEC_EXECTOGGLE, menu.mDevice, menu.mOnPowerOn, menu.mOnPowerOff);
+        mCECRemote->PushWaitCmd(cmd);
     }
 
 public:
