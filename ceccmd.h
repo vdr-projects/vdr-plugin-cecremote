@@ -60,8 +60,6 @@ private:
     static int serial;
     static cMutex mSerialMutex;
 
-    int getSerial(void);
-
 public:
     CECCommand mCmd;
     int mVal;
@@ -71,26 +69,12 @@ public:
     cCmdQueue mPoweron;
     cCmdQueue mPoweroff;
 
-    cCECCmd() : mCmd(CEC_INVALID), mVal(0), mSerial(getSerial()) {};
+    cCECCmd() : mCmd(CEC_INVALID), mVal(0), mSerial(-1) {};
     cCECCmd(CECCommand cmd, int val = -1,
-            cCECDevice *dev = NULL, std::string exec="") {
-        mCmd = cmd;
-        mVal = val;
-        if (dev != NULL) {
-            mDevice = *dev;
-        }
-        mExec = exec;
-        mSerial = getSerial();
-    }
+            cCECDevice *dev = NULL, std::string exec="");
     cCECCmd(CECCommand cmd, const cCECDevice dev,
-            const cCmdQueue poweron, const cCmdQueue poweroff) {
-        mCmd = cmd;
-        mVal = -1;
-        mDevice = dev;
-        mSerial = getSerial();
-        mPoweron = poweron;
-        mPoweroff = poweroff;
-    }
+            const cCmdQueue poweron, const cCmdQueue poweroff);
+    int getSerial(void);
 
     cCECCmd& operator=(const cCECCmd &c) {
         mCmd = c.mCmd;

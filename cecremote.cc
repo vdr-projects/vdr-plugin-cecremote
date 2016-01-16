@@ -691,8 +691,10 @@ void cCECRemote::Action(void)
             break;
         }
         Dsyslog ("(%d) Action finished", cmd.mSerial);
-        mProcessedSerial = cmd.mSerial;
-        mCmdReady.Signal();
+        if (cmd.mSerial != -1) {
+            mProcessedSerial = cmd.mSerial;
+            mCmdReady.Signal();
+        }
     }
     Dsyslog("cCECRemote stop worker thread");
 }
@@ -777,7 +779,8 @@ void cCECRemote::PushCmd(const cCECCmd &cmd)
  */
 void cCECRemote::PushWaitCmd(cCECCmd &cmd)
 {
-    int serial = cmd.mSerial;
+    int serial = cmd.getSerial();
+    cmd.mSerial = serial;
     bool signaled = false;
     Dsyslog("cCECRemote::PushWaitCmd %d (size %d)", cmd.mCmd, mWorkerQueue.size());
 
@@ -791,7 +794,7 @@ void cCECRemote::PushWaitCmd(cCECCmd &cmd)
         signaled = mCmdReady.Wait(10000);
     } while ((mProcessedSerial != serial) && (signaled));
     if (!signaled) {
-        Esyslog("cCECRemote::PushWaitCmd timeout");
+        Esyslog("cCECRemote::PushWaitCmd timeout %d %d", mProcessedSerial, serial);
     }
     else {
         Dsyslog("cCECRemote %d %d", mProcessedSerial, serial);
