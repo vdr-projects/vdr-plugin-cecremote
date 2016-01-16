@@ -110,7 +110,7 @@ bool cPluginCecremote::Start(void)
     Dsyslog("Next Wakeup %d", Setup.NextWakeupTime);
     if (Setup.NextWakeupTime > 0) {
         // 600 comes from vdr's MANUALSTART constant in vdr.c
-        if ((abs(Setup.NextWakeupTime) - time(NULL)) > 600) {
+        if (abs(Setup.NextWakeupTime - time(NULL)) < 600) {
             mStartManually = false;
         }
     }
