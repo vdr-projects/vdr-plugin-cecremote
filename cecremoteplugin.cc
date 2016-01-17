@@ -20,7 +20,7 @@
 #include "ceckeymaps.h"
 #include "cecconfigmenu.h"
 
-static const char *VERSION        = "1.3.1";
+static const char *VERSION        = "1.3.2";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
 static const char *MAINMENUENTRY  = "CECremote";
 
@@ -100,13 +100,6 @@ bool cPluginCecremote::ProcessArgs(int argc, char *argv[])
 
 bool cPluginCecremote::Initialize(void)
 {
-    // Initialize any background activities the plugin shall perform.
-    return true;
-}
-
-
-bool cPluginCecremote::Start(void)
-{
     Dsyslog("Next Wakeup %d", Setup.NextWakeupTime);
     if (Setup.NextWakeupTime > 0) {
         // 600 comes from vdr's MANUALSTART constant in vdr.c
@@ -128,20 +121,26 @@ bool cPluginCecremote::Start(void)
     }
     mCECLogLevel = mConfigFileParser.mGlobalOptions.cec_debug;
     mCECRemote = new cCECRemote(mConfigFileParser.mGlobalOptions,
-                                this);
-    mStatusMonitor = new cCECStatusMonitor(this);
+            this);
+
     SetDefaultKeymaps();
+    return true;
+}
+
+bool cPluginCecremote::Start(void)
+{
+    mStatusMonitor = new cCECStatusMonitor(this);
     return true;
 }
 
 void cPluginCecremote::Stop(void)
 {
     Dsyslog("Stop Plugin");
+    delete mStatusMonitor;
+    mStatusMonitor = NULL;
     mCECRemote->Stop();
     delete mCECRemote;
     mCECRemote = NULL;
-    delete mStatusMonitor;
-    mStatusMonitor = NULL;
 }
 
 void cPluginCecremote::Housekeeping(void)

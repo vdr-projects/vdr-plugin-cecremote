@@ -40,7 +40,7 @@ public:
     bool Initialize(void) {return false;};
     void PushCmd(const cCECCmd &cmd);
     void PushCmdQueue(const cCmdQueue &cmdList);
-    void PushWaitCmd(cCECCmd &cmd);
+    void PushWaitCmd(cCECCmd &cmd, int timeout = 5000);
     int getCECLogLevel() {return mCECLogLevel;}
     cString ListDevices();
     void Reconnect();
@@ -58,20 +58,31 @@ private:
     libcec_configuration   mCECConfig;
     ICECCallbacks          mCECCallbacks;
     cec_adapter_descriptor mCECAdapterDescription[MAX_CEC_ADAPTERS];
+
+    // Queue for normal worker thread
     cMutex                 mWorkerQueueMutex;
     cCondWait              mWorkerQueueWait;
     cCmdQueue              mWorkerQueue;
+
+    // Queue for special commands when shell script is executed
+    cMutex                 mExecQueueMutex;
+    cCondWait              mExecQueueWait;
+    cCmdQueue              mExecQueue;
+
     cCondWait              mCmdReady;
     deviceTypeList         mDeviceTypes;
     bool                   mShutdownOnStandby;
     bool                   mPowerOffOnStandby;
+    bool                   mInExec;
     cPluginCecremote       *mPlugin;
 
-    void Connect();
-    void Disconnect();
+    void Connect(void);
+    void Disconnect(void);
     void ActionKeyPress(cCECCmd &cmd);
     void Action(void);
-    cCECCmd WaitCmd();
+    cCECCmd WaitCmd(int timeout = 5000);
+    cCECCmd WaitExec(pid_t pid);
+    void Exec(cCECCmd &cmd);
     void ExecToggle(cCECDevice dev, const cCmdQueue &poweron,
                     const cCmdQueue &poweroff);
     void WaitForPowerStatus(cec_logical_address addr, cec_power_status newstatus);
