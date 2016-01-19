@@ -41,10 +41,11 @@ public:
     void PushCmd(const cCECCmd &cmd);
     void PushCmdQueue(const cCmdQueue &cmdList);
     void PushWaitCmd(cCECCmd &cmd, int timeout = 5000);
-    int getCECLogLevel() {return mCECLogLevel;}
-    cString ListDevices();
-    void Reconnect();
-    void Stop();
+    int getCECLogLevel(void) {return mCECLogLevel;}
+    cString ListDevices(void);
+    void Reconnect(void);
+    void Stop(void);
+    void Startup(void);
 
     ICECAdapter            *mCECAdapter;
 private:

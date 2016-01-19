@@ -200,7 +200,12 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
         return;
     }
 
-    Dsyslog("cCECRemote start");
+    Dsyslog("cCECRemote Init");
+}
+
+void cCECRemote::Startup()
+{
+    Dsyslog("cCECRemote Startup");
 
     if (mPlugin->GetStartManually()) {
         PushCmdQueue(mOnManualStart);

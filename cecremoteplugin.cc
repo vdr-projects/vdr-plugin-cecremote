@@ -103,7 +103,7 @@ bool cPluginCecremote::Initialize(void)
     Dsyslog("Next Wakeup %d", Setup.NextWakeupTime);
     if (Setup.NextWakeupTime > 0) {
         // 600 comes from vdr's MANUALSTART constant in vdr.c
-        if ((abs(Setup.NextWakeupTime) - time(NULL)) > 600) {
+        if (abs(Setup.NextWakeupTime - time(NULL)) < 600) {
             mStartManually = false;
         }
     }
@@ -120,8 +120,7 @@ bool cPluginCecremote::Initialize(void)
         return false;
     }
     mCECLogLevel = mConfigFileParser.mGlobalOptions.cec_debug;
-    mCECRemote = new cCECRemote(mConfigFileParser.mGlobalOptions,
-            this);
+    mCECRemote = new cCECRemote(mConfigFileParser.mGlobalOptions, this);
 
     SetDefaultKeymaps();
     return true;
@@ -129,6 +128,7 @@ bool cPluginCecremote::Initialize(void)
 
 bool cPluginCecremote::Start(void)
 {
+    mCECRemote->Startup();
     mStatusMonitor = new cCECStatusMonitor(this);
     return true;
 }
