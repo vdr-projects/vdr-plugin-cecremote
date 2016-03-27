@@ -12,7 +12,7 @@
 #include "cecremote.h"
 #include "ceclog.h"
 #include "cecremoteplugin.h"
-
+#include <sys/wait.h>
 // We need this for cecloader.h
 #include <iostream>
 using namespace std;
@@ -142,7 +142,6 @@ static int CecLogMessageCallback(void *cbParam, const cec_log_message message)
             Dsyslog(strFullLog);
         }
     }
-
     return 0;
 }
 
@@ -176,7 +175,9 @@ static int CECConfigurationCallback (void *cbParam,
 cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugin):
         cRemote("CEC"),
         cThread("CEC receiver"),
-        mDevicesFound(0)
+        mProcessedSerial(-1),
+        mDevicesFound(0),
+        mInExec(false)
 {
     mPlugin = plugin;
     mCECAdapter = NULL;
@@ -191,6 +192,7 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     mShutdownOnStandby = options.mShutdownOnStandby;
     mPowerOffOnStandby = options.mPowerOffOnStandby;
 
+    SetDescription("CEC Action Thread");
     Connect();
     Start();
     if (mCECAdapter == NULL) {
@@ -198,7 +200,12 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
         return;
     }
 
-    Dsyslog("cCECRemote start");
+    Dsyslog("cCECRemote Init");
+}
+
+void cCECRemote::Startup()
+{
+    Dsyslog("cCECRemote Startup");
 
     if (mPlugin->GetStartManually()) {
         PushCmdQueue(mOnManualStart);
@@ -287,7 +294,6 @@ void cCECRemote::Connect()
                 mCECAdapterDescription[0].iFirmwareVersion);
     }
 
-
     if (!mCECAdapter->Open(mCECAdapterDescription[0].strComName))
     {
         Esyslog("unable to open the device on port %s",
@@ -329,14 +335,11 @@ void cCECRemote::Disconnect()
 
 void cCECRemote::Stop()
 {
-    int cnt = 0;
-    cCondWait w;
     Dsyslog("Executing onStop");
     PushCmdQueue(mOnStop);
-    // Wait until the worker queue is empty (but longest 10 seconds)
-    while (!mWorkerQueue.empty() && (cnt < 20)) {
-       w.Wait(500);
-    }
+    // Send exit command to worker thread
+    cCECCmd cmd(CEC_EXIT);
+    PushWaitCmd(cmd);
     Dsyslog("onStop OK");
 }
 /*
@@ -344,14 +347,6 @@ void cCECRemote::Stop()
  */
 cCECRemote::~cCECRemote()
 {
-    int cnt = 0;
-    cCondWait w;
-    cCECCmd cmd(CEC_EXIT);
-    PushCmd(cmd);
-    // Wait until the worker queue is empty (but longest 5 seconds)
-    while (!mWorkerQueue.empty() && (cnt < 10)) {
-        w.Wait(500);
-    }
     Cancel(3);
     Disconnect();
 }
@@ -542,6 +537,91 @@ void cCECRemote::WaitForPowerStatus(cec_logical_address addr, cec_power_status n
         cnt++;
     } while ((status != newstatus) && (cnt < 50) && (status != CEC_POWER_STATUS_UNKNOWN));
 }
+
+/*
+ * Special exec which handles the svdrp CONN/DISC which may come
+ * from this executed shell script
+ */
+void cCECRemote::Exec(cCECCmd &execcmd)
+{
+    cCECCmd cmd;
+    Dsyslog("Execute script %s", execcmd.mExec.c_str());
+    mInExec = true;
+    pid_t pid = fork();
+    if (pid < 0) {
+        Esyslog("fork failed");
+        mInExec = false;
+        return;
+    }
+    else if (pid == 0) {
+        execl("/bin/sh", "sh", "-c", execcmd.mExec.c_str(), NULL);
+        Esyslog("Exec failed");
+        abort();
+    }
+
+    do {
+        cmd = WaitExec(pid);
+        Dsyslog ("(%d) ExecAction %d Val %d",
+                 cmd.mSerial, cmd.mCmd, cmd.mVal);
+        switch (cmd.mCmd) {
+        case CEC_EXIT:
+            Dsyslog("cCECRemote script stopped");
+            break;
+        case CEC_RECONNECT:
+            Dsyslog("cCECRemote reconnect");
+            Disconnect();
+            sleep(1);
+            Connect();
+            break;
+        case CEC_CONNECT:
+            Dsyslog("cCECRemote connect");
+            Connect();
+            break;
+        case CEC_DISCONNECT:
+            Dsyslog("cCECRemote disconnect");
+            Disconnect();
+            break;
+        default:
+            Esyslog("Unexpected action %d Val %d", cmd.mCmd, cmd.mVal);
+            break;
+        }
+        Dsyslog ("(%d) Action finished", cmd.mSerial);
+        if (cmd.mSerial != -1) {
+            mProcessedSerial = cmd.mSerial;
+            mCmdReady.Signal();
+        }
+    } while (cmd.mCmd != CEC_EXIT);
+    mInExec = false;
+}
+/*
+ * Wait until a command is put into the exec command queue.
+ * If a command was received remove it and return the received command.
+ */
+cCECCmd cCECRemote::WaitExec(pid_t pid)
+{
+    Dsyslog("WaitExec");
+    int stat_loc = 0;
+    mExecQueueMutex.Lock();
+    while (mExecQueue.empty()) {
+        mExecQueueMutex.Unlock();
+        if (mExecQueueWait.Wait(250)) {
+            Dsyslog("  Signal");
+        }
+        else {
+            if (waitpid (pid, &stat_loc, WNOHANG) == pid) {
+                Dsyslog("  Script exit with %d", WEXITSTATUS(stat_loc));
+                cCECCmd cmd(CEC_EXIT);
+                return cmd;
+            }
+        }
+        mExecQueueMutex.Lock();
+    }
+
+    cCECCmd cmd = mExecQueue.front();
+    mExecQueue.pop_front();
+    mExecQueueMutex.Unlock();
+    return cmd;
+}
 /*
  * Worker thread which processes the command queue and executes the
  * received commands.
@@ -556,7 +636,8 @@ void cCECRemote::Action(void)
     Dsyslog("cCECRemote start worker thread");
     while (Running()) {
         cmd = WaitCmd();
-        Dsyslog ("Action %d Val %d Phys Addr %d Logical %04x %04x",
+        Dsyslog ("(%d) Action %d Val %d Phys Addr %d Logical %04x %04x",
+                 cmd.mSerial,
                  cmd.mCmd, cmd.mVal, cmd.mDevice.mPhysicalAddress,
                  cmd.mDevice.mLogicalAddressDefined,
                  cmd.mDevice.mLogicalAddressUsed);
@@ -653,16 +734,11 @@ void cCECRemote::Action(void)
             break;
         case CEC_EXECSHELL:
             Dsyslog ("Exec: %s", cmd.mExec.c_str());
-            if (system(cmd.mExec.c_str()) < 0) {
-                Esyslog("Exec failed");
-            }
-            else {
-                Dsyslog("Exec OK");
-            }
+            Exec(cmd);
             break;
         case CEC_EXIT:
             Dsyslog("cCECRemote exit worker thread");
-            return;
+            Cancel(0);
             break;
         case CEC_RECONNECT:
             Dsyslog("cCECRemote reconnect");
@@ -670,12 +746,29 @@ void cCECRemote::Action(void)
             sleep(1);
             Connect();
             break;
+        case CEC_CONNECT:
+            Dsyslog("cCECRemote connect");
+            Connect();
+            break;
+        case CEC_DISCONNECT:
+            Dsyslog("cCECRemote disconnect");
+            Disconnect();
+            break;
         case CEC_ACTIVE_SOURCE:
             Dsyslog("cCECRemote active source %d", cmd.mVal);
+            break;
+        case CEC_EXECTOGGLE:
+            Dsyslog("cCECRemote exec_toggle");
+            ExecToggle(cmd.mDevice, cmd.mPoweron, cmd.mPoweroff);
             break;
         default:
             Esyslog("Unknown action %d Val %d", cmd.mCmd, cmd.mVal);
             break;
+        }
+        Dsyslog ("(%d) Action finished", cmd.mSerial);
+        if (cmd.mSerial != -1) {
+            mProcessedSerial = cmd.mSerial;
+            mCmdReady.Signal();
         }
     }
     Dsyslog("cCECRemote stop worker thread");
@@ -691,20 +784,11 @@ void cCECRemote::ExecToggle(cCECDevice dev,
     bool repeat;
     cec_power_status status;
     cec_logical_address addr;
+    cCondWait w;
+
     if (mCECAdapter == NULL) {
         Esyslog ("ExecToggle CEC Adapter disconnected");
         return;
-    }
-    // Wait until queue is empty
-    cCondWait w;
-    bool full = true;
-    while (full) {
-        mWorkerQueueMutex.Lock();
-        full = !mWorkerQueue.empty();
-        mWorkerQueueMutex.Unlock();
-        if (full) {
-            w.Wait(100);
-       }
     }
 
     addr = getLogical(dev);
@@ -758,7 +842,7 @@ void cCECRemote::PushCmdQueue(const cCmdQueue &cmdList)
 void cCECRemote::PushCmd(const cCECCmd &cmd)
 {
     Dsyslog("cCECRemote::PushCmd %d (size %d)", cmd.mCmd, mWorkerQueue.size());
-    cMutexLock lock(&mWorkerQueueMutex);
+
     mWorkerQueueMutex.Lock();
     mWorkerQueue.push_back(cmd);
     mWorkerQueueMutex.Unlock();
@@ -766,20 +850,63 @@ void cCECRemote::PushCmd(const cCECCmd &cmd)
 }
 
 /*
+ * Put a command into the worker command queue and wait for execution.
+ */
+void cCECRemote::PushWaitCmd(cCECCmd &cmd, int timeout)
+{
+    int serial = cmd.getSerial();
+    cmd.mSerial = serial;
+    bool signaled = false;
+    Dsyslog("cCECRemote::PushWaitCmd %d ID %d (WQ %d EQ %d)",
+            cmd.mCmd, serial, mWorkerQueue.size(), mExecQueue.size());
+
+    // Special handling for CEC_CONNECT and CEC_DISCONNECT when called
+    // from exec state (used for out of band processing of svdrp commands
+    // coming from a script, executed by a command queue.
+    if (((cmd.mCmd == CEC_CONNECT) || (cmd.mCmd == CEC_DISCONNECT)) && mInExec){
+        Dsyslog("ExecQueue");
+        mExecQueueMutex.Lock();
+        mExecQueue.push_back(cmd);
+        mExecQueueMutex.Unlock();
+        mExecQueueWait.Signal();
+    }
+    // Normal handling
+    else {
+        mWorkerQueueMutex.Lock();
+        mWorkerQueue.push_back(cmd);
+        mWorkerQueueMutex.Unlock();
+        mWorkerQueueWait.Signal();
+    }
+
+    // Wait until this command is processed.
+    do {
+        signaled = mCmdReady.Wait(timeout);
+    } while ((mProcessedSerial != serial) && (signaled));
+    if (!signaled) {
+        Esyslog("cCECRemote::PushWaitCmd timeout %d %d", mProcessedSerial, serial);
+    }
+    else {
+        Dsyslog("cCECRemote %d %d", mProcessedSerial, serial);
+    }
+}
+
+/*
  * Wait until a command is put into the worker command queue.
  * If a command was received remove it and return the received command.
  */
-cCECCmd cCECRemote::WaitCmd()
+cCECCmd cCECRemote::WaitCmd(int timeout)
 {
-    cCECCmd cmd;
+    Dsyslog("Wait");
     mWorkerQueueMutex.Lock();
     while (mWorkerQueue.empty()) {
         mWorkerQueueMutex.Unlock();
-        mWorkerQueueWait.Wait(10000);
+        if (mWorkerQueueWait.Wait(timeout)) {
+            Dsyslog("  Signal");
+        }
         mWorkerQueueMutex.Lock();
     }
 
-    cmd = mWorkerQueue.front();
+    cCECCmd cmd = mWorkerQueue.front();
     mWorkerQueue.pop_front();
     mWorkerQueueMutex.Unlock();
 
@@ -790,8 +917,17 @@ void cCECRemote::Reconnect()
 {
     Dsyslog("cCECRemote::Reconnect");
     cCECCmd cmd(CEC_RECONNECT);
-    mWorkerQueueMutex.Lock();
-    mWorkerQueue.push_front(cmd); // Ensure that command is executed ASAP.
-    mWorkerQueueMutex.Unlock();
-    mWorkerQueueWait.Signal();
+    // coming from a script, executed by a command queue.
+    if (mInExec) {
+        mExecQueueMutex.Lock();
+        mExecQueue.push_front(cmd); // Ensure that command is executed ASAP.
+        mExecQueueMutex.Unlock();
+        mExecQueueWait.Signal();
+    }
+    else {
+        mWorkerQueueMutex.Lock();
+        mWorkerQueue.push_front(cmd); // Ensure that command is executed ASAP.
+        mWorkerQueueMutex.Unlock();
+        mWorkerQueueWait.Signal();
+    }
 }

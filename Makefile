@@ -74,7 +74,8 @@ LIBS += -lpugixml #$(shell pkg-config --libs xerces-c)
 ### The object files (add further files here):
 
 OBJS = cecremote.o cecremoteplugin.o cecconfigmenu.o cecconfigfileparser.o \
-       cecosd.o cecplayer.o ceccontrol.o ceckeymaps.o cecstatusmonitor.o
+       cecosd.o cecplayer.o ceccontrol.o ceckeymaps.o cecstatusmonitor.o \
+       ceccmd.o
 
 ### The main target:
 
