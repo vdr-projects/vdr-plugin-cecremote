@@ -6,7 +6,7 @@
  * This code is distributed under the terms and conditions of the
  * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
  *
- * cecconfigfileparser.cc: Class for parsing the plugin configuration file.
+ * configfileparser.cc: Class for parsing the plugin configuration file.
  */
 
 #include <vdr/plugin.h>
@@ -59,6 +59,65 @@ const char *cConfigFileParser::XML_HDMIPORT = "hdmiport";
 const char *cConfigFileParser::XML_BASEDEVICE = "basedevice";
 const char *cConfigFileParser::XML_SHUTDOWNONSTANDBY = "shutdownonstandby";
 const char *cConfigFileParser::XML_POWEROFFONSTANDBY = "poweroffonstandby";
+const char *cConfigFileParser::XML_ONCECCOMMAND = "onceccommand";
+const char *cConfigFileParser::XML_EXECMENU = "execmenu";
+const char *cConfigFileParser::XML_STOPMENU = "stopmenu";
+const char *cConfigFileParser::XML_COMMANDLIST = "commandlist";
+const char *cConfigFileParser::XML_COMMAND = "command";
+const char *cConfigFileParser::XML_INITIATOR = "initiator";
+
+/*
+ * Parse <onceccommand>
+ */
+void cConfigFileParser::parseOnCecCommand(const xml_node node) {
+    cCECCommandHandler h;
+
+    string command = node.attribute(XML_COMMAND).as_string("");
+    if (command.empty()) {
+        string s = "Missing command";
+        Esyslog(s.c_str());
+        throw cCECConfigException(getLineNumber(node.offset_debug()), s);
+    }
+
+    if (!textToInt(command, h.mCecOpCode)) {
+       string s = "CEC Command not an integer";
+       Esyslog(s.c_str());
+       throw cCECConfigException(getLineNumber(node.offset_debug()), s);
+    }
+
+    const char *device = node.attribute(XML_INITIATOR).as_string("");
+    getDevice(device, h.mDevice, node.offset_debug());
+    Dsyslog("         Handle Command %d Device %d %d\n",
+            h.mCecOpCode, h.mDevice.mLogicalAddressDefined, h.mDevice.mLogicalAddressUsed);
+
+    for (xml_node currentNode = node.first_child(); currentNode;
+                currentNode = currentNode.next_sibling()) {
+
+        if (currentNode.type() == node_element)  // is element
+        {
+            Dsyslog("          %s %s\n", currentNode.name(), currentNode.text().as_string());
+
+            if (strcasecmp(currentNode.name(), XML_COMMANDLIST) == 0) {
+                parseList(currentNode, h.mCommands);
+            }
+            else if (strcasecmp(currentNode.name(), XML_EXECMENU) == 0) {
+                h.mExecMenu = currentNode.text().as_string("");
+            }
+            else if (strcasecmp(currentNode.name(), XML_STOPMENU) == 0) {
+                h.mStopMenu = currentNode.text().as_string("");
+            }
+            else {
+                string s = "Invalid command ";
+                s += currentNode.name();
+                throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+            }
+        }
+    }
+
+    mGlobalOptions.mCECCommandHandlers.insert(
+              std::pair<cec_opcode, cCECCommandHandler>(h.mCecOpCode, h));
+}
+
 /*
  * Parse <player file="">
  */
@@ -128,22 +187,6 @@ bool cConfigFileParser::hasElements(const xml_node node)
         }
     }
     return false;
-}
-
-// Convert text to int, returns false if conversion fails.
-bool cConfigFileParser::textToInt(const char *text, int &val, int base)
-{
-    char *endptr = NULL;
-    long v = strtol(text, &endptr, base);
-    // Only spaces are allowed at the end
-    while (*endptr != '\0') {
-        if (!isspace(*endptr)) {
-            return false;
-        }
-        endptr++;
-    }
-    val = (int)v;
-    return true;
 }
 
 // Convert text to bool, returns false if conversion fails.
@@ -505,6 +548,9 @@ void cConfigFileParser::parseGlobal(const pugi::xml_node node)
                     throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
                 }
             }
+            else if (strcasecmp(currentNode.name(), XML_ONCECCOMMAND) == 0) {
+                parseOnCecCommand(currentNode);
+            }
             else {
                 string s = "Invalid Node ";
                 s += currentNode.name();
@@ -737,6 +783,22 @@ int cConfigFileParser::getLineNumber(long offset)
 }
 
 /*
+ * Find a menu by name
+ */
+bool cConfigFileParser::FindMenu(const string &menuname, cCECMenu &menu) {
+    bool found = false;
+    for (cCECMenuListIterator i = mMenuList.begin(); i != mMenuList.end();
+            i++) {
+        cCECMenu m = *i;
+        if (m.mMenuTitle == menuname) {
+            menu = m;
+            found = true;
+        }
+    }
+    return found;
+}
+
+/*
  * Parse the file, fill mGlobalOptions and mMenuList and return the
  * parsed keymaps.
  * Returns false when a syntax error occurred during parsing.
@@ -834,6 +896,27 @@ bool cConfigFileParser::Parse(const string &filename, cKeyMaps &keymaps) {
         ret = false;
     }
 
+    // Check that referenced menu entries in onceccommand/execmenu,startmenu
+    // are defined
+
+    cCECMenu m;
+    for (mapCommandHandlerIterator i = mGlobalOptions.mCECCommandHandlers.begin();
+            i != mGlobalOptions.mCECCommandHandlers.end(); i++) {
+        cCECCommandHandler h = i->second;
+        if (!h.mExecMenu.empty()) {
+            if (!FindMenu(h.mExecMenu, m)) {
+                Esyslog ("Menu %s in execmenu not found", h.mExecMenu.c_str());
+                ret = false;
+            }
+        }
+
+        if (!h.mStopMenu.empty()) {
+           if (!FindMenu(h.mStopMenu, m)) {
+               Esyslog ("Menu %s in stopmenu not found", h.mStopMenu.c_str());
+               ret = false;
+           }
+       }
+    }
     return ret;
 }
 

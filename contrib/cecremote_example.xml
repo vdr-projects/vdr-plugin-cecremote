@@ -49,6 +49,20 @@
 	<!-- <cecdevicetype>TV</cecdevicetype>
 		<cecdevicetype>PLAYBACK_DEVICE</cecdevicetype>
 		<cecdevicetype>AUDIO_SYSTEM</cecdevicetype> -->
+		
+		<!--  CEC_OPCODE_ACTIVE_SOURCE  -->
+		<onceccommand command="0x82" initiator="blueray">
+			<execmenu>TV</execmenu>
+		</onceccommand>
+		<!--  If blueray player is powered off CEC_OPCODE_STANDBY -->
+		<onceccommand command="0x36" initiator="blueray">
+			<!--  stop the player for menu Blueray, if active -->
+			<stopmenu>Blueray</stopmenu>
+			<!--  command queue making the vdr the active source -->
+			<commandlist>
+				<makeactive />
+			</commandlist>
+		</onceccommand>
 	</global>
 
 	<!-- Key mapping CEC Key to VDR -->
@@ -91,7 +105,7 @@
 			<makeinactive />
 		</onstart>
 		
-		<!-- player starts a VDR-Player -->
+		<!-- player starts a still picture -->
 		<player file="/video/conf/plugins/cecremote/blueray.mpg">
 			<keymaps cec="myTV" vdr="myVDR" />
 			<stop>Stop</stop>

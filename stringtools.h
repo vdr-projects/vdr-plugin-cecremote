@@ -13,6 +13,7 @@
 
 #include <string>
 #include <algorithm>
+#include <stdlib.h>
 
 namespace cecplugin {
 
@@ -29,6 +30,23 @@ public:
         sprintf(buf,"%d", val);
         s = buf;
         return s;
+    }
+
+    // Trim trailing spaces and tabs.
+    static void StrTrimTrail(std::string &s) {
+        size_t endpos = s.find_last_not_of(" \t"); // Trim space and tabs
+        if (std::string::npos != endpos) {
+            s = s.substr(0, endpos + 1);
+        }
+    }
+
+    static bool TextToInt(std::string s, int &val, int base = 0) {
+        char *endp = NULL;
+
+        StrTrimTrail(s);
+        val = strtol(s.c_str(), &endp, 0);
+
+        return (*endp == '\0');
     }
 };
 

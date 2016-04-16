@@ -1,12 +1,12 @@
 /*
  * CECRemote PlugIn for VDR
  *
- * Copyright (C) 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ * Copyright (C) 2015-2016 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
  *
  * This code is distributed under the terms and conditions of the
  * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
  *
- * ceckeymaps.cc: Class for handling the keymaps.
+ * keymaps.cc: Class for handling the keymaps.
  */
 
 #include <stdexcept>

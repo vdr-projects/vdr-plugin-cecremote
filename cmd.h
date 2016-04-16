@@ -1,8 +1,13 @@
 /*
- * ccmd.h
  *
- *  Created on: 09.01.2016
- *      Author: uli
+ * CECRemote PlugIn for VDR
+ *
+ * Copyright (C) 2015-2016 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ *
+ * This code is distributed under the terms and conditions of the
+ * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
+ *
+ * This class implements a data storage for CEC commands.
  */
 
 #ifndef _CCECCMD_H_

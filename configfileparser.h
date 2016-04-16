@@ -6,7 +6,7 @@
  * This code is distributed under the terms and conditions of the
  * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
  *
- * cecconfigfileparser.h: Class for parsing the plugin configuration file.
+ * configfileparser.h: Class for parsing the plugin configuration file.
  */
 
 #ifndef CONFIGFILEPARSER_H_
@@ -24,11 +24,25 @@
 #include <set>
 
 #include "cecremote.h"
+#include "stringtools.h"
 
 namespace cecplugin {
 
-typedef std::set<eKeys> keySet;
+class cCECCommandHandler {
+public:
+    cCmdQueue mCommands;
+    std::string mExecMenu;
+    std::string mStopMenu;
+    cec_opcode mCecOpCode;
+    cCECDevice mDevice; // Initiator device
+public:
+    cCECCommandHandler() : mCecOpCode(CEC_OPCODE_NONE) {};
+};
 
+typedef std::map<cec_opcode, cCECCommandHandler> mapCommandHandler;
+typedef mapCommandHandler::iterator mapCommandHandlerIterator;
+
+typedef std::set<eKeys> keySet;
 // Class for storing information on <global> tags.
 
 class cCECGlobalOptions {
@@ -48,6 +62,7 @@ public:
     std::string mVDRKeymap;
     bool mShutdownOnStandby;
     bool mPowerOffOnStandby;
+    mapCommandHandler mCECCommandHandlers;
 
     cCECGlobalOptions() : cec_debug(7), mComboKeyTimeoutMs(1000),
             mHDMIPort(CEC_DEFAULT_HDMI_PORT),
@@ -130,25 +145,43 @@ private:
     // Convert text (true or false) to bool, returns false if conversion fails.
     bool textToBool(const char *text, bool &val);
     // Convert text to int, returns false if conversion fails.
-    bool textToInt(const char *text, int &val, int base = 10);
-    bool textToInt(const char *text, uint16_t &val, int base = 10) {
+
+    bool textToInt(const char *text, int &val, int base = 0) {
+            int v;
+            std::string s = text;
+            bool ret = StringTools::TextToInt(s, v, base);
+            val = v;
+            return ret;
+        };
+    bool textToInt(const char *text, uint16_t &val, int base = 0) {
         int v;
-        bool ret = textToInt(text, v, base);
+        std::string s = text;
+        bool ret = StringTools::TextToInt(s, v, base);
         val = v;
         return ret;
     };
-    bool textToInt(const char *text, uint32_t &val, int base = 10) {
+    bool textToInt(const char *text, uint32_t &val, int base = 0) {
         int v;
-        bool ret = textToInt(text, v, base);
+        std::string s = text;
+        bool ret = StringTools::TextToInt(s, v, base);
         val = v;
         return ret;
     };
-    bool textToInt(const char *text, cec_logical_address &val, int base = 10) {
+    bool textToInt(const char *text, cec_logical_address &val, int base = 0) {
         int v;
-        bool ret = textToInt(text, v, base);
+        std::string s = text;
+        bool ret = StringTools::TextToInt(s, v, base);
         val = (cec_logical_address)v;
         return ret;
     };
+
+    bool textToInt(std::string text, cec_opcode &val, int base = 0) {
+        int v;
+        bool ret = StringTools::TextToInt(text, v, base);
+        val = (cec_opcode)v;
+        return ret;
+    };
+
     // parse elements between <vdrkeymap>
     void parseVDRKeymap(const pugi::xml_node node, cKeyMaps &keymaps);
     // parse elements between <ceckeymap>
@@ -162,6 +195,8 @@ private:
     void parsePlayer(const pugi::xml_node node, cCECMenu &menu);
     // parse elements between <device id="">
     void parseDevice(const pugi::xml_node node);
+    // parse <onceccommand>
+    void parseOnCecCommand(const pugi::xml_node node);
 
     // Keywords used in the XML config file
     static const char *XML_GLOBAL;
@@ -202,7 +237,12 @@ private:
     static const char *XML_SHUTDOWNONSTANDBY;
     static const char *XML_POWEROFFONSTANDBY;
     static const char *XML_BASEDEVICE;
-
+    static const char *XML_ONCECCOMMAND;
+    static const char *XML_EXECMENU;
+    static const char *XML_STOPMENU;
+    static const char *XML_COMMANDLIST;
+    static const char *XML_COMMAND;
+    static const char *XML_INITIATOR;
     // Filename of the configuration file.
     const char* mXmlFile;
 
@@ -220,6 +260,8 @@ public:
     // parsed keymaps.
     // Returns false when a syntax error occurred during parsing.
     bool Parse(const std::string &filename, cKeyMaps &keymaps);
+    // Find a menu in the configuration by name.
+    bool FindMenu(const std::string &menuname, cCECMenu &menu);
 };
 
 } // namespace cecplugin
