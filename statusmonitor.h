@@ -20,7 +20,7 @@
 
 namespace cecplugin {
 
-class cCECStatusMonitor : public cStatus {
+class cStatusMonitor : public cStatus {
 protected:
     typedef enum {
         UNKNOWN,
@@ -55,8 +55,8 @@ protected:
     MonitorStatus mMonitorStatus;
     cPluginCecremote *mPlugin;
 public:
-    cCECStatusMonitor(cPluginCecremote *plugin);
-    virtual ~cCECStatusMonitor();
+    cStatusMonitor(cPluginCecremote *plugin);
+    virtual ~cStatusMonitor();
 };
 
 } // namespace cecplugin

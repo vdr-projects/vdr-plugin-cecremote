@@ -37,7 +37,7 @@ static int CecKeyPressCallback(void *cbParam, const cec_keypress key)
        )
     {
         lastkey = key.keycode;
-        cCECCmd cmd(CEC_KEYRPRESS, (int)key.keycode);
+        cCmd cmd(CEC_KEYRPRESS, (int)key.keycode);
         rem->PushCmd(cmd);
     }
     return 0;
@@ -53,7 +53,7 @@ static int CecCommandCallback(void *cbParam, const cec_command command)
     Dsyslog("CEC Command %d : %s Init %d Dest %d", command.opcode,
                                    rem->mCECAdapter->ToString(command.opcode),
                                    command.initiator, command.destination);
-    cCECCmd cmd(CEC_COMMAND, command.opcode, command.initiator);
+    cCmd cmd(CEC_COMMAND, command.opcode, command.initiator);
     rem->PushCmd(cmd);
 
     return 0;
@@ -333,7 +333,7 @@ void cCECRemote::Stop()
     Dsyslog("Executing onStop");
     PushCmdQueue(mOnStop);
     // Send exit command to worker thread
-    cCECCmd cmd(CEC_EXIT);
+    cCmd cmd(CEC_EXIT);
     PushWaitCmd(cmd);
     Dsyslog("onStop OK");
 }
@@ -490,7 +490,7 @@ cec_logical_address cCECRemote::getLogical(cCECDevice &dev)
     return dev.mLogicalAddressDefined;
 }
 
-void cCECRemote::ActionKeyPress(cCECCmd &cmd)
+void cCECRemote::ActionKeyPress(cCmd &cmd)
 {
     cec_logical_address addr;
     cCECList ceckmap;
@@ -537,9 +537,9 @@ void cCECRemote::WaitForPowerStatus(cec_logical_address addr, cec_power_status n
  * Special exec which handles the svdrp CONN/DISC which may come
  * from this executed shell script
  */
-void cCECRemote::Exec(cCECCmd &execcmd)
+void cCECRemote::Exec(cCmd &execcmd)
 {
-    cCECCmd cmd;
+    cCmd cmd;
     Dsyslog("Execute script %s", execcmd.mExec.c_str());
     mInExec = true;
     pid_t pid = fork();
@@ -592,7 +592,7 @@ void cCECRemote::Exec(cCECCmd &execcmd)
  * Wait until a command is put into the exec command queue.
  * If a command was received remove it and return the received command.
  */
-cCECCmd cCECRemote::WaitExec(pid_t pid)
+cCmd cCECRemote::WaitExec(pid_t pid)
 {
     Dsyslog("WaitExec");
     int stat_loc = 0;
@@ -605,14 +605,14 @@ cCECCmd cCECRemote::WaitExec(pid_t pid)
         else {
             if (waitpid (pid, &stat_loc, WNOHANG) == pid) {
                 Dsyslog("  Script exit with %d", WEXITSTATUS(stat_loc));
-                cCECCmd cmd(CEC_EXIT);
+                cCmd cmd(CEC_EXIT);
                 return cmd;
             }
         }
         mExecQueueMutex.Lock();
     }
 
-    cCECCmd cmd = mExecQueue.front();
+    cCmd cmd = mExecQueue.front();
     mExecQueue.pop_front();
     mExecQueueMutex.Unlock();
     return cmd;
@@ -623,7 +623,7 @@ cCECCmd cCECRemote::WaitExec(pid_t pid)
  */
 void cCECRemote::Action(void)
 {
-    cCECCmd cmd;
+    cCmd cmd;
     cCECList ceckmap;
     cec_logical_address addr;
     eKeys k;
@@ -834,7 +834,7 @@ void cCECRemote::PushCmdQueue(const cCmdQueue &cmdList)
 /*
  * Put a command into the worker command queue for execution.
  */
-void cCECRemote::PushCmd(const cCECCmd &cmd)
+void cCECRemote::PushCmd(const cCmd &cmd)
 {
     Dsyslog("cCECRemote::PushCmd %d (size %d)", cmd.mCmd, mWorkerQueue.size());
 
@@ -847,7 +847,7 @@ void cCECRemote::PushCmd(const cCECCmd &cmd)
 /*
  * Put a command into the worker command queue and wait for execution.
  */
-void cCECRemote::PushWaitCmd(cCECCmd &cmd, int timeout)
+void cCECRemote::PushWaitCmd(cCmd &cmd, int timeout)
 {
     int serial = cmd.getSerial();
     cmd.mSerial = serial;
@@ -889,7 +889,7 @@ void cCECRemote::PushWaitCmd(cCECCmd &cmd, int timeout)
  * Wait until a command is put into the worker command queue.
  * If a command was received remove it and return the received command.
  */
-cCECCmd cCECRemote::WaitCmd(int timeout)
+cCmd cCECRemote::WaitCmd(int timeout)
 {
     Dsyslog("Wait");
     mWorkerQueueMutex.Lock();
@@ -901,7 +901,7 @@ cCECCmd cCECRemote::WaitCmd(int timeout)
         mWorkerQueueMutex.Lock();
     }
 
-    cCECCmd cmd = mWorkerQueue.front();
+    cCmd cmd = mWorkerQueue.front();
     mWorkerQueue.pop_front();
     mWorkerQueueMutex.Unlock();
 
@@ -911,7 +911,7 @@ cCECCmd cCECRemote::WaitCmd(int timeout)
 void cCECRemote::Reconnect()
 {
     Dsyslog("cCECRemote::Reconnect");
-    cCECCmd cmd(CEC_RECONNECT);
+    cCmd cmd(CEC_RECONNECT);
     // coming from a script, executed by a command queue.
     if (mInExec) {
         mExecQueueMutex.Lock();

@@ -25,8 +25,8 @@
 #include <map>
 #include <string>
 
-#include "ceckeymaps.h"
-#include "ceccmd.h"
+#include "keymaps.h"
+#include "cmd.h"
 
 namespace cecplugin {
 
@@ -40,9 +40,9 @@ public:
     cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugin);
     ~cCECRemote();
     bool Initialize(void) {return false;};
-    void PushCmd(const cCECCmd &cmd);
+    void PushCmd(const cCmd &cmd);
     void PushCmdQueue(const cCmdQueue &cmdList);
-    void PushWaitCmd(cCECCmd &cmd, int timeout = 5000);
+    void PushWaitCmd(cCmd &cmd, int timeout = 5000);
     int getCECLogLevel(void) {return mCECLogLevel;}
     cString ListDevices(void);
     void Reconnect(void);
@@ -81,11 +81,11 @@ private:
 
     void Connect(void);
     void Disconnect(void);
-    void ActionKeyPress(cCECCmd &cmd);
+    void ActionKeyPress(cCmd &cmd);
     void Action(void);
-    cCECCmd WaitCmd(int timeout = 5000);
-    cCECCmd WaitExec(pid_t pid);
-    void Exec(cCECCmd &cmd);
+    cCmd WaitCmd(int timeout = 5000);
+    cCmd WaitExec(pid_t pid);
+    void Exec(cCmd &cmd);
     void ExecToggle(cCECDevice dev, const cCmdQueue &poweron,
                     const cCmdQueue &poweroff);
     void WaitForPowerStatus(cec_logical_address addr, cec_power_status newstatus);

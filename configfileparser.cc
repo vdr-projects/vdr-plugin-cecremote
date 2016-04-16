@@ -95,9 +95,9 @@ void cConfigFileParser::parsePlayer(const xml_node node, cCECMenu &menu)
             }
             else if (strcasecmp(currentNode.name(), XML_KEYMAPS) == 0) {
                 menu.mVDRKeymap = currentNode.attribute(XML_VDR).
-                                        as_string(cCECkeymaps::DEFAULTKEYMAP);
+                                        as_string(cKeyMaps::DEFAULTKEYMAP);
                 menu.mCECKeymap = currentNode.attribute(XML_CEC).
-                                                        as_string(cCECkeymaps::DEFAULTKEYMAP);
+                                                        as_string(cKeyMaps::DEFAULTKEYMAP);
                 Dsyslog("              Keymap VDR %s CEC %s",
                         menu.mVDRKeymap.c_str(), menu.mCECKeymap.c_str());
             }
@@ -199,7 +199,7 @@ void cConfigFileParser::getDevice(const char *text, cCECDevice &device,
 void cConfigFileParser::parseList(const xml_node node,
                                      cCmdQueue &cmdlist)
 {
-    cCECCmd cmd;
+    cCmd cmd;
 
     for (xml_node currentNode = node.first_child(); currentNode;
             currentNode = currentNode.next_sibling()) {
@@ -460,9 +460,9 @@ void cConfigFileParser::parseGlobal(const pugi::xml_node node)
             }
             else if (strcasecmp(currentNode.name(), XML_KEYMAPS) == 0) {
                 mGlobalOptions.mVDRKeymap = currentNode.attribute(XML_VDR).
-                                        as_string(cCECkeymaps::DEFAULTKEYMAP);
+                                        as_string(cKeyMaps::DEFAULTKEYMAP);
                 mGlobalOptions.mCECKeymap = currentNode.attribute(XML_CEC).
-                                        as_string(cCECkeymaps::DEFAULTKEYMAP);
+                                        as_string(cKeyMaps::DEFAULTKEYMAP);
                 Dsyslog("Keymap VDR %s CEC %s",
                         mGlobalOptions.mVDRKeymap.c_str(),
                         mGlobalOptions.mCECKeymap.c_str());
@@ -517,7 +517,7 @@ void cConfigFileParser::parseGlobal(const pugi::xml_node node)
 /*
  * parse elements between <vdrkeymap>
  */
-void cConfigFileParser::parseVDRKeymap(const xml_node node, cCECkeymaps &keymaps)
+void cConfigFileParser::parseVDRKeymap(const xml_node node, cKeyMaps &keymaps)
 {
     string id = node.attribute(XML_ID).as_string("");
     if (id.empty()) {
@@ -582,7 +582,7 @@ void cConfigFileParser::parseVDRKeymap(const xml_node node, cCECkeymaps &keymaps
 /*
  * parse elements between <ceckeymap>
  */
-void cConfigFileParser::parseCECKeymap(const xml_node node, cCECkeymaps &keymaps)
+void cConfigFileParser::parseCECKeymap(const xml_node node, cKeyMaps &keymaps)
 {
     string id = node.attribute(XML_ID).as_string("");
     if (id.empty()) {
@@ -741,7 +741,7 @@ int cConfigFileParser::getLineNumber(long offset)
  * parsed keymaps.
  * Returns false when a syntax error occurred during parsing.
  */
-bool cConfigFileParser::Parse(const string &filename, cCECkeymaps &keymaps) {
+bool cConfigFileParser::Parse(const string &filename, cKeyMaps &keymaps) {
     bool ret = true;
     xml_document xmlDoc;
     xml_node currentNode;

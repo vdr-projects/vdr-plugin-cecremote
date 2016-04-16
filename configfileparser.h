@@ -26,6 +26,7 @@
 #include "cecremote.h"
 
 namespace cecplugin {
+
 typedef std::set<eKeys> keySet;
 
 // Class for storing information on <global> tags.
@@ -51,8 +52,8 @@ public:
     cCECGlobalOptions() : cec_debug(7), mComboKeyTimeoutMs(1000),
             mHDMIPort(CEC_DEFAULT_HDMI_PORT),
             mBaseDevice(CECDEVICE_UNKNOWN),
-            mCECKeymap(cCECkeymaps::DEFAULTKEYMAP),
-            mVDRKeymap(cCECkeymaps::DEFAULTKEYMAP),
+            mCECKeymap(cKeyMaps::DEFAULTKEYMAP),
+            mVDRKeymap(cKeyMaps::DEFAULTKEYMAP),
             mShutdownOnStandby(false),
             mPowerOffOnStandby(false) {};
 };
@@ -79,8 +80,8 @@ public:
     std::string mCECKeymap;
     std::string mVDRKeymap;
 
-    cCECMenu() : mCECKeymap(cCECkeymaps::DEFAULTKEYMAP),
-                 mVDRKeymap(cCECkeymaps::DEFAULTKEYMAP),
+    cCECMenu() : mCECKeymap(cKeyMaps::DEFAULTKEYMAP),
+                 mVDRKeymap(cKeyMaps::DEFAULTKEYMAP),
                  mPowerToggle(UNDEFINED) {};
 
     bool isMenuPowerToggle() const { return (mPowerToggle == USE_ONPOWER); };
@@ -149,9 +150,9 @@ private:
         return ret;
     };
     // parse elements between <vdrkeymap>
-    void parseVDRKeymap(const pugi::xml_node node, cCECkeymaps &keymaps);
+    void parseVDRKeymap(const pugi::xml_node node, cKeyMaps &keymaps);
     // parse elements between <ceckeymap>
-    void parseCECKeymap(const pugi::xml_node node, cCECkeymaps &keymaps);
+    void parseCECKeymap(const pugi::xml_node node, cKeyMaps &keymaps);
     // parse elements between <global>
     void parseGlobal(const pugi::xml_node node);
     // parse elements between <menu>
@@ -218,7 +219,7 @@ public:
     // Parse the file, fill mGlobalOptions and mMenuList and return the
     // parsed keymaps.
     // Returns false when a syntax error occurred during parsing.
-    bool Parse(const std::string &filename, cCECkeymaps &keymaps);
+    bool Parse(const std::string &filename, cKeyMaps &keymaps);
 };
 
 } // namespace cecplugin

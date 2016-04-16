@@ -69,13 +69,13 @@ CFLAGS += $(shell pkg-config --cflags libcec)
 CXXFLAGS += $(shell pkg-config --cflags libcec)
 
 # Flags for pugixml xml parser
-LIBS += -lpugixml 
+LIBS += -lpugixml
 
 ### The object files (add further files here):
 
-OBJS = cecremote.o cecremoteplugin.o cecconfigmenu.o configfileparser.o \
-       cecosd.o cecplayer.o ceccontrol.o ceckeymaps.o cecstatusmonitor.o \
-       ceccmd.o
+OBJS = cecremote.o cecremoteplugin.o configmenu.o configfileparser.o \
+       cecosd.o cecplayer.o ceccontrol.o keymaps.o statusmonitor.o \
+       cmd.o
 
 ### The main target:
 

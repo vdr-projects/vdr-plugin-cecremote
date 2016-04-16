@@ -12,13 +12,13 @@
 
 #include "cecremote.h"
 #include "cecremoteplugin.h"
-#include "ceccmd.h"
+#include "cmd.h"
 
 namespace cecplugin {
-int cCECCmd::serial = 1;
-cMutex cCECCmd::mSerialMutex;
+int cCmd::serial = 1;
+cMutex cCmd::mSerialMutex;
 
-cCECCmd::cCECCmd(CECCommand cmd, int val, cCECDevice *dev, std::string exec) {
+cCmd::cCmd(CECCommand cmd, int val, cCECDevice *dev, std::string exec) {
     mCmd = cmd;
     mVal = val;
     if (dev != NULL) {
@@ -30,7 +30,7 @@ cCECCmd::cCECCmd(CECCommand cmd, int val, cCECDevice *dev, std::string exec) {
     mCecLogicalAddress = CECDEVICE_UNKNOWN;
 }
 
-cCECCmd::cCECCmd(CECCommand cmd, const cCECDevice dev,
+cCmd::cCmd(CECCommand cmd, const cCECDevice dev,
         const cCmdQueue poweron, const cCmdQueue poweroff) {
     mCmd = cmd;
     mVal = -1;
@@ -42,7 +42,7 @@ cCECCmd::cCECCmd(CECCommand cmd, const cCECDevice dev,
     mCecLogicalAddress = CECDEVICE_UNKNOWN;
 }
 
-cCECCmd::cCECCmd(CECCommand cmd, cec_opcode opcode,
+cCmd::cCmd(CECCommand cmd, cec_opcode opcode,
         cec_logical_address logicaladdress) {
     mCmd = cmd;
     mVal = -1;
@@ -51,7 +51,7 @@ cCECCmd::cCECCmd(CECCommand cmd, cec_opcode opcode,
     mCecLogicalAddress = logicaladdress;
 }
 
-int cCECCmd::getSerial(void) {
+int cCmd::getSerial(void) {
     int ret;
     mSerialMutex.Lock();
     serial++;

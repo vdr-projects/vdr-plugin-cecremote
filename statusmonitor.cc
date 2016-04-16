@@ -9,19 +9,20 @@
  * This class implements the status monitor for channel switch information.
  */
 
-#include "cecstatusmonitor.h"
+#include "statusmonitor.h"
 #include "ceclog.h"
 
 namespace cecplugin {
-cCECStatusMonitor::cCECStatusMonitor(cPluginCecremote *plugin) : mMonitorStatus(UNKNOWN) {
+
+cStatusMonitor::cStatusMonitor(cPluginCecremote *plugin) : mMonitorStatus(UNKNOWN) {
     mPlugin = plugin;
 }
 
-cCECStatusMonitor::~cCECStatusMonitor() {
+cStatusMonitor::~cStatusMonitor() {
 
 }
 
-void cCECStatusMonitor::ChannelSwitch(const cDevice *Device, int ChannelNumber,
+void cStatusMonitor::ChannelSwitch(const cDevice *Device, int ChannelNumber,
                                       bool LiveView)
 {
     char l = 'f';
@@ -66,7 +67,7 @@ void cCECStatusMonitor::ChannelSwitch(const cDevice *Device, int ChannelNumber,
     }
 }
 
-void cCECStatusMonitor::Replaying(const cControl *Control, const char *Name,
+void cStatusMonitor::Replaying(const cControl *Control, const char *Name,
                                   const char *FileName, bool On)
 {
     Dsyslog("Replaying");
