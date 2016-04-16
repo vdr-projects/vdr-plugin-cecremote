@@ -17,9 +17,10 @@
 #include <vdr/plugin.h>
 #include "cecremote.h"
 #include "cecconfigmenu.h"
-#include "cecconfigfileparser.h"
+#include "configfileparser.h"
 #include "cecstatusmonitor.h"
 
+namespace cecplugin {
 class cCECOsd;
 class cCECStatusMonitor;
 
@@ -31,7 +32,7 @@ protected:
     std::string mCfgDir;
     std::string mCfgFile;
 
-    cCECConfigFileParser mConfigFileParser;
+    cConfigFileParser mConfigFileParser;
     cCECRemote *mCECRemote;
     cCECStatusMonitor *mStatusMonitor;
     bool mStartManually;
@@ -83,5 +84,7 @@ public:
     cCECMenuList *GetMenuList() {return &mConfigFileParser.mMenuList;}
     bool GetStartManually() {return mStartManually;}
 };
+
+} // namespace cecplugin
 
 #endif

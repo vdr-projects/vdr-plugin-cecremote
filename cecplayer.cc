@@ -13,6 +13,9 @@
 #include "ceclog.h"
 
 using namespace std;
+using namespace cecplugin;
+
+namespace cecplugin {
 
 cCECPlayer::cCECPlayer(const cCECMenu &config) :
                 pStillBuf(NULL), mStillBufLen(0)
@@ -95,3 +98,6 @@ void cCECPlayer::Activate(bool On) {
         LoadStillPicture(mStillPic);
     }
 }
+
+} // namespace cecplugin
+

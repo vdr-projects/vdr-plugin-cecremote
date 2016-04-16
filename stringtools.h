@@ -14,6 +14,8 @@
 #include <string>
 #include <algorithm>
 
+namespace cecplugin {
+
 class StringTools
 {
 public:
@@ -29,5 +31,7 @@ public:
         return s;
     }
 };
+
+} // namespace cecplugin
 
 #endif /* STRINGTOOLS_H_ */

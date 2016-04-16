@@ -13,55 +13,56 @@
 #include <stdio.h>
 #include <stdexcept>
 #include "ceclog.h"
-#include "cecconfigfileparser.h"
+#include "configfileparser.h"
 #include "stringtools.h"
 
 using namespace std;
 using namespace pugi;
 
+namespace cecplugin {
 // Keywords used in the XML config file
-const char *cCECConfigFileParser::XML_ONSTART = "onstart";
-const char *cCECConfigFileParser::XML_ONSTOP  = "onstop";
-const char *cCECConfigFileParser::XML_ONPOWERON = "onpoweron";
-const char *cCECConfigFileParser::XML_ONPOWEROFF = "onpoweroff";
-const char *cCECConfigFileParser::XML_GLOBAL = "global";
-const char *cCECConfigFileParser::XML_MENU = "menu";
-const char *cCECConfigFileParser::XML_CECKEYMAP = "ceckeymap";
-const char *cCECConfigFileParser::XML_VDRKEYMAP = "vdrkeymap";
-const char *cCECConfigFileParser::XML_ID = "id";
-const char *cCECConfigFileParser::XML_KEY = "key";
-const char *cCECConfigFileParser::XML_CODE = "code";
-const char *cCECConfigFileParser::XML_VALUE = "value";
-const char *cCECConfigFileParser::XML_STOP = "stop";
-const char *cCECConfigFileParser::XML_KEYMAPS = "keymaps";
-const char *cCECConfigFileParser::XML_FILE = "file";
-const char *cCECConfigFileParser::XML_CEC = "cec";
-const char *cCECConfigFileParser::XML_VDR = "vdr";
-const char *cCECConfigFileParser::XML_POWERON = "poweron";
-const char *cCECConfigFileParser::XML_POWEROFF = "poweroff";
-const char *cCECConfigFileParser::XML_MAKEACTIVE = "makeactive";
-const char *cCECConfigFileParser::XML_MAKEINACTIVE = "makeinactive";
-const char *cCECConfigFileParser::XML_EXEC = "exec";
-const char *cCECConfigFileParser::XML_TEXTVIEWON = "textviewon";
-const char *cCECConfigFileParser::XML_COMBOKEYTIMEOUTMS = "combokeytimeoutms";
-const char *cCECConfigFileParser::XML_CECDEBUG = "cecdebug";
-const char *cCECConfigFileParser::XML_CECDEVICETYPE = "cecdevicetype";
-const char *cCECConfigFileParser::XML_DEVICE = "device";
-const char *cCECConfigFileParser::XML_PHYSICAL = "physical";
-const char *cCECConfigFileParser::XML_LOGICAL = "logical";
-const char *cCECConfigFileParser::XML_ONMANUALSTART = "onmanualstart";
-const char *cCECConfigFileParser::XML_ONSWITCHTOTV = "onswitchtotv";
-const char *cCECConfigFileParser::XML_ONSWITCHTORADIO = "onswitchtoradio";
-const char *cCECConfigFileParser::XML_ONSWITCHTOREPLAY = "onswitchtoreplay";
-const char *cCECConfigFileParser::XML_ONACTIVESOURCE = "onactivesource";
-const char *cCECConfigFileParser::XML_HDMIPORT = "hdmiport";
-const char *cCECConfigFileParser::XML_BASEDEVICE = "basedevice";
-const char *cCECConfigFileParser::XML_SHUTDOWNONSTANDBY = "shutdownonstandby";
-const char *cCECConfigFileParser::XML_POWEROFFONSTANDBY = "poweroffonstandby";
+const char *cConfigFileParser::XML_ONSTART = "onstart";
+const char *cConfigFileParser::XML_ONSTOP  = "onstop";
+const char *cConfigFileParser::XML_ONPOWERON = "onpoweron";
+const char *cConfigFileParser::XML_ONPOWEROFF = "onpoweroff";
+const char *cConfigFileParser::XML_GLOBAL = "global";
+const char *cConfigFileParser::XML_MENU = "menu";
+const char *cConfigFileParser::XML_CECKEYMAP = "ceckeymap";
+const char *cConfigFileParser::XML_VDRKEYMAP = "vdrkeymap";
+const char *cConfigFileParser::XML_ID = "id";
+const char *cConfigFileParser::XML_KEY = "key";
+const char *cConfigFileParser::XML_CODE = "code";
+const char *cConfigFileParser::XML_VALUE = "value";
+const char *cConfigFileParser::XML_STOP = "stop";
+const char *cConfigFileParser::XML_KEYMAPS = "keymaps";
+const char *cConfigFileParser::XML_FILE = "file";
+const char *cConfigFileParser::XML_CEC = "cec";
+const char *cConfigFileParser::XML_VDR = "vdr";
+const char *cConfigFileParser::XML_POWERON = "poweron";
+const char *cConfigFileParser::XML_POWEROFF = "poweroff";
+const char *cConfigFileParser::XML_MAKEACTIVE = "makeactive";
+const char *cConfigFileParser::XML_MAKEINACTIVE = "makeinactive";
+const char *cConfigFileParser::XML_EXEC = "exec";
+const char *cConfigFileParser::XML_TEXTVIEWON = "textviewon";
+const char *cConfigFileParser::XML_COMBOKEYTIMEOUTMS = "combokeytimeoutms";
+const char *cConfigFileParser::XML_CECDEBUG = "cecdebug";
+const char *cConfigFileParser::XML_CECDEVICETYPE = "cecdevicetype";
+const char *cConfigFileParser::XML_DEVICE = "device";
+const char *cConfigFileParser::XML_PHYSICAL = "physical";
+const char *cConfigFileParser::XML_LOGICAL = "logical";
+const char *cConfigFileParser::XML_ONMANUALSTART = "onmanualstart";
+const char *cConfigFileParser::XML_ONSWITCHTOTV = "onswitchtotv";
+const char *cConfigFileParser::XML_ONSWITCHTORADIO = "onswitchtoradio";
+const char *cConfigFileParser::XML_ONSWITCHTOREPLAY = "onswitchtoreplay";
+const char *cConfigFileParser::XML_ONACTIVESOURCE = "onactivesource";
+const char *cConfigFileParser::XML_HDMIPORT = "hdmiport";
+const char *cConfigFileParser::XML_BASEDEVICE = "basedevice";
+const char *cConfigFileParser::XML_SHUTDOWNONSTANDBY = "shutdownonstandby";
+const char *cConfigFileParser::XML_POWEROFFONSTANDBY = "poweroffonstandby";
 /*
  * Parse <player file="">
  */
-void cCECConfigFileParser::parsePlayer(const xml_node node, cCECMenu &menu)
+void cConfigFileParser::parsePlayer(const xml_node node, cCECMenu &menu)
 {
     menu.mStillPic = node.attribute(XML_FILE).as_string("");
     if (menu.mStillPic.empty()) {
@@ -116,7 +117,7 @@ void cCECConfigFileParser::parsePlayer(const xml_node node, cCECMenu &menu)
 /*
  * Check if a tag contains child elements.
  */
-bool cCECConfigFileParser::hasElements(const xml_node node)
+bool cConfigFileParser::hasElements(const xml_node node)
 {
     for (xml_node currentNode = node.first_child(); currentNode;
          currentNode = currentNode.next_sibling()) {
@@ -130,7 +131,7 @@ bool cCECConfigFileParser::hasElements(const xml_node node)
 }
 
 // Convert text to int, returns false if conversion fails.
-bool cCECConfigFileParser::textToInt(const char *text, int &val, int base)
+bool cConfigFileParser::textToInt(const char *text, int &val, int base)
 {
     char *endptr = NULL;
     long v = strtol(text, &endptr, base);
@@ -146,7 +147,7 @@ bool cCECConfigFileParser::textToInt(const char *text, int &val, int base)
 }
 
 // Convert text to bool, returns false if conversion fails.
-bool cCECConfigFileParser::textToBool(const char *text, bool &val)
+bool cConfigFileParser::textToBool(const char *text, bool &val)
 {
     if (strcasecmp(text, "true") == 0) {
         val = true;
@@ -163,7 +164,7 @@ bool cCECConfigFileParser::textToBool(const char *text, bool &val)
 /*
  * Helper function to get device address
  */
-void cCECConfigFileParser::getDevice(const char *text, cCECDevice &device,
+void cConfigFileParser::getDevice(const char *text, cCECDevice &device,
                                      ptrdiff_t linenumber)
 {
     int val;
@@ -195,7 +196,7 @@ void cCECConfigFileParser::getDevice(const char *text, cCECDevice &device,
 /*
  * parse <onstart> and <onstop>
  */
-void cCECConfigFileParser::parseList(const xml_node node,
+void cConfigFileParser::parseList(const xml_node node,
                                      cCmdQueue &cmdlist)
 {
     cCECCmd cmd;
@@ -261,7 +262,7 @@ void cCECConfigFileParser::parseList(const xml_node node,
 /*
  * parse elements between <menu name="" address="">
  */
-void cCECConfigFileParser::parseMenu(const xml_node node)
+void cConfigFileParser::parseMenu(const xml_node node)
 {
     cCECMenu menu;
 
@@ -360,7 +361,7 @@ void cCECConfigFileParser::parseMenu(const xml_node node)
 /*
  * Convert device type string to cec_device_type
  */
-cec_device_type cCECConfigFileParser::getDeviceType(const string &s)
+cec_device_type cConfigFileParser::getDeviceType(const string &s)
 {
     if (strcasecmp(s.c_str(), "TV") == 0) {
         return CEC_DEVICE_TYPE_TV;
@@ -382,7 +383,7 @@ cec_device_type cCECConfigFileParser::getDeviceType(const string &s)
 /*
  *  Parse elements between <global> nodes.
  */
-void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
+void cConfigFileParser::parseGlobal(const pugi::xml_node node)
 {
     for (xml_node currentNode = node.first_child(); currentNode;
          currentNode = currentNode.next_sibling()) {
@@ -516,7 +517,7 @@ void cCECConfigFileParser::parseGlobal(const pugi::xml_node node)
 /*
  * parse elements between <vdrkeymap>
  */
-void cCECConfigFileParser::parseVDRKeymap(const xml_node node, cCECkeymaps &keymaps)
+void cConfigFileParser::parseVDRKeymap(const xml_node node, cCECkeymaps &keymaps)
 {
     string id = node.attribute(XML_ID).as_string("");
     if (id.empty()) {
@@ -581,7 +582,7 @@ void cCECConfigFileParser::parseVDRKeymap(const xml_node node, cCECkeymaps &keym
 /*
  * parse elements between <ceckeymap>
  */
-void cCECConfigFileParser::parseCECKeymap(const xml_node node, cCECkeymaps &keymaps)
+void cConfigFileParser::parseCECKeymap(const xml_node node, cCECkeymaps &keymaps)
 {
     string id = node.attribute(XML_ID).as_string("");
     if (id.empty()) {
@@ -646,7 +647,7 @@ void cCECConfigFileParser::parseCECKeymap(const xml_node node, cCECkeymaps &keym
 /*
  * parse elements between <device id="">
  */
-void cCECConfigFileParser::parseDevice(const xml_node node)
+void cConfigFileParser::parseDevice(const xml_node node)
 {
     cCECDevice device;
     string id = node.attribute(XML_ID).as_string("");
@@ -718,7 +719,7 @@ void cCECConfigFileParser::parseDevice(const xml_node node)
  * Helper function to get the line number from the byte offset in the XML
  * error.
  */
-int cCECConfigFileParser::getLineNumber(long offset)
+int cConfigFileParser::getLineNumber(long offset)
 {
     int line = 1;
     FILE *fp = fopen (mXmlFile, "r");
@@ -740,7 +741,7 @@ int cCECConfigFileParser::getLineNumber(long offset)
  * parsed keymaps.
  * Returns false when a syntax error occurred during parsing.
  */
-bool cCECConfigFileParser::Parse(const string &filename, cCECkeymaps &keymaps) {
+bool cConfigFileParser::Parse(const string &filename, cCECkeymaps &keymaps) {
     bool ret = true;
     xml_document xmlDoc;
     xml_node currentNode;
@@ -835,3 +836,5 @@ bool cCECConfigFileParser::Parse(const string &filename, cCECkeymaps &keymaps) {
 
     return ret;
 }
+
+} // namespace cecplugin

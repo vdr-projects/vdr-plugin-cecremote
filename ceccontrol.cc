@@ -14,6 +14,8 @@
 #include "cecplayer.h"
 #include "ceclog.h"
 
+namespace cecplugin {
+
 cCECControl::cCECControl(const cCECMenu &menuitem, cPluginCecremote *plugin) :
     cControl(mCECPlayer = new cCECPlayer(menuitem))
 {
@@ -56,4 +58,6 @@ eOSState cCECControl::ProcessKey(eKeys key)
 
     return (osContinue);
 }
+
+} // namespace cecplugin
 

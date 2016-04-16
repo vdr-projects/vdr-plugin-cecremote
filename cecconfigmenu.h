@@ -13,6 +13,8 @@
 #ifndef CONFIGMENU_H_
 #define CONFIGMENU_H_
 
+namespace cecplugin {
+
 #include <vdr/plugin.h>
 
 class cCECConfigMenu: public cMenuSetupPage {
@@ -28,5 +30,7 @@ public:
     static const bool GetShowMainMenu(void) { return mShowMainMenu; }
     static const bool SetupParse(const char *Name, const char *Value);
 };
+
+} // namespace cecplugin
 
 #endif /* CONFIGMENU_H_ */

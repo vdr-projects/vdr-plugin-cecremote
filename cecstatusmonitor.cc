@@ -12,6 +12,7 @@
 #include "cecstatusmonitor.h"
 #include "ceclog.h"
 
+namespace cecplugin {
 cCECStatusMonitor::cCECStatusMonitor(cPluginCecremote *plugin) : mMonitorStatus(UNKNOWN) {
     mPlugin = plugin;
 }
@@ -76,3 +77,5 @@ void cCECStatusMonitor::Replaying(const cControl *Control, const char *Name,
         }
     }
 }
+
+} // namespace cecplugin

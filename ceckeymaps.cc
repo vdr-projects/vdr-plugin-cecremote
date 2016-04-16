@@ -15,6 +15,8 @@
 
 using namespace std;
 
+namespace cecplugin {
+
 const char *cCECkeymaps::DEFAULTKEYMAP = "default";
 
 cCECkeymaps::cCECkeymaps() {
@@ -373,3 +375,6 @@ void cCECkeymaps::SetActiveKeymaps(const string &vdrkeymapid,
     mActiveVdrKeyMap = mVDRKeyMap.at(vdrkeymapid);
     mActiveCecKeyMap = mCECKeyMap.at(ceckeymapid);
 }
+
+} // namespace cecplugin
+

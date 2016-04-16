@@ -17,6 +17,8 @@
 #include <vdr/player.h>
 #include <string>
 #include "cecremoteplugin.h"
+
+namespace cecplugin {
 // The maximum size of a single frame (up to HDTV 1920x1080):
 #define TS_SIZE 188
 #define CDMAXFRAMESIZE  (KILOBYTE(1024) / TS_SIZE * TS_SIZE) // multiple of TS_SIZE to avoid breaking up TS packets
@@ -35,5 +37,7 @@ public:
     cCECPlayer(const cCECMenu &config);
     virtual ~cCECPlayer();
 };
+
+} // namespace cecplugin
 
 #endif /* CECPLAYER_H_ */

@@ -9,8 +9,8 @@
  * cecconfigfileparser.h: Class for parsing the plugin configuration file.
  */
 
-#ifndef CECCONFIGFILEPARSER_H_
-#define CECCONFIGFILEPARSER_H_
+#ifndef CONFIGFILEPARSER_H_
+#define CONFIGFILEPARSER_H_
 
 #include <pugixml.hpp>
 #include <fstream>
@@ -25,6 +25,7 @@
 
 #include "cecremote.h"
 
+namespace cecplugin {
 typedef std::set<eKeys> keySet;
 
 // Class for storing information on <global> tags.
@@ -60,7 +61,7 @@ typedef std::map<std::string, cCECDevice> mCECDeviceMap;
 
 // Class for storing information on <menu> tags.
 class cCECMenu {
-    friend class cCECConfigFileParser;
+    friend class cConfigFileParser;
 public:
     typedef enum {
         UNDEFINED,
@@ -114,7 +115,7 @@ public:
 };
 
 // Configuration file parser
-class cCECConfigFileParser {
+class cConfigFileParser {
 private:
     // Helper function to get the line number from the byte offset in the XML
     // error.
@@ -212,7 +213,7 @@ public:
     // List of devices
     mCECDeviceMap mDeviceMap;
 
-    cCECConfigFileParser() : mXmlFile(NULL) {};
+    cConfigFileParser() : mXmlFile(NULL) {};
 
     // Parse the file, fill mGlobalOptions and mMenuList and return the
     // parsed keymaps.
@@ -220,4 +221,5 @@ public:
     bool Parse(const std::string &filename, cCECkeymaps &keymaps);
 };
 
+} // namespace cecplugin
 #endif /* CONFIGFILEPARSER_H_ */

@@ -23,6 +23,7 @@
 #include <cec.h>
 
 using namespace CEC;
+namespace cecplugin {
 
 // Key map CEC key->VDR keys
 typedef std::list<eKeys> cKeyList;
@@ -67,5 +68,7 @@ public:
 
     static const char *DEFAULTKEYMAP;
 };
+
+} // namespace cecplugin
 
 #endif /* _CECKEYMAPS_H_ */

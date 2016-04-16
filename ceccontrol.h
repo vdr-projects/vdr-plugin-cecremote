@@ -18,6 +18,8 @@
 #include "cecremoteplugin.h"
 #include "cecplayer.h"
 
+namespace cecplugin {
+
 class cCECControl: public cControl {
 private:
     cCECPlayer *mCECPlayer;
@@ -32,5 +34,7 @@ public:
     virtual cOsdObject *GetInfo(void) { return NULL; }
     virtual eOSState ProcessKey(eKeys Key);
 };
+
+} // namespace cecplugin
 
 #endif /* CECONTROL_H_ */

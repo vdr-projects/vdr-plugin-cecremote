@@ -28,6 +28,8 @@
 #include "ceckeymaps.h"
 #include "ceccmd.h"
 
+namespace cecplugin {
+
 #define MAX_CEC_ADAPTERS 10
 
 class cPluginCecremote;
@@ -94,5 +96,7 @@ private:
     cCmdQueue mOnStop;
     cCmdQueue mOnManualStart;
 };
+
+} // namespace cecplugin
 
 #endif /* CECREMOTE_H_ */

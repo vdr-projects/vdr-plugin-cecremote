@@ -18,6 +18,8 @@
 
 #include "cecremoteplugin.h"
 
+namespace cecplugin {
+
 class cCECStatusMonitor : public cStatus {
 protected:
     typedef enum {
@@ -56,5 +58,7 @@ public:
     cCECStatusMonitor(cPluginCecremote *plugin);
     virtual ~cCECStatusMonitor();
 };
+
+} // namespace cecplugin
 
 #endif /*_CECSTATUSMONITOR_H_ */

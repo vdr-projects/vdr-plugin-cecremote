@@ -18,6 +18,9 @@
 using namespace std;
 #include <cecloader.h>
 
+using namespace cecplugin;
+
+namespace cecplugin {
 const char *cCECRemote::VDRNAME = "VDR";
 /*
  * Callback when libCEC receives a key press
@@ -50,17 +53,9 @@ static int CecCommandCallback(void *cbParam, const cec_command command)
     Dsyslog("CEC Command %d : %s Init %d Dest %d", command.opcode,
                                    rem->mCECAdapter->ToString(command.opcode),
                                    command.initiator, command.destination);
-    switch (command.opcode)
-    {
-    case CEC_OPCODE_ACTIVE_SOURCE:
-        {
-            cCECCmd cmd(CEC_ACTIVE_SOURCE, (int)command.initiator);
-            rem->PushCmd(cmd);
-        }
-        break;
-    default:
-        break;
-    }
+    cCECCmd cmd(CEC_COMMAND, command.opcode, command.initiator);
+    rem->PushCmd(cmd);
+
     return 0;
 }
 
@@ -754,8 +749,8 @@ void cCECRemote::Action(void)
             Dsyslog("cCECRemote disconnect");
             Disconnect();
             break;
-        case CEC_ACTIVE_SOURCE:
-            Dsyslog("cCECRemote active source %d", cmd.mVal);
+        case CEC_COMMAND:
+            Dsyslog("cCECRemote command %d", cmd.mCecOpcode);
             break;
         case CEC_EXECTOGGLE:
             Dsyslog("cCECRemote exec_toggle");
@@ -931,3 +926,6 @@ void cCECRemote::Reconnect()
         mWorkerQueueWait.Signal();
     }
 }
+
+} // namespace cecplugin
+

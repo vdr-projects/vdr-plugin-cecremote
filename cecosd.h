@@ -16,6 +16,8 @@
 #include <vdr/plugin.h>
 #include "ceccontrol.h"
 
+namespace cecplugin {
+
 class cCECOsd : public cOsdMenu {
 public:
     static std::vector<cCECMenu> mMenuItems;
@@ -34,5 +36,7 @@ public:
   ~cCECOsdItem() {}
   virtual eOSState ProcessKey(eKeys key);
 };
+
+} // namespace cecplugin
 
 #endif /* CECOSD_H_ */

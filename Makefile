@@ -69,11 +69,11 @@ CFLAGS += $(shell pkg-config --cflags libcec)
 CXXFLAGS += $(shell pkg-config --cflags libcec)
 
 # Flags for pugixml xml parser
-LIBS += -lpugixml #$(shell pkg-config --libs xerces-c)
+LIBS += -lpugixml 
 
 ### The object files (add further files here):
 
-OBJS = cecremote.o cecremoteplugin.o cecconfigmenu.o cecconfigfileparser.o \
+OBJS = cecremote.o cecremoteplugin.o cecconfigmenu.o configfileparser.o \
        cecosd.o cecplayer.o ceccontrol.o ceckeymaps.o cecstatusmonitor.o \
        ceccmd.o
 
@@ -147,3 +147,4 @@ dist: $(I18Npo) clean
 clean:
 	@-rm -f $(PODIR)/*.mo $(PODIR)/*.pot
 	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~
+	@-rm -f .dependencies

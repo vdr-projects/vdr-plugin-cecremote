@@ -12,6 +12,8 @@
 
 #include "cecconfigmenu.h"
 
+namespace cecplugin {
+
 const char *cCECConfigMenu::ENABLEMAINMENU = "EnableMainMenu";
 int cCECConfigMenu::mShowMainMenu = true;
 
@@ -35,3 +37,5 @@ void cCECConfigMenu::Store(void)
 {
     SetupStore(ENABLEMAINMENU, (int)mShowMainMenu);
 }
+
+} // namespace cecplugin

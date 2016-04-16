@@ -20,11 +20,12 @@
 #include "ceckeymaps.h"
 #include "cecconfigmenu.h"
 
-static const char *VERSION        = "1.3.2";
+static const char *VERSION        = "1.3.3";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
 static const char *MAINMENUENTRY  = "CECremote";
 
 using namespace std;
+namespace cecplugin {
 
 cPluginCecremote::cPluginCecremote(void) :
         mCfgDir("cecremote"), mCfgFile("cecremote.xml"), mStatusMonitor(NULL),
@@ -280,3 +281,5 @@ void cPluginCecremote::SetDefaultKeymaps()
 }
 
 VDRPLUGINCREATOR(cPluginCecremote); // Don't touch this!
+
+} // namespace cecplugin
