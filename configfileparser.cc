@@ -15,6 +15,7 @@
 #include "ceclog.h"
 #include "configfileparser.h"
 #include "stringtools.h"
+#include "opcodemap.h"
 
 using namespace std;
 using namespace pugi;
@@ -80,9 +81,11 @@ void cConfigFileParser::parseOnCecCommand(const xml_node node) {
     }
 
     if (!textToInt(command, h.mCecOpCode)) {
-       string s = "CEC Command not an integer";
-       Esyslog(s.c_str());
-       throw cCECConfigException(getLineNumber(node.offset_debug()), s);
+        if (!opcodeMap::getOpcode(command, h.mCecOpCode)) {
+            string s = "CEC Command not an integer";
+            Esyslog(s.c_str());
+            throw cCECConfigException(getLineNumber(node.offset_debug()), s);
+        }
     }
 
     const char *device = node.attribute(XML_INITIATOR).as_string("");
