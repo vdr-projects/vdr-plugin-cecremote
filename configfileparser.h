@@ -39,7 +39,7 @@ public:
     cCECCommandHandler() : mCecOpCode(CEC_OPCODE_NONE) {};
 };
 
-typedef std::map<cec_opcode, cCECCommandHandler> mapCommandHandler;
+typedef std::multimap<cec_opcode, cCECCommandHandler> mapCommandHandler;
 typedef mapCommandHandler::iterator mapCommandHandlerIterator;
 
 typedef std::set<eKeys> keySet;

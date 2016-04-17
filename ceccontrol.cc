@@ -11,13 +11,13 @@
  */
 
 #include "ceccontrol.h"
-#include "cecplayer.h"
+#include "stillpicplayer.h"
 #include "ceclog.h"
 
 namespace cecplugin {
 
 cCECControl::cCECControl(const cCECMenu &menuitem, cPluginCecremote *plugin) :
-    cControl(mCECPlayer = new cCECPlayer(menuitem))
+    cControl(mStillPicPlayer = new cStillPicPlayer(menuitem))
 {
     mPlugin = plugin;
     mMenuItem = menuitem;
@@ -28,7 +28,7 @@ cCECControl::cCECControl(const cCECMenu &menuitem, cPluginCecremote *plugin) :
 cCECControl::~cCECControl() {
     mPlugin->PushCmdQueue(mMenuItem.mOnStop);
     mPlugin->SetDefaultKeymaps();
-    delete mCECPlayer;
+    delete mStillPicPlayer;
 }
 
 void cCECControl::Hide(void)

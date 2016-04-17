@@ -97,6 +97,8 @@ public:
         mSerial = c.mSerial;
         mPoweron = c.mPoweron;
         mPoweroff = c.mPoweroff;
+        mCecOpcode = c.mCecOpcode;
+        mCecLogicalAddress = c.mCecLogicalAddress;
         return *this;
     }
 };

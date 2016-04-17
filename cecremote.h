@@ -1,7 +1,7 @@
 /*
  * CECRemote PlugIn for VDR
  *
- * Copyright (C) 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ * Copyright (C) 2015-2016 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
  *
  * This code is distributed under the terms and conditions of the
  * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
@@ -83,6 +83,7 @@ private:
     void Disconnect(void);
     void ActionKeyPress(cCmd &cmd);
     void Action(void);
+    void CECCommand(const cCmd &cmd);
     cCmd WaitCmd(int timeout = 5000);
     cCmd WaitExec(pid_t pid);
     void Exec(cCmd &cmd);

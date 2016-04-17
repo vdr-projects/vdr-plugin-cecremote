@@ -1,7 +1,7 @@
 /*
  * CECRemote PlugIn for VDR
  *
- * Copyright (C) 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ * Copyright (C) 2015-2016 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
  *
  * This code is distributed under the terms and conditions of the
  * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
@@ -89,36 +89,35 @@ void cConfigFileParser::parseOnCecCommand(const xml_node node) {
     }
 
     const char *device = node.attribute(XML_INITIATOR).as_string("");
-    getDevice(device, h.mDevice, node.offset_debug());
-    Dsyslog("         Handle Command %d Device %d %d\n",
-            h.mCecOpCode, h.mDevice.mLogicalAddressDefined, h.mDevice.mLogicalAddressUsed);
+    getDevice(device, h.mDevice, getLineNumber(node.offset_debug()));
+    Dsyslog("         Handle Command %d Device %d %d\n", h.mCecOpCode,
+            h.mDevice.mLogicalAddressDefined, h.mDevice.mLogicalAddressUsed);
 
-    for (xml_node currentNode = node.first_child(); currentNode;
-                currentNode = currentNode.next_sibling()) {
+    for (xml_node currentNode = node.first_child(); currentNode; currentNode =
+            currentNode.next_sibling()) {
 
         if (currentNode.type() == node_element)  // is element
-        {
-            Dsyslog("          %s %s\n", currentNode.name(), currentNode.text().as_string());
+                {
+            Dsyslog("          %s %s\n", currentNode.name(),
+                    currentNode.text().as_string());
 
             if (strcasecmp(currentNode.name(), XML_COMMANDLIST) == 0) {
                 parseList(currentNode, h.mCommands);
-            }
-            else if (strcasecmp(currentNode.name(), XML_EXECMENU) == 0) {
+            } else if (strcasecmp(currentNode.name(), XML_EXECMENU) == 0) {
                 h.mExecMenu = currentNode.text().as_string("");
-            }
-            else if (strcasecmp(currentNode.name(), XML_STOPMENU) == 0) {
+            } else if (strcasecmp(currentNode.name(), XML_STOPMENU) == 0) {
                 h.mStopMenu = currentNode.text().as_string("");
-            }
-            else {
+            } else {
                 string s = "Invalid command ";
                 s += currentNode.name();
-                throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                throw cCECConfigException(
+                        getLineNumber(currentNode.offset_debug()), s);
             }
         }
     }
 
     mGlobalOptions.mCECCommandHandlers.insert(
-              std::pair<cec_opcode, cCECCommandHandler>(h.mCecOpCode, h));
+            std::pair<cec_opcode, cCECCommandHandler>(h.mCecOpCode, h));
 }
 
 /*
@@ -261,7 +260,7 @@ void cConfigFileParser::parseList(const xml_node node,
             if (strcasecmp(currentNode.name(), XML_POWERON) == 0) {
                 cmd.mCmd = CEC_POWERON;
                 getDevice(currentNode.text().as_string(""), cmd.mDevice,
-                          currentNode.offset_debug());
+                        getLineNumber(currentNode.offset_debug()));
                 cmd.mExec = "";
                 Dsyslog("         POWERON %s\n", currentNode.text().as_string(""));
                 cmdlist.push_back(cmd);
@@ -269,7 +268,7 @@ void cConfigFileParser::parseList(const xml_node node,
             else if (strcasecmp(currentNode.name(), XML_POWEROFF) == 0) {
                 cmd.mCmd = CEC_POWEROFF;
                 getDevice(currentNode.text().as_string(""), cmd.mDevice,
-                          currentNode.offset_debug());
+                          getLineNumber(currentNode.offset_debug()));
                 cmd.mExec = "";
                 Dsyslog("         POWEROFF %s\n", currentNode.text().as_string(""));
                 cmdlist.push_back(cmd);
@@ -286,7 +285,7 @@ void cConfigFileParser::parseList(const xml_node node,
             } else if (strcasecmp(currentNode.name(),XML_TEXTVIEWON) == 0) {
                 cmd.mCmd = CEC_TEXTVIEWON;
                 getDevice(currentNode.text().as_string(""), cmd.mDevice,
-                          currentNode.offset_debug());
+                         getLineNumber(currentNode.offset_debug()));
                 cmd.mExec = "";
                 Dsyslog("         CEC_TEXTVIEWON %s\n", currentNode.text().as_string(""));
                 cmdlist.push_back(cmd);
@@ -320,7 +319,7 @@ void cConfigFileParser::parseMenu(const xml_node node)
     }
 
     getDevice(node.attribute("address").as_string(""), menu.mDevice,
-              node.offset_debug());
+            getLineNumber(node.offset_debug()));
     Dsyslog ("  Menu %s (%s)\n", menu.mMenuTitle.c_str(),
             node.attribute("address").as_string(""));
 
@@ -486,78 +485,85 @@ void cConfigFileParser::parseGlobal(const pugi::xml_node node)
                 parseList(currentNode, mGlobalOptions.mOnSwitchToRadio);
             }
             // <onSwitchToRadio>
-            else if (strcasecmp(currentNode.name(), XML_ONSWITCHTOREPLAY) == 0) {
+            else if (strcasecmp(currentNode.name(), XML_ONSWITCHTOREPLAY)
+                    == 0) {
                 parseList(currentNode, mGlobalOptions.mOnSwitchToReplay);
-            }
-            else if (strcasecmp(currentNode.name(), XML_CECDEVICETYPE) == 0) {
+            } else if (strcasecmp(currentNode.name(), XML_CECDEVICETYPE) == 0) {
                 if (!currentNode.first_child()) {
                     string s = "No nodes allowed for cecdebug: ";
                     s += currentNode.first_child().name();
-                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                    throw cCECConfigException(
+                            getLineNumber(currentNode.offset_debug()), s);
                 }
-                cec_device_type t = getDeviceType(currentNode.text().as_string(""));
+                cec_device_type t = getDeviceType(
+                        currentNode.text().as_string(""));
                 if (t == CEC_DEVICE_TYPE_RESERVED) {
                     string s = "Invalid device type: ";
                     s += currentNode.text().as_string("");
-                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                    throw cCECConfigException(
+                            getLineNumber(currentNode.offset_debug()), s);
                 }
                 mGlobalOptions.mDeviceTypes.push_back(t);
                 Dsyslog("CECDevicetype = %d \n", t);
-            }
-            else if (strcasecmp(currentNode.name(), XML_KEYMAPS) == 0) {
-                mGlobalOptions.mVDRKeymap = currentNode.attribute(XML_VDR).
-                                        as_string(cKeyMaps::DEFAULTKEYMAP);
-                mGlobalOptions.mCECKeymap = currentNode.attribute(XML_CEC).
-                                        as_string(cKeyMaps::DEFAULTKEYMAP);
+            } else if (strcasecmp(currentNode.name(), XML_KEYMAPS) == 0) {
+                mGlobalOptions.mVDRKeymap =
+                        currentNode.attribute(XML_VDR).as_string(
+                                cKeyMaps::DEFAULTKEYMAP);
+                mGlobalOptions.mCECKeymap =
+                        currentNode.attribute(XML_CEC).as_string(
+                                cKeyMaps::DEFAULTKEYMAP);
                 Dsyslog("Keymap VDR %s CEC %s",
                         mGlobalOptions.mVDRKeymap.c_str(),
                         mGlobalOptions.mCECKeymap.c_str());
-            }
-            else if (strcasecmp(currentNode.name(), XML_HDMIPORT) == 0) {
+            } else if (strcasecmp(currentNode.name(), XML_HDMIPORT) == 0) {
                 if (!textToInt(currentNode.text().as_string("1000"),
-                    mGlobalOptions.mHDMIPort)) {
+                        mGlobalOptions.mHDMIPort)) {
                     string s = "Invalid numeric in hdmiport";
-                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                    throw cCECConfigException(
+                            getLineNumber(currentNode.offset_debug()), s);
                 }
-                if ((mGlobalOptions.mHDMIPort < CEC_HDMI_PORTNUMBER_NONE) ||
-                    (mGlobalOptions.mHDMIPort) > CEC_MAX_HDMI_PORTNUMBER) {
+                if ((mGlobalOptions.mHDMIPort < CEC_HDMI_PORTNUMBER_NONE)
+                        || (mGlobalOptions.mHDMIPort) > CEC_MAX_HDMI_PORTNUMBER) {
                     string s = "Allowed value for hdmiport 0-15";
-                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                    throw cCECConfigException(
+                            getLineNumber(currentNode.offset_debug()), s);
                 }
-            }
-            else if (strcasecmp(currentNode.name(), XML_BASEDEVICE) == 0) {
+            } else if (strcasecmp(currentNode.name(), XML_BASEDEVICE) == 0) {
                 if (!textToInt(currentNode.text().as_string("0"),
-                    mGlobalOptions.mBaseDevice)) {
+                        mGlobalOptions.mBaseDevice)) {
                     string s = "Invalid numeric in basedevice";
-                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                    throw cCECConfigException(
+                            getLineNumber(currentNode.offset_debug()), s);
                 }
-                if ((mGlobalOptions.mBaseDevice < CEC_HDMI_PORTNUMBER_NONE) ||
-                    (mGlobalOptions.mBaseDevice) > CECDEVICE_BROADCAST) {
+                if ((mGlobalOptions.mBaseDevice < CEC_HDMI_PORTNUMBER_NONE)
+                        || (mGlobalOptions.mBaseDevice) > CECDEVICE_BROADCAST) {
                     string s = "Allowed value for basedevice 0-15";
-                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                    throw cCECConfigException(
+                            getLineNumber(currentNode.offset_debug()), s);
                 }
-            }
-            else if (strcasecmp(currentNode.name(), XML_SHUTDOWNONSTANDBY) == 0) {
+            } else if (strcasecmp(currentNode.name(), XML_SHUTDOWNONSTANDBY)
+                    == 0) {
                 if (!textToBool(currentNode.text().as_string(""),
-                     mGlobalOptions.mShutdownOnStandby)) {
+                        mGlobalOptions.mShutdownOnStandby)) {
                     string s = "Only true or false allowed";
-                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                    throw cCECConfigException(
+                            getLineNumber(currentNode.offset_debug()), s);
                 }
-            }
-            else if (strcasecmp(currentNode.name(), XML_POWEROFFONSTANDBY) == 0) {
+            } else if (strcasecmp(currentNode.name(), XML_POWEROFFONSTANDBY)
+                    == 0) {
                 if (!textToBool(currentNode.text().as_string(""),
-                     mGlobalOptions.mPowerOffOnStandby)) {
+                        mGlobalOptions.mPowerOffOnStandby)) {
                     string s = "Only true or false allowed";
-                    throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                    throw cCECConfigException(
+                            getLineNumber(currentNode.offset_debug()), s);
                 }
-            }
-            else if (strcasecmp(currentNode.name(), XML_ONCECCOMMAND) == 0) {
+            } else if (strcasecmp(currentNode.name(), XML_ONCECCOMMAND) == 0) {
                 parseOnCecCommand(currentNode);
-            }
-            else {
+            } else {
                 string s = "Invalid Node ";
                 s += currentNode.name();
-                throw cCECConfigException(getLineNumber(currentNode.offset_debug()), s);
+                throw cCECConfigException(
+                        getLineNumber(currentNode.offset_debug()), s);
             }
         }
     }
@@ -607,19 +613,21 @@ void cConfigFileParser::parseVDRKeymap(const xml_node node, cKeyMaps &keymaps)
             for (xml_node ceckeynode = currentNode.first_child(); ceckeynode;
                     ceckeynode = ceckeynode.next_sibling()) {
                 if (ceckeynode.type() == node_element)  // is element
-                {
+                        {
                     if (strcasecmp(ceckeynode.name(), XML_VALUE) != 0) {
                         string s = "Invalid node ";
                         s += ceckeynode.name();
                         Esyslog(s.c_str());
-                        throw cCECConfigException(getLineNumber(ceckeynode.offset_debug()), s);
+                        throw cCECConfigException(
+                                getLineNumber(ceckeynode.offset_debug()), s);
                     }
                     string ceckey = ceckeynode.text().as_string();
                     cec_user_control_code c = keymaps.StringToCEC(ceckey);
                     if (c == CEC_USER_CONTROL_CODE_UNKNOWN) {
                         string s = "Unknown CEC key code " + ceckey;
                         Esyslog(s.c_str());
-                        throw cCECConfigException(getLineNumber(ceckeynode.offset_debug()), s);
+                        throw cCECConfigException(
+                                getLineNumber(ceckeynode.offset_debug()), s);
                     }
                     keymaps.AddVDRKey(id, k, c);
                 }
@@ -901,24 +909,28 @@ bool cConfigFileParser::Parse(const string &filename, cKeyMaps &keymaps) {
 
     // Check that referenced menu entries in onceccommand/execmenu,startmenu
     // are defined
+    if (ret) {
+        cCECMenu m;
+        for (mapCommandHandlerIterator i =
+                mGlobalOptions.mCECCommandHandlers.begin();
+                i != mGlobalOptions.mCECCommandHandlers.end(); i++) {
+            cCECCommandHandler h = i->second;
+            if (!h.mExecMenu.empty()) {
+                if (!FindMenu(h.mExecMenu, m)) {
+                    Esyslog("Menu %s in execmenu not found",
+                            h.mExecMenu.c_str());
+                    ret = false;
+                }
+            }
 
-    cCECMenu m;
-    for (mapCommandHandlerIterator i = mGlobalOptions.mCECCommandHandlers.begin();
-            i != mGlobalOptions.mCECCommandHandlers.end(); i++) {
-        cCECCommandHandler h = i->second;
-        if (!h.mExecMenu.empty()) {
-            if (!FindMenu(h.mExecMenu, m)) {
-                Esyslog ("Menu %s in execmenu not found", h.mExecMenu.c_str());
-                ret = false;
+            if (!h.mStopMenu.empty()) {
+                if (!FindMenu(h.mStopMenu, m)) {
+                    Esyslog("Menu %s in stopmenu not found",
+                            h.mStopMenu.c_str());
+                    ret = false;
+                }
             }
         }
-
-        if (!h.mStopMenu.empty()) {
-           if (!FindMenu(h.mStopMenu, m)) {
-               Esyslog ("Menu %s in stopmenu not found", h.mStopMenu.c_str());
-               ret = false;
-           }
-       }
     }
     return ret;
 }

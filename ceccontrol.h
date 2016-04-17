@@ -1,7 +1,7 @@
 /*
  * CECRemote PlugIn for VDR
  *
- * Copyright (C) 2014, 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ * Copyright (C) 2014-2016 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
  *
  * This code is distributed under the terms and conditions of the
  * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
@@ -16,13 +16,13 @@
 #include <vdr/player.h>
 
 #include "cecremoteplugin.h"
-#include "cecplayer.h"
+#include "stillpicplayer.h"
 
 namespace cecplugin {
 
 class cCECControl: public cControl {
 private:
-    cCECPlayer *mCECPlayer;
+    cStillPicPlayer *mStillPicPlayer;
     cPluginCecremote *mPlugin;
     cCECMenu mMenuItem;
 
@@ -33,6 +33,9 @@ public:
     virtual void Hide(void);
     virtual cOsdObject *GetInfo(void) { return NULL; }
     virtual eOSState ProcessKey(eKeys Key);
+    std::string getMenuTitle() {
+        return mMenuItem.mMenuTitle;
+    }
 };
 
 } // namespace cecplugin

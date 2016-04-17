@@ -42,6 +42,12 @@ static void ceclogmsg (int severity, const char *format, ...)
 #define Isyslog(a...) ceclogmsg(1, a)
 #define Dsyslog(a...) ceclogmsg(2, a)
 
+#ifdef VERBOSEDEBUG
+#define Csyslog(a...) ceclogmsg(2, a)
+#else
+#define Csyslog(a...)
+#endif
+
 } // namespace cecplugin
 
 #endif /* CECLOG_H_ */

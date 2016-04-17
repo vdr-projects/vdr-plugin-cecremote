@@ -63,6 +63,9 @@ INCLUDES +=
 
 DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
 
+# Uncomment for more debug messages
+DEFINES += -DVERBOSEDEBUG
+
 # Flags for libcec
 LIBS += $(shell pkg-config --libs libcec)
 CFLAGS += $(shell pkg-config --cflags libcec)
@@ -74,8 +77,8 @@ LIBS += -lpugixml
 ### The object files (add further files here):
 
 OBJS = cecremote.o cecremoteplugin.o configmenu.o configfileparser.o \
-       cecosd.o cecplayer.o ceccontrol.o keymaps.o statusmonitor.o \
-       cmd.o opcodemap.o
+       cecosd.o stillpicplayer.o ceccontrol.o keymaps.o statusmonitor.o \
+       cmd.o opcodemap.o handleactions.o
 
 ### The main target:
 

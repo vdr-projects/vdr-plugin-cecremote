@@ -84,6 +84,12 @@ public:
     void PushCmdQueue(const cCmdQueue &cmdList) {mCECRemote->PushCmdQueue(cmdList);}
     cCECMenuList *GetMenuList() {return &mConfigFileParser.mMenuList;}
     bool GetStartManually() {return mStartManually;}
+    mapCommandHandler *GetCECCommandHandlers() {
+        return &mConfigFileParser.mGlobalOptions.mCECCommandHandlers;
+    }
+    bool FindMenu(const std::string &menuname, cCECMenu &menu) {
+        return mConfigFileParser.FindMenu(menuname, menu);
+    }
 };
 
 } // namespace cecplugin
