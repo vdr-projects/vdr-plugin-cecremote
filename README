@@ -239,6 +239,30 @@ are mutually exclusive.
 <onpoweroff>: A command list which is executed if the device is currently 
               powered on.
 
+* OnCECCommand
+====================================
+
+Perform actions when a cec command is received. 
+
+The <onceccommand> must have the following attributes:
+  * command :   A CEC opcode as string as defined in cectypes.h, but without the
+                CEC_OPCODE_ prefix. The opcode can also be defined as a numeric or
+                hex value. The following examples are valid defines for
+                CEC_OPCODE_STANDBY:
+              
+                command="STANDBY", command="0x36", command="54"
+  * initiator : The device which initiated this command.
+  
+The child elements of <onceccommand> are <stopmenu>, <execmenu> and
+<commandlist>.
+
+<stopmenu>menu name</stopmenu>:
+    If a menu with the name has a still pic player, this player is stopped.
+<execmenu>menu name</execmenu>:
+    Execute the CEC plugin menu entry with the name.
+<commandlist>:
+   A command list which is executed when this command is received.
+
 * Player 
 ====================================
 Starts a stillpic player and waits until the player is stopped. This tag can 

@@ -101,3 +101,7 @@ VDR Plugin 'cecremote' Revision History
 - Fix manual/automatic start detection (reported by jack-itb)
 - Use a c++ namespace for the plugin code.
 - Removed cec prefixes for several files and classes.
+- Moved CEC initialization into worker thread for faster startup.
+- Add new config option <onceccommand> which allows to start a menu, stop
+  a CEC menu with still picture player and executes a command list.
+  

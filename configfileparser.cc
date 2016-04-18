@@ -90,7 +90,7 @@ void cConfigFileParser::parseOnCecCommand(const xml_node node) {
 
     const char *device = node.attribute(XML_INITIATOR).as_string("");
     getDevice(device, h.mDevice, getLineNumber(node.offset_debug()));
-    Dsyslog("         Handle Command %d Device %d %d\n", h.mCecOpCode,
+    Dsyslog("Handle Command %d Device %d %d\n", h.mCecOpCode,
             h.mDevice.mLogicalAddressDefined, h.mDevice.mLogicalAddressUsed);
 
     for (xml_node currentNode = node.first_child(); currentNode; currentNode =
@@ -98,7 +98,7 @@ void cConfigFileParser::parseOnCecCommand(const xml_node node) {
 
         if (currentNode.type() == node_element)  // is element
                 {
-            Dsyslog("          %s %s\n", currentNode.name(),
+            Dsyslog("   %s %s\n", currentNode.name(),
                     currentNode.text().as_string());
 
             if (strcasecmp(currentNode.name(), XML_COMMANDLIST) == 0) {
@@ -557,8 +557,6 @@ void cConfigFileParser::parseGlobal(const pugi::xml_node node)
                     throw cCECConfigException(
                             getLineNumber(currentNode.offset_debug()), s);
                 }
-            } else if (strcasecmp(currentNode.name(), XML_ONCECCOMMAND) == 0) {
-                parseOnCecCommand(currentNode);
             } else {
                 string s = "Invalid Node ";
                 s += currentNode.name();
@@ -897,6 +895,12 @@ bool cConfigFileParser::Parse(const string &filename, cKeyMaps &keymaps) {
         for (currentNode = elementRoot.child(XML_MENU); currentNode;
                 currentNode = currentNode.next_sibling(XML_MENU)) {
             parseMenu(currentNode);
+        }
+
+        // Parse all onceccommand definitions
+        for (currentNode = elementRoot.child(XML_ONCECCOMMAND); currentNode;
+                currentNode = currentNode.next_sibling(XML_ONCECCOMMAND)) {
+            parseOnCecCommand(currentNode);
         }
 
     } catch (const cCECConfigException &e) {

@@ -64,7 +64,7 @@ INCLUDES +=
 DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
 
 # Uncomment for more debug messages
-DEFINES += -DVERBOSEDEBUG
+# DEFINES += -DVERBOSEDEBUG
 
 # Flags for libcec
 LIBS += $(shell pkg-config --libs libcec)
