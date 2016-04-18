@@ -16,6 +16,9 @@
 #include "ceclog.h"
 
 using namespace std;
+using namespace cecplugin;
+
+namespace cecplugin {
 
 std::vector<cCECMenu> cCECOsd::mMenuItems;
 
@@ -70,3 +73,6 @@ eOSState cCECOsdItem::ProcessKey(eKeys key) {
     }
     return state;
 }
+
+} // namespace cecplugin
+

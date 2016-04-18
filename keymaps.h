@@ -1,7 +1,7 @@
 /*
  * CECRemote PlugIn for VDR
  *
- * Copyright (C) 2014, 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ * Copyright (C) 2015-2016 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
  *
  * This code is distributed under the terms and conditions of the
  * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
@@ -23,10 +23,11 @@
 #include <cec.h>
 
 using namespace CEC;
+namespace cecplugin {
 
 // Key map CEC key->VDR keys
 typedef std::list<eKeys> cKeyList;
-typedef std::vector<cKeyList> cCECKeyMap;
+typedef std::vector<cKeyList> cKeyMap;
 typedef cKeyList::const_iterator cKeyListIterator;
 
 // Key map VDR key->CEC keys
@@ -34,19 +35,19 @@ typedef std::list<cec_user_control_code>cCECList;
 typedef std::vector<cCECList> cVDRKeyMap;
 typedef cCECList::const_iterator cCECListIterator;
 
-class cCECkeymaps {
+class cKeyMaps {
 private:
     eKeys mDefaultKeyMap[CEC_USER_CONTROL_CODE_MAX+1][2];
     const char *mCECKeyNames[CEC_USER_CONTROL_CODE_MAX+1];
 
     std::map<std::string, cVDRKeyMap> mVDRKeyMap;
-    std::map<std::string, cCECKeyMap> mCECKeyMap;
+    std::map<std::string, cKeyMap> mCECKeyMap;
     cVDRKeyMap mActiveVdrKeyMap;
-    cCECKeyMap mActiveCecKeyMap;
+    cKeyMap mActiveCecKeyMap;
 
     cec_user_control_code getFirstCEC(eKeys key);
 public:
-    cCECkeymaps();
+    cKeyMaps();
     void InitVDRKeyFromDefault(std::string id);
     void InitCECKeyFromDefault(std::string id);
     void ClearCECKey(std::string id, cec_user_control_code k);
@@ -67,5 +68,7 @@ public:
 
     static const char *DEFAULTKEYMAP;
 };
+
+} // namespace cecplugin
 
 #endif /* _CECKEYMAPS_H_ */

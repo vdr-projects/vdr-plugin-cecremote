@@ -1,7 +1,7 @@
 /*
  * CECRemote PlugIn for VDR
  *
- * Copyright (C) 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ * Copyright (C) 2015-2016 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
  *
  * This code is distributed under the terms and conditions of the
  * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
@@ -18,7 +18,9 @@
 
 #include "cecremoteplugin.h"
 
-class cCECStatusMonitor : public cStatus {
+namespace cecplugin {
+
+class cStatusMonitor : public cStatus {
 protected:
     typedef enum {
         UNKNOWN,
@@ -53,8 +55,10 @@ protected:
     MonitorStatus mMonitorStatus;
     cPluginCecremote *mPlugin;
 public:
-    cCECStatusMonitor(cPluginCecremote *plugin);
-    virtual ~cCECStatusMonitor();
+    cStatusMonitor(cPluginCecremote *plugin);
+    virtual ~cStatusMonitor();
 };
+
+} // namespace cecplugin
 
 #endif /*_CECSTATUSMONITOR_H_ */

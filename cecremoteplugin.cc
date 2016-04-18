@@ -1,7 +1,7 @@
 /*
  * CECRemote PlugIn for VDR
  *
- * Copyright (C) 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ * Copyright (C) 2015-2016 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
  *
  * This code is distributed under the terms and conditions of the
  * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
@@ -17,10 +17,12 @@
 #include "ceclog.h"
 #include "cecosd.h"
 #include "stringtools.h"
-#include "ceckeymaps.h"
-#include "cecconfigmenu.h"
+#include "keymaps.h"
+#include "configmenu.h"
 
-static const char *VERSION        = "1.3.2";
+namespace cecplugin {
+
+static const char *VERSION        = "1.3.5";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
 static const char *MAINMENUENTRY  = "CECremote";
 
@@ -58,7 +60,7 @@ const char *cPluginCecremote::Description(void)
 
 const char *cPluginCecremote::MainMenuEntry(void)
 {
-    if (cCECConfigMenu::GetShowMainMenu()) {
+    if (cConfigMenu::GetShowMainMenu()) {
         return tr(MAINMENUENTRY);
     }
     return NULL;
@@ -129,7 +131,7 @@ bool cPluginCecremote::Initialize(void)
 bool cPluginCecremote::Start(void)
 {
     mCECRemote->Startup();
-    mStatusMonitor = new cCECStatusMonitor(this);
+    mStatusMonitor = new cStatusMonitor(this);
     return true;
 }
 
@@ -197,13 +199,13 @@ cOsdObject *cPluginCecremote::MainMenuAction(void)
 
 cMenuSetupPage *cPluginCecremote::SetupMenu(void)
 {
-    return new cCECConfigMenu();
+    return new cConfigMenu();
 }
 
 bool cPluginCecremote::SetupParse(const char *Name, const char *Value)
 {
     // Parse your own setup parameters and store their values.
-    return cCECConfigMenu::SetupParse(Name, Value);
+    return cConfigMenu::SetupParse(Name, Value);
 }
 
 bool cPluginCecremote::Service(const char *Id, void *Data)
@@ -256,12 +258,12 @@ cString cPluginCecremote::SVDRPCommand(const char *Command, const char *Option, 
         return mKeyMaps.ListCECKeyMap(s);
     }
     else if (strcasecmp(Command, "DISC") == 0) {
-        cCECCmd cmd(CEC_DISCONNECT);
+        cCmd cmd(CEC_DISCONNECT);
         mCECRemote->PushWaitCmd(cmd);
         return "Disconnected";
     }
     else if (strcasecmp(Command, "CONN") == 0) {
-        cCECCmd cmd(CEC_CONNECT);
+        cCmd cmd(CEC_CONNECT);
         mCECRemote->PushWaitCmd(cmd);
         return "Connected";
     }
@@ -279,4 +281,7 @@ void cPluginCecremote::SetDefaultKeymaps()
                               mConfigFileParser.mGlobalOptions.mCECKeymap);
 }
 
-VDRPLUGINCREATOR(cPluginCecremote); // Don't touch this!
+} // namespace cecplugin
+
+VDRPLUGINCREATOR(cecplugin::cPluginCecremote); // Don't touch this!
+

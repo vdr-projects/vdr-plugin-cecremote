@@ -1,7 +1,7 @@
 /*
  * CECRemote PlugIn for VDR
  *
- * Copyright (C) 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ * Copyright (C) 2015-2016 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
  *
  * This code is distributed under the terms and conditions of the
  * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
@@ -9,18 +9,20 @@
  * This class implements the status monitor for channel switch information.
  */
 
-#include "cecstatusmonitor.h"
+#include "statusmonitor.h"
 #include "ceclog.h"
 
-cCECStatusMonitor::cCECStatusMonitor(cPluginCecremote *plugin) : mMonitorStatus(UNKNOWN) {
+namespace cecplugin {
+
+cStatusMonitor::cStatusMonitor(cPluginCecremote *plugin) : mMonitorStatus(UNKNOWN) {
     mPlugin = plugin;
 }
 
-cCECStatusMonitor::~cCECStatusMonitor() {
+cStatusMonitor::~cStatusMonitor() {
 
 }
 
-void cCECStatusMonitor::ChannelSwitch(const cDevice *Device, int ChannelNumber,
+void cStatusMonitor::ChannelSwitch(const cDevice *Device, int ChannelNumber,
                                       bool LiveView)
 {
     char l = 'f';
@@ -65,7 +67,7 @@ void cCECStatusMonitor::ChannelSwitch(const cDevice *Device, int ChannelNumber,
     }
 }
 
-void cCECStatusMonitor::Replaying(const cControl *Control, const char *Name,
+void cStatusMonitor::Replaying(const cControl *Control, const char *Name,
                                   const char *FileName, bool On)
 {
     Dsyslog("Replaying");
@@ -76,3 +78,5 @@ void cCECStatusMonitor::Replaying(const cControl *Control, const char *Name,
         }
     }
 }
+
+} // namespace cecplugin

@@ -10,17 +10,19 @@
  *
  */
 
-#include "cecconfigmenu.h"
+#include "configmenu.h"
 
-const char *cCECConfigMenu::ENABLEMAINMENU = "EnableMainMenu";
-int cCECConfigMenu::mShowMainMenu = true;
+namespace cecplugin {
 
-cCECConfigMenu::cCECConfigMenu() : cMenuSetupPage()
+const char *cConfigMenu::ENABLEMAINMENU = "EnableMainMenu";
+int cConfigMenu::mShowMainMenu = true;
+
+cConfigMenu::cConfigMenu() : cMenuSetupPage()
 {
     Add(new cMenuEditBoolItem(tr("Show in main menu"), &mShowMainMenu));
 }
 
-const bool cCECConfigMenu::SetupParse(const char *Name, const char *Value)
+const bool cConfigMenu::SetupParse(const char *Name, const char *Value)
 {
     if (strcasecmp(Name, ENABLEMAINMENU) == 0) {
         mShowMainMenu = atoi(Value);
@@ -31,7 +33,9 @@ const bool cCECConfigMenu::SetupParse(const char *Name, const char *Value)
     return true;
 }
 
-void cCECConfigMenu::Store(void)
+void cConfigMenu::Store(void)
 {
     SetupStore(ENABLEMAINMENU, (int)mShowMainMenu);
 }
+
+} // namespace cecplugin

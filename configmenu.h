@@ -15,7 +15,9 @@
 
 #include <vdr/plugin.h>
 
-class cCECConfigMenu: public cMenuSetupPage {
+namespace cecplugin {
+
+class cConfigMenu: public cMenuSetupPage {
 private:
     static int mShowMainMenu;
     static const char *ENABLEMAINMENU;
@@ -24,9 +26,11 @@ protected:
     virtual void Store(void);
 
 public:
-    cCECConfigMenu(void);
+    cConfigMenu(void);
     static const bool GetShowMainMenu(void) { return mShowMainMenu; }
     static const bool SetupParse(const char *Name, const char *Value);
 };
+
+} // namespace cecplugin
 
 #endif /* CONFIGMENU_H_ */

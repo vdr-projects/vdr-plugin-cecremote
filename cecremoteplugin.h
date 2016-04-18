@@ -16,24 +16,26 @@
 
 #include <vdr/plugin.h>
 #include "cecremote.h"
-#include "cecconfigmenu.h"
-#include "cecconfigfileparser.h"
-#include "cecstatusmonitor.h"
+#include "configmenu.h"
+#include "configfileparser.h"
+#include "statusmonitor.h"
+
+namespace cecplugin {
 
 class cCECOsd;
-class cCECStatusMonitor;
+class cStatusMonitor;
 
 class cPluginCecremote : public cPlugin {
-    friend class cCECStatusMonitor;
+    friend class cStatusMonitor;
 protected:
     int mCECLogLevel;
 
     std::string mCfgDir;
     std::string mCfgFile;
 
-    cCECConfigFileParser mConfigFileParser;
+    cConfigFileParser mConfigFileParser;
     cCECRemote *mCECRemote;
-    cCECStatusMonitor *mStatusMonitor;
+    cStatusMonitor *mStatusMonitor;
     bool mStartManually;
 
     const std::string GetConfigDir(void) {
@@ -48,12 +50,12 @@ protected:
         return cf;
     }
     void ExecToggle(cCECMenu menu) {
-        cCECCmd cmd(CEC_EXECTOGGLE, menu.mDevice, menu.mOnPowerOn, menu.mOnPowerOff);
+        cCmd cmd(CEC_EXECTOGGLE, menu.mDevice, menu.mOnPowerOn, menu.mOnPowerOff);
         mCECRemote->PushWaitCmd(cmd);
     }
 
 public:
-    cCECkeymaps mKeyMaps;
+    cKeyMaps mKeyMaps;
 
     cPluginCecremote(void);
     virtual ~cPluginCecremote();
@@ -78,10 +80,18 @@ public:
 
     void SetDefaultKeymaps();
     void StartPlayer(const cCECMenu &menuitem);
-    void PushCmd(const cCECCmd &cmd) {mCECRemote->PushCmd(cmd);}
+    void PushCmd(const cCmd &cmd) {mCECRemote->PushCmd(cmd);}
     void PushCmdQueue(const cCmdQueue &cmdList) {mCECRemote->PushCmdQueue(cmdList);}
     cCECMenuList *GetMenuList() {return &mConfigFileParser.mMenuList;}
     bool GetStartManually() {return mStartManually;}
+    mapCommandHandler *GetCECCommandHandlers() {
+        return &mConfigFileParser.mGlobalOptions.mCECCommandHandlers;
+    }
+    bool FindMenu(const std::string &menuname, cCECMenu &menu) {
+        return mConfigFileParser.FindMenu(menuname, menu);
+    }
 };
+
+} // namespace cecplugin
 
 #endif

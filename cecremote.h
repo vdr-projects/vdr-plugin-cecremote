@@ -1,7 +1,7 @@
 /*
  * CECRemote PlugIn for VDR
  *
- * Copyright (C) 2015 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ * Copyright (C) 2015-2016 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
  *
  * This code is distributed under the terms and conditions of the
  * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
@@ -25,8 +25,10 @@
 #include <map>
 #include <string>
 
-#include "ceckeymaps.h"
-#include "ceccmd.h"
+#include "keymaps.h"
+#include "cmd.h"
+
+namespace cecplugin {
 
 #define MAX_CEC_ADAPTERS 10
 
@@ -38,9 +40,9 @@ public:
     cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugin);
     ~cCECRemote();
     bool Initialize(void) {return false;};
-    void PushCmd(const cCECCmd &cmd);
+    void PushCmd(const cCmd &cmd);
     void PushCmdQueue(const cCmdQueue &cmdList);
-    void PushWaitCmd(cCECCmd &cmd, int timeout = 5000);
+    void PushWaitCmd(cCmd &cmd, int timeout = 5000);
     int getCECLogLevel(void) {return mCECLogLevel;}
     cString ListDevices(void);
     void Reconnect(void);
@@ -79,11 +81,12 @@ private:
 
     void Connect(void);
     void Disconnect(void);
-    void ActionKeyPress(cCECCmd &cmd);
+    void ActionKeyPress(cCmd &cmd);
     void Action(void);
-    cCECCmd WaitCmd(int timeout = 5000);
-    cCECCmd WaitExec(pid_t pid);
-    void Exec(cCECCmd &cmd);
+    void CECCommand(const cCmd &cmd);
+    cCmd WaitCmd(int timeout = 5000);
+    cCmd WaitExec(pid_t pid);
+    void Exec(cCmd &cmd);
     void ExecToggle(cCECDevice dev, const cCmdQueue &poweron,
                     const cCmdQueue &poweroff);
     void WaitForPowerStatus(cec_logical_address addr, cec_power_status newstatus);
@@ -94,5 +97,7 @@ private:
     cCmdQueue mOnStop;
     cCmdQueue mOnManualStart;
 };
+
+} // namespace cecplugin
 
 #endif /* CECREMOTE_H_ */

@@ -9,19 +9,21 @@
  * This class implements a VDR Player which displays a still-picture.
  */
 
-#ifndef CECPLAYER_H_
-#define CECPLAYER_H_
+#ifndef _CECREMOTE_STILLPICPLAYER_H_
+#define _CECREMOTE_STILLPICPLAYER_H_
 
 #include <vdr/plugin.h>
 #include <vdr/status.h>
 #include <vdr/player.h>
 #include <string>
 #include "cecremoteplugin.h"
+
+namespace cecplugin {
 // The maximum size of a single frame (up to HDTV 1920x1080):
 #define TS_SIZE 188
 #define CDMAXFRAMESIZE  (KILOBYTE(1024) / TS_SIZE * TS_SIZE) // multiple of TS_SIZE to avoid breaking up TS packets
 
-class cCECPlayer: public cPlayer {
+class cStillPicPlayer: public cPlayer {
 protected:
     void Activate(bool On);
     void LoadStillPicture (const std::string &filename);
@@ -32,8 +34,10 @@ protected:
     uchar *pStillBuf;
     ssize_t mStillBufLen;
 public:
-    cCECPlayer(const cCECMenu &config);
-    virtual ~cCECPlayer();
+    cStillPicPlayer(const cCECMenu &config);
+    virtual ~cStillPicPlayer();
 };
 
-#endif /* CECPLAYER_H_ */
+} // namespace cecplugin
+
+#endif /* _CECREMOTE_STILLPICPLAYER_H_ */

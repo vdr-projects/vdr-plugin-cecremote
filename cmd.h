@@ -1,8 +1,13 @@
 /*
- * cCECCmd.h
  *
- *  Created on: 09.01.2016
- *      Author: uli
+ * CECRemote PlugIn for VDR
+ *
+ * Copyright (C) 2015-2016 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ *
+ * This code is distributed under the terms and conditions of the
+ * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
+ *
+ * This class implements a data storage for CEC commands.
  */
 
 #ifndef _CCECCMD_H_
@@ -10,7 +15,9 @@
 
 using namespace CEC;
 
+namespace cecplugin {
 // Class for storing information of devices (<device> tag)
+
 class cCECDevice {
 public:
     uint16_t mPhysicalAddress;
@@ -47,15 +54,15 @@ typedef enum {
     CEC_RECONNECT,
     CEC_CONNECT,
     CEC_DISCONNECT,
-    CEC_ACTIVE_SOURCE
+    CEC_COMMAND
 } CECCommand;
 
-class cCECCmd;
+class cCmd;
 
-typedef std::list<cCECCmd> cCmdQueue;
+typedef std::list<cCmd> cCmdQueue;
 typedef cCmdQueue::const_iterator cCmdQueueIterator;
 
-class cCECCmd {
+class cCmd {
 private:
     static int serial;
     static cMutex mSerialMutex;
@@ -68,15 +75,21 @@ public:
     int mSerial;
     cCmdQueue mPoweron;
     cCmdQueue mPoweroff;
+    cec_opcode mCecOpcode;
+    cec_logical_address mCecLogicalAddress;
 
-    cCECCmd() : mCmd(CEC_INVALID), mVal(0), mSerial(-1) {};
-    cCECCmd(CECCommand cmd, int val = -1,
+    cCmd() : mCmd(CEC_INVALID), mVal(0), mSerial(-1),
+            mCecOpcode(CEC_OPCODE_NONE),
+            mCecLogicalAddress(CECDEVICE_UNKNOWN) {};
+    cCmd(CECCommand cmd, int val = -1,
             cCECDevice *dev = NULL, std::string exec="");
-    cCECCmd(CECCommand cmd, const cCECDevice dev,
+    cCmd(CECCommand cmd, const cCECDevice dev,
             const cCmdQueue poweron, const cCmdQueue poweroff);
+    cCmd(CECCommand cmd, cec_opcode opcode, cec_logical_address logicaladdress);
+
     int getSerial(void);
 
-    cCECCmd& operator=(const cCECCmd &c) {
+    cCmd& operator=(const cCmd &c) {
         mCmd = c.mCmd;
         mVal = c.mVal;
         mDevice = c.mDevice;
@@ -84,8 +97,12 @@ public:
         mSerial = c.mSerial;
         mPoweron = c.mPoweron;
         mPoweroff = c.mPoweroff;
+        mCecOpcode = c.mCecOpcode;
+        mCecLogicalAddress = c.mCecLogicalAddress;
         return *this;
     }
 };
+
+} // namespace cecplugin
 
 #endif /* PLUGINS_SRC_VDR_PLUGIN_CECREMOTE_CCECCMD_H_ */

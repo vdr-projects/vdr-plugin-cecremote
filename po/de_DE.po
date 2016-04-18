@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.2.x\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2015-04-11 14:36+0200\n"
+"POT-Creation-Date: 2016-04-17 17:23+0200\n"
 "PO-Revision-Date: 2013-02-12 13:53+0100\n"
 "Last-Translator: Ulrich Eckhardt <vdr@uli-eckhardt.de>\n"
 "Language-Team: German\n"
@@ -16,11 +16,11 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid "Show in main menu"
-msgstr "Im Hauptmenü anzeigen"
-
 msgid "CEC Device"
 msgstr "CEC Device"
+
+msgid "Show in main menu"
+msgstr "Im Hauptmenü anzeigen"
 
 msgid "Can not open still picture: "
 msgstr "Kann Hintergrundbild nicht öffnen"

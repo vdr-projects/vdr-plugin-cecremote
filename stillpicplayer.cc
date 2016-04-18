@@ -9,32 +9,35 @@
  * This class implements a VDR Player which displays a still-picture.
  */
 
-#include "cecplayer.h"
+#include "stillpicplayer.h"
 #include "ceclog.h"
 
 using namespace std;
+using namespace cecplugin;
 
-cCECPlayer::cCECPlayer(const cCECMenu &config) :
+namespace cecplugin {
+
+cStillPicPlayer::cStillPicPlayer(const cCECMenu &config) :
                 pStillBuf(NULL), mStillBufLen(0)
 {
     mStillPic = config.mStillPic;
 }
 
-cCECPlayer::~cCECPlayer() {
+cStillPicPlayer::~cStillPicPlayer() {
     if (pStillBuf != NULL) {
         free (pStillBuf);
         pStillBuf = NULL;
     }
 }
 
-void cCECPlayer::DisplayStillPicture (void)
+void cStillPicPlayer::DisplayStillPicture (void)
 {
     if (pStillBuf != NULL) {
         DeviceStillPicture((const uchar *)pStillBuf, mStillBufLen);
     }
 }
 
-void cCECPlayer::LoadStillPicture (const string &FileName)
+void cStillPicPlayer::LoadStillPicture (const string &FileName)
 {
     int fd;
     ssize_t len;
@@ -90,8 +93,11 @@ void cCECPlayer::LoadStillPicture (const string &FileName)
     DisplayStillPicture();
 }
 
-void cCECPlayer::Activate(bool On) {
+void cStillPicPlayer::Activate(bool On) {
     if (On) {
         LoadStillPicture(mStillPic);
     }
 }
+
+} // namespace cecplugin
+

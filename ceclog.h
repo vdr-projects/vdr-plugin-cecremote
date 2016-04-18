@@ -13,6 +13,8 @@
 #ifndef CECLOG_H_
 #define CECLOG_H_
 
+namespace cecplugin {
+
 #define MAXSYSLOGBUF 256
 
 static void ceclogmsg (int severity, const char *format, ...)
@@ -39,5 +41,13 @@ static void ceclogmsg (int severity, const char *format, ...)
 #define Esyslog(a...) ceclogmsg(0, a)
 #define Isyslog(a...) ceclogmsg(1, a)
 #define Dsyslog(a...) ceclogmsg(2, a)
+
+#ifdef VERBOSEDEBUG
+#define Csyslog(a...) ceclogmsg(2, a)
+#else
+#define Csyslog(a...)
+#endif
+
+} // namespace cecplugin
 
 #endif /* CECLOG_H_ */
