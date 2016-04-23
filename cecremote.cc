@@ -346,10 +346,6 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     SetDescription("CEC Action Thread");
 
     Start();
-    if (mCECAdapter == NULL) {
-        Esyslog("Can not initialize/connect to libcec");
-        return;
-    }
 
     Csyslog("cCECRemote Init");
 }
