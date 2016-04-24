@@ -12,9 +12,12 @@
 	<global>
 		<cecdebug>7</cecdebug>
 		<hdmiport>2</hdmiport>
+		<rtcdetect>false</rtcdetect>
 		<basedevice>2</basedevice>
 		<shutdownonstandby>false</shutdownonstandby>
 		<poweroffonstandby>false</poweroffonstandby>
+		<!--  Set rtcdetec to true if the PC RTC is available -->
+		<rtcdetect>false</rtcdetect>
 		<combokeytimeoutms>1000</combokeytimeoutms>
 		<!--  Use the keymap to translate from CEC Keymap to VDR keys -->
 		<!--  if not overwritten by a keymap in a player section -->

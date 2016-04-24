@@ -10,6 +10,7 @@
 	<global>
 		<cecdebug>7</cecdebug>
 		<combokeytimeoutms>1000</combokeytimeoutms>
+		<rtcdetect>true</rtcdetect>
 		<shutdownonstandby>false</shutdownonstandby>
 		<poweroffonstandby>false</poweroffonstandby>
 		<!--  On VDR start power on TV, make VDR device active -->

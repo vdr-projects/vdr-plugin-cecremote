@@ -4,7 +4,7 @@ Written by:                  Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
 
 Project's homepage:          http://www.uli-eckhardt.de/vdr/cec.en.shtml 
 
-Latest version available at: http://hg.uli-eckhardt.de/
+Latest version available at: http://git.uli-eckhardt.de/
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -87,12 +87,20 @@ The output should look like:
 214    8# Playback 2     @2000 BD Player       BD Player      Samsung
 221 vdr closing connection
 
-In the plugin configuration directory create the file cecremote.xml (an example 
-can be found in the contrib directory) with an device entry for each device 
-which should be handled by this plugin. 
+In the plugin configuration directory create the file cecremote.xml (an example
+can be found in the contrib directory) with an device entry for each device
+which should be handled by this plugin.
 
-In this example device#8 (osd string=CECTester) is the address of the libCEC 
+In this example device#8 (osd string=CECTester) is the address of the libCEC
 device (VDR).
+
+After the first start of the vdr ensure, that the CEC device is not accessed
+by the Modem-Manager or mtp-probe by grep for the device path 
+(/sys/devices/pci00 ...) in the log.
+
+An example udev rule which can be installed at /etc/udev/rules.d/20-libcec.rules
+can be found in the contrib directory. This udev rule disables access of the
+ModemManger or mtp-probe to the pulse-eight CEC adapter.
 
 Format of the configuration file :
 ===================================
@@ -188,8 +196,9 @@ case Playback 2) is used.
 * Global
 ====================================
 
-The child elements of <global> are <cecdebug>, <onstart>, <onmanualstart>, 
-<onstop> <onswitchtotv>, <onswitchtoradio>, <onswitchtoreplay> and <keymaps>.
+The child elements of <global> are <rtcdetect>, <cecdebug>, <onstart>,
+<onmanualstart>, <onstop> <onswitchtotv>, <onswitchtoradio>, <onswitchtoreplay>
+<shutdownonstandby>, <poweroffonstandby> and <keymaps>.
 
 <cecdebug>          Debug level for CEC debugging (see cec_log_level in cectypes.h)
 <onstart>           A command list which is executed upon plugin start.
@@ -210,8 +219,17 @@ The child elements of <global> are <cecdebug>, <onstart>, <onmanualstart>,
                     * PLAYBACK_DEVICE
                     * AUDIO_SYSTEM
 <hdmiport>          Specify the HDMI-Port where the adapter is connected to.
+<rtcdetect>         If set to true (default) use the rtc driver to detect if
+                    the vdr was started manually or by rtc alarm. Otherwise
+                    use a heuristic. If the VDR was started in a time range
+                    5 minutes before or after an timer was running, the VDR
+                    start is detected as timed start.
+<shutdownonstandby> If set to true, all CEC devices are set to standby when the
+                    VDR is shut down. Default is false.
+<poweroffonstandby> If set to true, all CEC devices are set to power off when
+                    the VDR is shut down. Default is false.
 
-NOTE: There seems to be a bug in the libCEC implementation for the Raspberry PI 
+NOTE: There seems to be a bug in the libCEC implementation for the Raspberry PI
       which causes a crash when registering more than one device type.
 
 For the description of a command list see below.

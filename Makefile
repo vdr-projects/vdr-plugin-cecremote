@@ -78,7 +78,7 @@ LIBS += -lpugixml
 
 OBJS = cecremote.o cecremoteplugin.o configmenu.o configfileparser.o \
        cecosd.o stillpicplayer.o ceccontrol.o keymaps.o statusmonitor.o \
-       cmd.o opcodemap.o handleactions.o
+       cmd.o opcodemap.o handleactions.o rtcwakeup.o
 
 ### The main target:
 

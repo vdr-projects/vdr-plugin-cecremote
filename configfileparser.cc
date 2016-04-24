@@ -66,6 +66,7 @@ const char *cConfigFileParser::XML_STOPMENU = "stopmenu";
 const char *cConfigFileParser::XML_COMMANDLIST = "commandlist";
 const char *cConfigFileParser::XML_COMMAND = "command";
 const char *cConfigFileParser::XML_INITIATOR = "initiator";
+const char *cConfigFileParser::XML_RTCDETECT = "rtcdetect";
 
 /*
  * Parse <onceccommand>
@@ -553,6 +554,13 @@ void cConfigFileParser::parseGlobal(const pugi::xml_node node)
                     == 0) {
                 if (!textToBool(currentNode.text().as_string(""),
                         mGlobalOptions.mPowerOffOnStandby)) {
+                    string s = "Only true or false allowed";
+                    throw cCECConfigException(
+                            getLineNumber(currentNode.offset_debug()), s);
+                }
+            } else if (strcasecmp(currentNode.name(), XML_RTCDETECT) == 0) {
+                if (!textToBool(currentNode.text().as_string(""),
+                        mGlobalOptions.mRTCDetect)) {
                     string s = "Only true or false allowed";
                     throw cCECConfigException(
                             getLineNumber(currentNode.offset_debug()), s);

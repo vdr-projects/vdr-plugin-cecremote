@@ -28,6 +28,7 @@ class cStatusMonitor;
 class cPluginCecremote : public cPlugin {
     friend class cStatusMonitor;
 protected:
+
     int mCECLogLevel;
 
     std::string mCfgDir;

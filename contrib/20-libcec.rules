@@ -1,0 +1,3 @@
+
+# ModemManager and mtp probe should ignore /dev/ttyACM0  
+ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="2548",  ATTRS{idProduct}=="1002", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{MTP_NO_PROBE}="1"

@@ -1,8 +1,13 @@
 /*
- * opcode.cc
+ * CECRemote PlugIn for VDR
  *
- *  Created on: 17.04.2016
- *      Author: uli
+ * Copyright (C) 2016 Ulrich Eckhardt <uli-vdr@uli-eckhardt.de>
+ *
+ * This code is distributed under the terms and conditions of the
+ * GNU GENERAL PUBLIC LICENSE. See the file COPYING for details.
+ *
+ * opcode.cc: Class for converting CEC commands as string to the
+ *            corresponding CEC opcode.
  */
 
 #include "opcodemap.h"

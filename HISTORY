@@ -99,9 +99,13 @@ VDR Plugin 'cecremote' Revision History
 
 - Remove superfluous call to SetHDMIPort (reported by jack-itb)
 - Fix manual/automatic start detection (reported by jack-itb)
-- Use a c++ namespace for the plugin code.
-- Removed cec prefixes for several files and classes.
-- Moved CEC initialization into worker thread for faster startup.
+- Use c++ namespace for the plugin code and removed cec prefixes for
+  several files and classes.
+- Moved the CEC initialization into worker thread for faster startup.
 - Add new config option <onceccommand> which allows to start a menu, stop
   a CEC menu with still picture player and executes a command list.
-  
+- Added a new detection if the VDR is started via the RTC. The old
+  detection behaviour can be enabled with the new config option
+  <rtcdetect>false</rtcdetect> in the <global> section.
+- Add a udev rule to the contrib directory which disables ModemManger or
+  mtp-probe access to the pulse-eight CEC adapter.

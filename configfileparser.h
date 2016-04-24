@@ -62,6 +62,7 @@ public:
     std::string mVDRKeymap;
     bool mShutdownOnStandby;
     bool mPowerOffOnStandby;
+    bool mRTCDetect;
     mapCommandHandler mCECCommandHandlers;
 
     cCECGlobalOptions() : cec_debug(7), mComboKeyTimeoutMs(1000),
@@ -70,7 +71,8 @@ public:
             mCECKeymap(cKeyMaps::DEFAULTKEYMAP),
             mVDRKeymap(cKeyMaps::DEFAULTKEYMAP),
             mShutdownOnStandby(false),
-            mPowerOffOnStandby(false) {};
+            mPowerOffOnStandby(false),
+            mRTCDetect(true) {};
 };
 
 typedef std::map<std::string, cCECDevice> mCECDeviceMap;
@@ -243,6 +245,7 @@ private:
     static const char *XML_COMMANDLIST;
     static const char *XML_COMMAND;
     static const char *XML_INITIATOR;
+    static const char *XML_RTCDETECT;
     // Filename of the configuration file.
     const char* mXmlFile;
 

@@ -19,10 +19,11 @@
 #include "stringtools.h"
 #include "keymaps.h"
 #include "configmenu.h"
+#include "rtcwakeup.h"
 
 namespace cecplugin {
 
-static const char *VERSION        = "1.3.5";
+static const char *VERSION        = "1.3.6";
 static const char *DESCRIPTION    = "Send/Receive CEC commands";
 static const char *MAINMENUENTRY  = "CECremote";
 
@@ -102,26 +103,32 @@ bool cPluginCecremote::ProcessArgs(int argc, char *argv[])
 
 bool cPluginCecremote::Initialize(void)
 {
-    Dsyslog("Next Wakeup %d", Setup.NextWakeupTime);
-    if (Setup.NextWakeupTime > 0) {
-        // 600 comes from vdr's MANUALSTART constant in vdr.c
-        if (abs(Setup.NextWakeupTime - time(NULL)) < 600) {
-            mStartManually = false;
-        }
-    }
-
-    if (mStartManually) {
-        Dsyslog("manual start");
-    }
-    else {
-        Dsyslog("timed start");
-    }
     string file = GetConfigFile();
     if (!mConfigFileParser.Parse(file, mKeyMaps)) {
         Esyslog("Error on parsing config file file %s", file.c_str());
         return false;
     }
     mCECLogLevel = mConfigFileParser.mGlobalOptions.cec_debug;
+    if (mConfigFileParser.mGlobalOptions.mRTCDetect) {
+        Dsyslog("Use RTC wakeup detection");
+        mStartManually = (rtcwakeup::check() != rtcwakeup::RTC_WAKEUP);
+    }
+    else {
+        Dsyslog("Use VDR wakeup detection: Next Wakeup %d",
+                Setup.NextWakeupTime);
+        if (Setup.NextWakeupTime > 0) {
+            // 600 comes from vdr's MANUALSTART constant in vdr.c
+            if (abs(Setup.NextWakeupTime - time(NULL)) < 600) {
+                mStartManually = false;
+            }
+        }
+    }
+    if (mStartManually) {
+        Dsyslog("manual start");
+    }
+    else {
+        Dsyslog("timed start");
+    }
     mCECRemote = new cCECRemote(mConfigFileParser.mGlobalOptions, this);
 
     SetDefaultKeymaps();
