@@ -104,6 +104,8 @@ bool cPluginCecremote::ProcessArgs(int argc, char *argv[])
 bool cPluginCecremote::Initialize(void)
 {
     string file = GetConfigFile();
+    rtcwakeup::RTC_WAKEUP_TYPE rtcwakeup = rtcwakeup::RTC_ERROR;
+
     if (!mConfigFileParser.Parse(file, mKeyMaps)) {
         Esyslog("Error on parsing config file file %s", file.c_str());
         return false;
@@ -111,9 +113,12 @@ bool cPluginCecremote::Initialize(void)
     mCECLogLevel = mConfigFileParser.mGlobalOptions.cec_debug;
     if (mConfigFileParser.mGlobalOptions.mRTCDetect) {
         Dsyslog("Use RTC wakeup detection");
-        mStartManually = (rtcwakeup::check() != rtcwakeup::RTC_WAKEUP);
+        rtcwakeup = rtcwakeup::check();
+        mStartManually = (rtcwakeup != rtcwakeup::RTC_WAKEUP);
     }
-    else {
+    // Either rtc wakeup is disabled or not available, so fall back
+    // to "old" manual start detection
+    if (rtcwakeup == rtcwakeup::RTC_ERROR) {
         Dsyslog("Use VDR wakeup detection: Next Wakeup %d",
                 Setup.NextWakeupTime);
         if (Setup.NextWakeupTime > 0) {

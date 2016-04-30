@@ -30,7 +30,7 @@ static int CecKeyPressCallback(void *cbParam, const cec_keypress key)
     static cec_user_control_code lastkey = CEC_USER_CONTROL_CODE_UNKNOWN;
     cCECRemote *rem = (cCECRemote *)cbParam;
 
-    Csyslog("key pressed %02x (%d)", key.keycode, key.duration);
+    Dsyslog("key pressed %02x (%d)", key.keycode, key.duration);
     if (
         ((key.keycode >= 0) && (key.keycode <= CEC_USER_CONTROL_CODE_MAX)) &&
         ((key.duration == 0) || (key.keycode != lastkey))
@@ -68,7 +68,7 @@ static int CecAlertCallback(void *cbParam, const libcec_alert type,
                             const libcec_parameter param)
 {
     cCECRemote *rem = (cCECRemote *)cbParam;
-    Csyslog("CecAlert %d", type);
+    Dsyslog("CecAlert %d", type);
     switch (type)
     {
     case CEC_ALERT_CONNECTION_LOST:
@@ -702,13 +702,13 @@ void cCECRemote::Exec(cCmd &execcmd)
  */
 cCmd cCECRemote::WaitExec(pid_t pid)
 {
-    Dsyslog("WaitExec");
+    Csyslog("WaitExec");
     int stat_loc = 0;
     mExecQueueMutex.Lock();
     while (mExecQueue.empty()) {
         mExecQueueMutex.Unlock();
         if (mExecQueueWait.Wait(250)) {
-            Dsyslog("  Signal");
+            Csyslog("  Signal");
         }
         else {
             if (waitpid (pid, &stat_loc, WNOHANG) == pid) {
@@ -750,7 +750,7 @@ void cCECRemote::PushCmdQueue(const cCmdQueue &cmdList)
  */
 void cCECRemote::PushCmd(const cCmd &cmd)
 {
-    Dsyslog("cCECRemote::PushCmd %d (size %d)", cmd.mCmd, mWorkerQueue.size());
+    Csyslog("cCECRemote::PushCmd %d (size %d)", cmd.mCmd, mWorkerQueue.size());
 
     mWorkerQueueMutex.Lock();
     mWorkerQueue.push_back(cmd);
@@ -811,7 +811,7 @@ cCmd cCECRemote::WaitCmd(int timeout)
     while (mWorkerQueue.empty()) {
         mWorkerQueueMutex.Unlock();
         if (mWorkerQueueWait.Wait(timeout)) {
-            Dsyslog("  Signal");
+            Csyslog("  Signal");
         }
         mWorkerQueueMutex.Lock();
     }
