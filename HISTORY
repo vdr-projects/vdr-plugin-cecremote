@@ -109,3 +109,7 @@ VDR Plugin 'cecremote' Revision History
   <rtcdetect>false</rtcdetect> in the <global> section.
 - Add a udev rule to the contrib directory which disables ModemManger or
   mtp-probe access to the pulse-eight CEC adapter.
+
+2016-11-10: Version 1.4.1
+
+- Compiles with libCEC 4

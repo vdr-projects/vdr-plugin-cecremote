@@ -25,6 +25,24 @@ const char *cCECRemote::VDRNAME = "VDR";
 /*
  * Callback when libCEC receives a key press
  */
+#if CEC_LIB_VERSION_MAJOR >= 4
+static void CecKeyPressCallback(void *cbParam, const cec_keypress* key)
+{
+    static cec_user_control_code lastkey = CEC_USER_CONTROL_CODE_UNKNOWN;
+    cCECRemote *rem = (cCECRemote *)cbParam;
+
+    Dsyslog("key pressed %02x (%d)", key->keycode, key->duration);
+    if (
+        ((key->keycode >= 0) && (key->keycode <= CEC_USER_CONTROL_CODE_MAX)) &&
+        ((key->duration == 0) || (key->keycode != lastkey))
+       )
+    {
+        lastkey = key->keycode;
+        cCmd cmd(CEC_KEYRPRESS, (int)key->keycode);
+        rem->PushCmd(cmd);
+    }
+}
+#else
 static int CecKeyPressCallback(void *cbParam, const cec_keypress key)
 {
     static cec_user_control_code lastkey = CEC_USER_CONTROL_CODE_UNKNOWN;
@@ -42,11 +60,23 @@ static int CecKeyPressCallback(void *cbParam, const cec_keypress key)
     }
     return 0;
 }
+#endif
 
 /*
  * Callback function for libCEC command messages.
  * Currently only used for debugging.
  */
+#if CEC_LIB_VERSION_MAJOR >= 4
+static void CecCommandCallback(void *cbParam, const cec_command *command)
+{
+    cCECRemote *rem = (cCECRemote *)cbParam;
+    Dsyslog("CEC Command %d : %s Init %d Dest %d", command->opcode,
+                                   rem->mCECAdapter->ToString(command->opcode),
+                                   command->initiator, command->destination);
+    cCmd cmd(CEC_COMMAND, command->opcode, command->initiator);
+    rem->PushCmd(cmd);
+}
+#else
 static int CecCommandCallback(void *cbParam, const cec_command command)
 {
     cCECRemote *rem = (cCECRemote *)cbParam;
@@ -58,14 +88,19 @@ static int CecCommandCallback(void *cbParam, const cec_command command)
 
     return 0;
 }
-
+#endif
 
 /*
  * Callback function for libCEC alert messages.
  * Currently only used for debugging.
  */
+#if CEC_LIB_VERSION_MAJOR >= 4
+static void CecAlertCallback(void *cbParam, const libcec_alert type,
+                            const libcec_parameter param)
+#else
 static int CecAlertCallback(void *cbParam, const libcec_alert type,
                             const libcec_parameter param)
+#endif
 {
     cCECRemote *rem = (cCECRemote *)cbParam;
     Dsyslog("CecAlert %d", type);
@@ -93,12 +128,55 @@ static int CecAlertCallback(void *cbParam, const libcec_alert type,
     default:
         break;
     }
+#if CEC_LIB_VERSION_MAJOR < 4
     return 0;
+#endif
 }
 
 /*
  * Callback function for libCEC to print out log messages.
  */
+#if CEC_LIB_VERSION_MAJOR >= 4
+static void CecLogMessageCallback(void *cbParam, const cec_log_message *message)
+{
+    cCECRemote *rem = (cCECRemote *)cbParam;
+    if ((message->level & rem->getCECLogLevel()) == message->level)
+    {
+        string strLevel;
+        switch (message->level)
+        {
+        case CEC_LOG_ERROR:
+            strLevel = "ERROR:   ";
+            break;
+        case CEC_LOG_WARNING:
+            strLevel = "WARNING: ";
+            break;
+        case CEC_LOG_NOTICE:
+            strLevel = "NOTICE:  ";
+            break;
+        case CEC_LOG_TRAFFIC:
+            strLevel = "TRAFFIC: ";
+            break;
+        case CEC_LOG_DEBUG:
+            strLevel = "DEBUG:   ";
+            break;
+        default:
+            break;
+        }
+
+        char strFullLog[1040];
+        snprintf(strFullLog, 1039, "CEC %s %s", strLevel.c_str(), message->message);
+        if (message->level == CEC_LOG_ERROR)
+        {
+            Esyslog(strFullLog);
+        }
+        else
+        {
+            Dsyslog(strFullLog);
+        }
+    }
+}
+#else
 static int CecLogMessageCallback(void *cbParam, const cec_log_message message)
 {
     cCECRemote *rem = (cCECRemote *)cbParam;
@@ -137,9 +215,10 @@ static int CecLogMessageCallback(void *cbParam, const cec_log_message message)
             Dsyslog(strFullLog);
         }
     }
+
     return 0;
 }
-
+#endif
 /*
  * Callback function for libCEC when a device gets activated.
  * Currently only used for debugging.
@@ -155,13 +234,20 @@ static void CECSourceActivatedCallback (void *cbParam,
  * Callback function for libCEC when configuration changes.
  * Currently only used for debugging.
  */
+#if CEC_LIB_VERSION_MAJOR >= 4
+static void CECConfigurationCallback (void *cbParam,
+                                      const libcec_configuration *config)
+{
+    Csyslog("CECConfiguration");
+}
+#else
 static int CECConfigurationCallback (void *cbParam,
                                      const libcec_configuration config)
 {
     Csyslog("CECConfiguration");
     return CEC_TRUE;
 }
-
+#endif
 /*
  * Worker thread which processes the command queue and executes the
  * received commands.
@@ -368,13 +454,21 @@ void cCECRemote::Connect()
     }
     // Initialize Callbacks
     mCECCallbacks.Clear();
+#if CEC_LIB_VERSION_MAJOR >= 4
+   mCECCallbacks.logMessage  = &::CecLogMessageCallback;
+   mCECCallbacks.keyPress    = &::CecKeyPressCallback;
+   mCECCallbacks.commandReceived     = &::CecCommandCallback;
+   mCECCallbacks.alert       = &::CecAlertCallback;
+   mCECCallbacks.sourceActivated = &::CECSourceActivatedCallback;
+   mCECCallbacks.configurationChanged = &::CECConfigurationCallback;
+#else
     mCECCallbacks.CBCecLogMessage  = &::CecLogMessageCallback;
     mCECCallbacks.CBCecKeyPress    = &::CecKeyPressCallback;
     mCECCallbacks.CBCecCommand     = &::CecCommandCallback;
     mCECCallbacks.CBCecAlert       = &::CecAlertCallback;
     mCECCallbacks.CBCecSourceActivated = &::CECSourceActivatedCallback;
     mCECCallbacks.CBCecConfigurationChanged = &::CECConfigurationCallback;
-
+#endif
     // Setup CEC configuration
     mCECConfig.Clear();
     strncpy(mCECConfig.strDeviceName, VDRNAME, sizeof(mCECConfig.strDeviceName));
@@ -391,7 +485,9 @@ void cCECRemote::Connect()
     mCECConfig.iHDMIPort = mHDMIPort;
     mCECConfig.wakeDevices.Clear();
     mCECConfig.powerOffDevices.Clear();
+#if CEC_LIB_VERSION_MAJOR < 4
     mCECConfig.bShutdownOnStandby = mShutdownOnStandby;
+#endif
     mCECConfig.bPowerOffOnStandby = mPowerOffOnStandby;
     mCECConfig.baseDevice = mBaseDevice;
     // If no <cecdevicetype> is specified in the <global>, set default
@@ -458,12 +554,20 @@ void cCECRemote::Connect()
             cec_logical_address logical_addres = (cec_logical_address) j;
 
             uint16_t phaddr = mCECAdapter->GetDevicePhysicalAddress(logical_addres);
-            cec_osd_name name = mCECAdapter->GetDeviceOSDName(logical_addres);
+
             cec_vendor_id vendor = (cec_vendor_id)mCECAdapter->GetDeviceVendorId(logical_addres);
+#if CEC_LIB_VERSION_MAJOR >= 4
+            string name = mCECAdapter->GetDeviceOSDName(logical_addres);
+            Dsyslog("   %15.15s %d@%04x %15.15s %15.15s",
+                    mCECAdapter->ToString(logical_addres), logical_addres,
+                    phaddr, name.c_str(), mCECAdapter->ToString(vendor));
+#else
+            cec_osd_name name = mCECAdapter->GetDeviceOSDName(logical_addres);
             Dsyslog("   %15.15s %d@%04x %15.15s %15.15s",
                     mCECAdapter->ToString(logical_addres),
                     logical_addres, phaddr, name.name,
                     mCECAdapter->ToString(vendor));
+#endif
         }
     }
     Csyslog("END cCECRemote::Initialize");
@@ -505,7 +609,7 @@ cString cCECRemote::ListDevices()
 {
     cString s = "Available CEC Devices:";
     uint16_t phaddr;
-    cec_osd_name name;
+    string name;
     cec_vendor_id vendor;
     cec_power_status powerstatus;
 
@@ -535,14 +639,19 @@ cString cCECRemote::ListDevices()
             cec_logical_address logical_addres = (cec_logical_address)j;
 
             phaddr = mCECAdapter->GetDevicePhysicalAddress(logical_addres);
+#if CEC_LIB_VERSION_MAJOR >= 4
             name = mCECAdapter->GetDeviceOSDName(logical_addres);
+#else
+            cec_osd_name oldname = mCECAdapter->GetDeviceOSDName(logical_addres);
+            name = oldname.name;
+#endif
             vendor = (cec_vendor_id)mCECAdapter->GetDeviceVendorId(logical_addres);
 
             if (own[j]) {
                 s = cString::sprintf("%s\n   %d# %-15.15s@%04x %-15.15s %-14.14s %-15.15s", *s,
                         logical_addres,
                         mCECAdapter->ToString(logical_addres),
-                        phaddr, name.name,
+                        phaddr, name.c_str(),
                         VDRNAME, VDRNAME);
             }
             else {
@@ -550,8 +659,12 @@ cString cCECRemote::ListDevices()
                 s = cString::sprintf("%s\n   %d# %-15.15s@%04x %-15.15s %-14.14s %-15.15s %-15.15s", *s,
                         logical_addres,
                         mCECAdapter->ToString(logical_addres),
-                        phaddr, name.name,
+                        phaddr, name.c_str(),
+#if CEC_LIB_VERSION_MAJOR >= 4
+                        mCECAdapter->GetDeviceOSDName(logical_addres).c_str(),
+#else
                         mCECAdapter->GetDeviceOSDName(logical_addres).name,
+#endif
                         mCECAdapter->ToString(vendor),
                         mCECAdapter->ToString(powerstatus));
             }

@@ -69,7 +69,9 @@ DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
 # Flags for libcec
 LIBS += $(shell pkg-config --libs libcec)
 CFLAGS += $(shell pkg-config --cflags libcec)
-CXXFLAGS += $(shell pkg-config --cflags libcec)
+CXXFLAGS += $(shell pkg-config --cflags libcec) 
+# Uncomment if compile against libcec 4
+CXXFLAGS +=-std=c++11
 
 # Flags for pugixml xml parser
 LIBS += -lpugixml
