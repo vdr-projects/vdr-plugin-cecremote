@@ -48,12 +48,12 @@ public:
     void Reconnect(void);
     void Stop(void);
     void Startup(void);
-
     ICECAdapter            *mCECAdapter;
 private:
     static const char      *VDRNAME;
     int                    mCECLogLevel;
     int                    mProcessedSerial;
+    int                    mStartupDelay;
     uint8_t                mDevicesFound;
     uint8_t                mHDMIPort;
     cec_logical_address    mBaseDevice;
@@ -77,6 +77,7 @@ private:
     bool                   mShutdownOnStandby;
     bool                   mPowerOffOnStandby;
     bool                   mInExec;
+    bool                   mDeferredStartup;
     cPluginCecremote       *mPlugin;
 
     void Connect(void);

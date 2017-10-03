@@ -8,4 +8,7 @@ vdr-cecremote*.tgz
 po/*.mo
 po/*.pot
 push.sh
+.cproject
+.project
+.settings
 

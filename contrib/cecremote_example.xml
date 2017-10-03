@@ -14,6 +14,7 @@
 		<hdmiport>2</hdmiport>
 		<rtcdetect>false</rtcdetect>
 		<basedevice>2</basedevice>
+		<startupdelay>1</startupdelay>
 		<shutdownonstandby>false</shutdownonstandby>
 		<poweroffonstandby>false</poweroffonstandby>
 		<!--  Set rtcdetec to true if the PC RTC is available -->

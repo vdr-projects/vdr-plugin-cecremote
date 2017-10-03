@@ -67,7 +67,7 @@ const char *cConfigFileParser::XML_COMMANDLIST = "commandlist";
 const char *cConfigFileParser::XML_COMMAND = "command";
 const char *cConfigFileParser::XML_INITIATOR = "initiator";
 const char *cConfigFileParser::XML_RTCDETECT = "rtcdetect";
-
+const char *cConfigFileParser::XML_STARTUPDELAY = "startupdelay";
 /*
  * Parse <onceccommand>
  */
@@ -562,6 +562,13 @@ void cConfigFileParser::parseGlobal(const pugi::xml_node node)
                 if (!textToBool(currentNode.text().as_string(""),
                         mGlobalOptions.mRTCDetect)) {
                     string s = "Only true or false allowed";
+                    throw cCECConfigException(
+                            getLineNumber(currentNode.offset_debug()), s);
+                }
+            } else if (strcasecmp(currentNode.name(), XML_STARTUPDELAY) == 0) {
+                if (!textToInt(currentNode.text().as_string("0"),
+                                        mGlobalOptions.mStartupDelay)) {
+                    string s = "Invalid numeric in startupdelay";
                     throw cCECConfigException(
                             getLineNumber(currentNode.offset_debug()), s);
                 }

@@ -15,6 +15,7 @@
 #include <sys/wait.h>
 // We need this for cecloader.h
 #include <iostream>
+#include <csignal>
 using namespace std;
 #include <cecloader.h>
 
@@ -259,6 +260,10 @@ void cCECRemote::Action(void)
     cec_logical_address addr;
     eKeys k;
 
+    // Allow some delay before the first connection to the CEC Adapter.
+    if (mStartupDelay > 0) {
+        sleep(mStartupDelay);
+    }
     Connect();
 
     Dsyslog("cCECRemote start worker thread");
@@ -414,7 +419,8 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
         cThread("CEC receiver"),
         mProcessedSerial(-1),
         mDevicesFound(0),
-        mInExec(false)
+        mInExec(false),
+		mDeferredStartup(false)
 {
     mPlugin = plugin;
     mCECAdapter = NULL;
@@ -428,6 +434,7 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
     mDeviceTypes = options.mDeviceTypes;
     mShutdownOnStandby = options.mShutdownOnStandby;
     mPowerOffOnStandby = options.mPowerOffOnStandby;
+    mStartupDelay = options.mStartupDelay;
 
     SetDescription("CEC Action Thread");
 
@@ -438,12 +445,17 @@ cCECRemote::cCECRemote(const cCECGlobalOptions &options, cPluginCecremote *plugi
 
 void cCECRemote::Startup()
 {
-    Csyslog("cCECRemote Startup");
-
-    if (mPlugin->GetStartManually()) {
-        PushCmdQueue(mOnManualStart);
+    if (mCECAdapter == NULL) {
+        Csyslog("cCECRemote Delayed Startup");
+        mDeferredStartup = true;
     }
-    PushCmdQueue(mOnStart);
+    else {
+        Csyslog("cCECRemote Startup");
+        if (mPlugin->GetStartManually()) {
+            PushCmdQueue(mOnManualStart);
+        }
+        PushCmdQueue(mOnStart);
+    }
 }
 
 void cCECRemote::Connect()
@@ -545,6 +557,7 @@ void cCECRemote::Connect()
         mCECAdapter = NULL;
         return;
     }
+    Csyslog("END cCECRemote::Open OK");
 
     cec_logical_addresses devices = mCECAdapter->GetActiveDevices();
     for (int j = 0; j < 16; j++)
@@ -571,6 +584,11 @@ void cCECRemote::Connect()
         }
     }
     Csyslog("END cCECRemote::Initialize");
+
+    if (mDeferredStartup) {
+        mDeferredStartup = false;
+        Startup();
+    }
 }
 
 void cCECRemote::Disconnect()

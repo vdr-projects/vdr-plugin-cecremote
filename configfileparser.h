@@ -50,6 +50,7 @@ public:
     int cec_debug;
     uint32_t mComboKeyTimeoutMs;
     int mHDMIPort;
+    int mStartupDelay;
     cec_logical_address mBaseDevice;
     cCmdQueue mOnStart;
     cCmdQueue mOnStop;
@@ -67,6 +68,7 @@ public:
 
     cCECGlobalOptions() : cec_debug(7), mComboKeyTimeoutMs(1000),
             mHDMIPort(CEC_DEFAULT_HDMI_PORT),
+            mStartupDelay(0),
             mBaseDevice(CECDEVICE_UNKNOWN),
             mCECKeymap(cKeyMaps::DEFAULTKEYMAP),
             mVDRKeymap(cKeyMaps::DEFAULTKEYMAP),
@@ -246,6 +248,7 @@ private:
     static const char *XML_COMMAND;
     static const char *XML_INITIATOR;
     static const char *XML_RTCDETECT;
+    static const char *XML_STARTUPDELAY;
     // Filename of the configuration file.
     const char* mXmlFile;
 
