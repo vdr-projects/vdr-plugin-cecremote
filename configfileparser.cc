@@ -803,6 +803,7 @@ int cConfigFileParser::getLineNumber(long offset)
         }
         offset--;
     }
+    fclose(fp);
     return line;
 }
 
